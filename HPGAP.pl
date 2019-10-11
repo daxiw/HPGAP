@@ -7,7 +7,7 @@ use Getopt::Long;
 use Cwd qw(getcwd abs_path);
 use FindBin '$Bin';
 use lib "$Bin/lib";
-use lib '/root/miniconda3/lib/site_perl/5.26.2';
+#use lib '/root/miniconda3/lib/site_perl/5.26.2';
 #use PopGenome;
 use YAML::Tiny;
 
