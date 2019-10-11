@@ -53,7 +53,7 @@ unless (exists $cfg{args}{mem}){$cfg{args}{mem}=$mem}
 
 open IN,"$input" or die $!;
 my %sample;
-while(<Raw>){
+while(<IN>){
     chomp;
     if($seqtype eq "SE"){
         my($name,$path) = (split /\s+/,$_)[0,1];
