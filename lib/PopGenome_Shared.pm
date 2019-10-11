@@ -5,9 +5,8 @@ use strict;
 use warnings;
 use FindBin '$Bin';
 use lib "$Bin/lib";
-use lib '/root/miniconda3/lib/site_perl/5.26.2';
 use YAML::Tiny;
-use Bio::SeqIO;
+
 #----------------------------------- other subroutines ---------------------------------------------
 sub LOADREF{
 	my ($reference) = @_;
