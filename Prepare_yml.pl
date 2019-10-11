@@ -76,7 +76,7 @@ while(<Raw>){
 close IN;
 
 foreach my $sample (keys %sample){
-	$cfg{population}{$name}{'presumed population'}="All";
+	$cfg{population}{$sample}{'presumed population'}="All";
 }
 
 unless ( -e $outpath){
