@@ -4,31 +4,31 @@ use warnings;
 use File::Basename;
 use File::Path qw(make_path);
 use Getopt::Long;
+use YAML::Tiny;
 use Cwd qw(getcwd abs_path);
 use FindBin '$Bin';
 use lib "$Bin/lib";
 #use lib '/root/miniconda3/lib/site_perl/5.26.2';
 #use PopGenome;
-use YAML::Tiny;
 
 #######
-require PopGenome_Indexing;
-require PopGenome_Data_Filtering;
+#require PopGenome_Indexing;
+#require PopGenome_Data_Filtering;
 require PopGenome_Mapping;
-require PopGenome_Read_Report;
-require PopGenome_Calibration;
-require PopGenome_Variant_Calling;
-require PopGenome_Combine_Calling;
-require PopGenome_Variant_Filtering;
-require PopGenome_Relatedness;
-require PopGenome_Phylogeny;
-require PopGenome_Admixture;
-require PopGenome_Homozygosity;
-require PopGenome_ROH;
-require PopGenome_LD;
-require PopGenome_Slidingwindow;
-require PopGenome_SFS;
-require PopGenome_MKTEST;
+#require PopGenome_Read_Report;
+#require PopGenome_Calibration;
+#require PopGenome_Variant_Calling;
+#require PopGenome_Combine_Calling;
+#require PopGenome_Variant_Filtering;
+#require PopGenome_Relatedness;
+#require PopGenome_Phylogeny;
+#require PopGenome_Admixture;
+#require PopGenome_Homozygosity;
+#require PopGenome_ROH;
+#require PopGenome_LD;
+#require PopGenome_Slidingwindow;
+#require PopGenome_SFS;
+#require PopGenome_MKTEST;
 #######
 my ($config, $step, $run, $skipsh, $help, $run_flag);
 
@@ -147,21 +147,21 @@ unless (defined $run_flag){
 	close MH;
 }
 
-	PopGenome_Indexing::INDEXING($allcfg,$skipsh) if ($run eq 'step0_indexing');
+#	PopGenome_Indexing::INDEXING($allcfg,$skipsh) if ($run eq 'step0_indexing');
 
-	PopGenome_Data_Filtering::DATA_FILTERING($allcfg,$skipsh) if ($run eq 'step1_read_filtering');
+#	PopGenome_Data_Filtering::DATA_FILTERING($allcfg,$skipsh) if ($run eq 'step1_read_filtering');
 
 	PopGenome_Mapping::MAPPING($allcfg,$skipsh) if ($run eq 'step1_read_mapping');
 
-	PopGenome_Read_Report::READ_REPORT($allcfg,$skipsh) if ($run eq 'step1_read_report');
+#	PopGenome_Read_Report::READ_REPORT($allcfg,$skipsh) if ($run eq 'step1_read_report');
 
-	PopGenome_Calibration::CALIBRATION($allcfg,$skipsh) if ($run eq 'step1_recalibration');
+#	PopGenome_Calibration::CALIBRATION($allcfg,$skipsh) if ($run eq 'step1_recalibration');
 
-	PopGenome_Variant_Calling::VARIANT_CALLING($allcfg,$skipsh) if ($run eq 'step1_variant_calling');
+#	PopGenome_Variant_Calling::VARIANT_CALLING($allcfg,$skipsh) if ($run eq 'step1_variant_calling');
 
-	PopGenome_Combine_Calling::COMBINE_CALLING($allcfg,$skipsh) if ($run eq 'step1_combine_calling');
+#	PopGenome_Combine_Calling::COMBINE_CALLING($allcfg,$skipsh) if ($run eq 'step1_combine_calling');
 
-	PopGenome_Variant_Filtering::VARIANT_FILTERING($allcfg,$skipsh) if ($run eq 'step1_variant_filtering');
+#	PopGenome_Variant_Filtering::VARIANT_FILTERING($allcfg,$skipsh) if ($run eq 'step1_variant_filtering');
 
 
 	#############################################
@@ -171,25 +171,25 @@ unless (defined $run_flag){
 	#############################################
 
 	#02.SampleFiltering
-	PopGenome_Relatedness::RELATEDNESS($allcfg,$skipsh) if ($run eq 'step2_relatedness');
+#	PopGenome_Relatedness::RELATEDNESS($allcfg,$skipsh) if ($run eq 'step2_relatedness');
 
-	PopGenome_Phylogeny::PHYLOGENY($allcfg,$skipsh) if ($run eq 'step3_phylogeny');
+#	PopGenome_Phylogeny::PHYLOGENY($allcfg,$skipsh) if ($run eq 'step3_phylogeny');
 	
-	PopGenome_Admixture::ADMIXTURE($allcfg,$skipsh) if ($run eq 'step3_admixture');
+#	PopGenome_Admixture::ADMIXTURE($allcfg,$skipsh) if ($run eq 'step3_admixture');
 
-	PopGenome_Homozygosity::HOMOZYGOSITY($allcfg,$skipsh) if ($run eq 'step4_homozygosity');
+#	PopGenome_Homozygosity::HOMOZYGOSITY($allcfg,$skipsh) if ($run eq 'step4_homozygosity');
 
-	PopGenome_ROH::ROH($allcfg,$skipsh) if ($run eq 'step4_roh');
+#	PopGenome_ROH::ROH($allcfg,$skipsh) if ($run eq 'step4_roh');
 
-	PopGenome_LD::LD($allcfg,$skipsh) if ($run eq 'step4_ld');
+#	PopGenome_LD::LD($allcfg,$skipsh) if ($run eq 'step4_ld');
 
 	#05.IntraPopulation
-	PopGenome_Slidingwindow::SLIDINGWINDOW($allcfg,$skipsh) if ($run eq 'step4_slidingwindow');
+#	PopGenome_Slidingwindow::SLIDINGWINDOW($allcfg,$skipsh) if ($run eq 'step4_slidingwindow');
 
-	PopGenome_SFS::SFS($allcfg,$skipsh) if ($run eq 'step4_sfs');
+#	PopGenome_SFS::SFS($allcfg,$skipsh) if ($run eq 'step4_sfs');
 
 	#06.Selection
-	PopGenome_MKTEST::MKTEST($allcfg,$skipsh) if ($run eq 'step6_mktest');
+#	PopGenome_MKTEST::MKTEST($allcfg,$skipsh) if ($run eq 'step6_mktest');
 
 #----------------------------------- usage sub progamm ------------------------------------------
 
