@@ -42,8 +42,7 @@ $mem ||= "2G";
 $thread ||= 4;
 $seqtype ||= "SE";
 
-$config = $Bin/lib/template.yml;
-my $yaml = YAML::Tiny->read( $config );
+my $yaml = YAML::Tiny->read( "$Bin/lib/template.yml" );
 my %cfg = %{$yaml->[0]};
 
 unless (exists $cfg{args}{threads}){$cfg{args}{threads}=$thread}
