@@ -56,7 +56,8 @@ sub MAPPING{
 			print CL "sh $shpath/$sample.step1b.sh 1>$shpath/$sample.step1b.sh.o 2>$shpath/$sample.step1b.sh.e \n";
 		}
 		close CL;
-		`perl $Bin/lib/qsub.pl -d $shpath/cmd_step1b_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=$cfg{args}{threads} -binding linear:1' -m 100 -r $shpath/cmd_step1b.list` unless ($skipsh ==1);
+		my $threads = 1+$cfg{args}{threads}/2;
+		`perl $Bin/lib/qsub.pl -d $shpath/cmd_step1b_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=$threads -binding linear:1' -m 100 -r $shpath/cmd_step1b.list` unless ($skipsh ==1);
 	}
 
 	# create this yaml object
