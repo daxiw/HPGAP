@@ -42,7 +42,7 @@ $mem ||= "2G";
 $thread ||= 4;
 $seqtype ||= "SE";
 
-$config = $Bin/lib/template.yml
+$config = $Bin/lib/template.yml;
 my $yaml = YAML::Tiny->read( $config );
 my %cfg = %{$yaml->[0]};
 
