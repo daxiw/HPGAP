@@ -60,5 +60,5 @@ foreach my $sample (keys %samplelist){
 close CL;
 
 my $threads = $cfg{args}{threads};
-`perl $Bin/lib/qsub.pl -d $shpath/centrifuge_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=$threads -binding linear:1' -m 100 -r $shpath/centrifuge.list` unless ($skipsh ==1);
+`perl $Bin/qsub.pl -d $shpath/centrifuge_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=$threads -binding linear:1' -m 100 -r $shpath/centrifuge.list` unless ($skipsh ==1);
 
