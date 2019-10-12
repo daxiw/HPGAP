@@ -12,7 +12,7 @@ GetOptions(
     '-s=s' => \$skipsh,
 );
 
-if(!$input){die;}
+if(!$yml_file){die;}
 $skipsh ||= 0;
 
 my $yaml = YAML::Tiny->read( $yml_file );
@@ -23,8 +23,6 @@ my $outpath = "$cfg{args}{outdir}/01.QualityControl/centrifuge";
 if ( !-d $outpath ) {make_path $outpath or die "Failed to create path: $outpath";} 
 my $shpath = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/centrifuge";
 if ( !-d $shpath ) {make_path $shpath or die "Failed to create path: $shpath";}
-
-my $reference = $cfg{ref}{db}{$temp_ref}{path};	
 
 open CL, ">$shpath/centrifuge.list";
 foreach my $sample (keys %samplelist){
