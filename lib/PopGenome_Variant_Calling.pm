@@ -43,7 +43,7 @@ sub VARIANT_CALLING{
 	  	print SH "	--OUTPUT $sample.sorted.markdup.bam \\\n";
 	  	print SH "	--METRICS_FILE $sample.sorted.markdup_metrics.txt && \\\n";
 	  	print SH "rm -f $sample.sorted.bam && \\\n";
-	  	print SH "echo \"** $sample.sorted.markdup.bam done **\" && \\\n";
+	  	print SH "echo \"** $sample.sorted.markdup.bam done **\" \n";
 	  	print SH "samtools index $sample.sorted.markdup.bam && echo \"** $sample.sorted.markdup.bam index done **\" \n";
 
 		if ($cfg{step1}{variant_calling_mode} eq 'fast'){
