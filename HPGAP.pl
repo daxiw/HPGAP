@@ -17,8 +17,8 @@ use lib "$Bin/lib";
 require PopGenome_Mapping;
 #require PopGenome_Read_Report;
 #require PopGenome_Calibration;
-#require PopGenome_Variant_Calling;
-#require PopGenome_Combine_Calling;
+require PopGenome_Variant_Calling;
+require PopGenome_Combine_Calling;
 #require PopGenome_Variant_Filtering;
 #require PopGenome_Relatedness;
 #require PopGenome_Phylogeny;
@@ -157,9 +157,9 @@ unless (defined $run_flag){
 
 #	PopGenome_Calibration::CALIBRATION($allcfg,$skipsh) if ($run eq 'step1_recalibration');
 
-#	PopGenome_Variant_Calling::VARIANT_CALLING($allcfg,$skipsh) if ($run eq 'step1_variant_calling');
+	PopGenome_Variant_Calling::VARIANT_CALLING($allcfg,$skipsh) if ($run eq 'step1_variant_calling');
 
-#	PopGenome_Combine_Calling::COMBINE_CALLING($allcfg,$skipsh) if ($run eq 'step1_combine_calling');
+	PopGenome_Combine_Calling::COMBINE_CALLING($allcfg,$skipsh) if ($run eq 'step1_combine_calling');
 
 #	PopGenome_Variant_Filtering::VARIANT_FILTERING($allcfg,$skipsh) if ($run eq 'step1_variant_filtering');
 
