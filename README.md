@@ -1,5 +1,5 @@
 # HPGAP
-Helminth Population Genomic Analysis Pipeline (`HPGAP`)  overcomes the difficulties in variant calling and is able to explore key aspects centering the population genetics of helminths, including defining population structures, estimating reproductive modes and identifying loci under local adaptation. 
+HPC Helminth Population Genomic Analysis Pipeline (`HPGAP`)  overcomes the difficulties in variant calling and is able to explore key aspects centering the population genetics of helminths, including defining population structures, estimating reproductive modes and identifying loci under local adaptation. 
 
 `HPGAP` automates six key bioinformatic components in population genomic analysis using customised R, Perl, Python and Unix shell scripts. These scripts and associated programs were then packaged into a platform independent image to enable setting up an identical system environment.
 
