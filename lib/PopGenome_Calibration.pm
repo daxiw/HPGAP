@@ -4,11 +4,9 @@ use File::Path qw(make_path);
 use strict;
 use warnings;
 use FindBin '$Bin';
-use lib "$Bin/lib";
-use lib '/root/miniconda3/lib/site_perl/5.26.2';
-use PopGenome_Shared;
 use YAML::Tiny;
-use Bio::SeqIO;
+use lib "$Bin/lib";
+use PopGenome_Shared;
 
 #################################
 #			   #
@@ -16,6 +14,7 @@ use Bio::SeqIO;
 #			   #
 #################################
 sub CALIBRATION{
+	# read the configuration file
 	my ($yml_file,$skipsh) = @_;
 	my $yaml = YAML::Tiny->read( $yml_file );
 	my %cfg = %{$yaml->[0]};
@@ -30,11 +29,11 @@ sub CALIBRATION{
 	my $shpath = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$cfg{ref}{choose}";
 	if ( !-d $shpath ) {make_path $shpath or die "Failed to create path: $shpath";}
 
-	open CL, ">$shpath/cmd_step1d.list";
+	open CL, ">$shpath/cmd_recalibration.list";
 
 	foreach my $sample (keys %samplelist){
 		my $sample_outpath="$outpath/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
-		open SH, ">$shpath/$sample.step1d.sh";
+		open SH, ">$shpath/$sample.recalibration.sh";
 
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
 #		if (defined $cfg{step1}{read_subsampling}){
@@ -112,11 +111,11 @@ sub CALIBRATION{
 			print SH "	--known-sites $sample\_filtered_indels1st.vcf.gz && echo \"** $sample.sorted.markdup.recal_data.table done **\" \n";
 		}
 		close SH;
-		print CL "sh $shpath/$sample.step1d.sh 1>$shpath/$sample.step1d.sh.o 2>$shpath/$sample.step1d.sh.e\n";
+		print CL "sh $shpath/$sample.recalibration.sh 1>$shpath/$sample.recalibration.sh.o 2>$shpath/$sample.recalibration.sh.e\n";
 	}
 	close CL;
 
-	`parallel -j $cfg{args}{threads} < $shpath/cmd_step1d.list`;
+	`perl $Bin/lib/qsub.pl -d $shpath/cmd_recalibration_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=1 -binding linear:1' -m 100 -r $shpath/cmd_recalibration.list` unless ($skipsh ==1);
 }
 
 1;

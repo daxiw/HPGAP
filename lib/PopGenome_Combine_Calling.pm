@@ -4,11 +4,9 @@ use File::Path qw(make_path);
 use strict;
 use warnings;
 use FindBin '$Bin';
-use lib "$Bin/lib";
-use lib '/root/miniconda3/lib/site_perl/5.26.2';
-use PopGenome_Shared;
 use YAML::Tiny;
-use Bio::SeqIO;
+use lib "$Bin/lib";
+use PopGenome_Shared;
 
 #################################
 #			   #
@@ -21,8 +19,6 @@ sub COMBINE_CALLING{
 	my $yaml = YAML::Tiny->read( $yml_file );
 	my %cfg = %{$yaml->[0]};
 
-	my $ploidy = $cfg{args}{ploidy};
-
 	my %samplelist = %{$cfg{fqdata}};
 
 	my $reference = $cfg{ref}{db}{$cfg{ref}{choose}}{path};
@@ -31,7 +27,9 @@ sub COMBINE_CALLING{
 	my $shpath = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/Combined";
 	if ( !-d $shpath ) {make_path $shpath or die "Failed to create path: $shpath";}
 
-	open SH, ">$shpath/final.calling.sh";
+	open CL, ">$shpath/cmd_combine_calling.list";
+
+	open SH, ">$shpath/combine_calling.sh";
 	## Joint genotyping
 	## First, merge all the gvcf results, then perform GenotypeGVCFs
 	my $sample_gvcfs = "";
@@ -49,7 +47,7 @@ sub COMBINE_CALLING{
 
 	print SH "gatk GenotypeGVCFs \\\n";
 	print SH "	-R $reference \\\n";
-	print SH "	-ploidy $ploidy \\\n";
+	print SH "	-ploidy $cfg{args}{ploidy} \\\n";
 	print SH "	-V $outpath/Combined/Combined.HC.g.vcf.gz \\\n";
 	print SH "	-O $outpath/Combined/Combined.HC.vcf.gz && echo \"** Combined.HC.vcf.gz done ** \"\n";
 
@@ -57,7 +55,10 @@ sub COMBINE_CALLING{
 	# We can then use this variant quality score in the second step to filter the raw call set, thus producing a subset of calls with our desired level of quality, fine-tuned to balance specificity and sensitivity.
 	## SNP mode
 	close SH;
-	`sh $shpath/final.calling.sh 1>$shpath/final.calling.sh.o 2>$shpath/final.calling.sh.e` unless ($skipsh ==1);
+	print CL "sh $shpath/combine_calling.sh 1>$shpath/combine_calling.sh.o 2>$shpath/combine_calling.sh.e\n";
+	close CL;
+
+	`perl $Bin/lib/qsub.pl -d $shpath/cmd_combine_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=12G,num_proc=1 -binding linear:1' -m 100 -r $shpath/cmd_combine_calling.list` unless ($skipsh ==1);
 }
 
 1;
