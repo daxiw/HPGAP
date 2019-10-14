@@ -85,8 +85,10 @@ if(defined $step){
 }
 
 #-------------------------------------- Main steps  --------------------------------------------------
+# when the analysis is not specified
 unless (defined $run_flag){
-	my $main = "$cfg{args}{outdir}/HPGAP.main.sh";
+	# set the running environment for udocker 
+	my $main = "$cfg{args}{outdir}/hpgap.main.sh";
 	open MH, ">$main"; print MH "#!/bin/sh\ncd $cfg{args}{outdir}\n";
 	my $udocker_cmd="udocker run ";
 		for (my $i=0;$i<@{$cfg{args}{mount}};$i++){
@@ -99,24 +101,22 @@ unless (defined $run_flag){
 		$udocker_cmd .= "--env=\"$cfg{args}{env}\" $cfg{args}{container} /bin/bash -c ";
 		
 	#01.indexing
-	print MH "time $udocker_cmd 'HPGAP.pl --run step0_indexing --config $allcfg' && echo 'indexing done'\n" if (exists $step{0}{indexing});
+	print MH "time $udocker_cmd 'hpgap --run indexing --config $allcfg' && echo 'indexing done'\n" if (exists $step{0}{indexing});
 
-	print MH "time $udocker_cmd 'HPGAP.pl --run step1_read_filtering --config $allcfg'  && echo 'read_filtering done'\n" if (exists $step{1}{read_filtering});
+	print MH "time $udocker_cmd 'hpgap --run read_filtering --config $allcfg'  && echo 'read_filtering done'\n" if (exists $step{1}{read_filtering});
 
-	print MH "time $udocker_cmd 'HPGAP.pl --run step1_read_mapping --config $allcfg' && echo 'read_mapping done'\n" if (exists $step{1}{read_mapping});
+	print MH "time $udocker_cmd 'hpgap --run read_mapping --config $allcfg' && echo 'read_mapping done'\n" if (exists $step{1}{read_mapping});
 	
-	print MH "time $udocker_cmd 'HPGAP.pl --run step1_read_report --config $allcfg' && echo 'read_report done'\n" if (exists $step{1}{read_report});
+	print MH "time $udocker_cmd 'hpgap --run read_report --config $allcfg' && echo 'read_report done'\n" if (exists $step{1}{read_report});
 
-	print MH "time $udocker_cmd 'HPGAP.pl --run step1_recalibration --config $allcfg' && echo 'recalibration done'\n" if (exists $step{1}{recalibration});
+	print MH "time $udocker_cmd 'hpgap --run variant_calling --config $allcfg' && echo 'variant_calling done'\n" if (exists $step{1}{variant_calling});
 
-	print MH "time $udocker_cmd 'HPGAP.pl --run step1_variant_calling --config $allcfg' && echo 'variant_calling done'\n" if (exists $step{1}{variant_calling});
+	print MH "time $udocker_cmd 'hpgap --run combine_calling --config $allcfg' && echo 'combine_calling done'\n" if (exists $step{1}{combine_calling});
 
-	print MH "time $udocker_cmd 'HPGAP.pl --run step1_combine_calling --config $allcfg' && echo 'combine_calling done'\n" if (exists $step{1}{combine_calling});
-
-	print MH "time $udocker_cmd 'HPGAP.pl --run step1_variant_filtering --config $allcfg' && echo 'variant_filtering done'\n" if (exists $step{1}{variant_filtering});
+	print MH "time $udocker_cmd 'hpgap --run variant_filtering --config $allcfg' && echo 'variant_filtering done'\n" if (exists $step{1}{variant_filtering});
 
 
-	#print "$udocker_cmd 'HPGAP.pl --run step1_comparison --config $allcfg'\n" if (exists $step{1}{Comparison});
+	#print "$udocker_cmd 'hpgap --run step1_comparison --config $allcfg'\n" if (exists $step{1}{Comparison});
 	#PopGenome::VARIANT_COMPARISON($allcfg,$skipsh) if ($run eq 'step1_comparison');
 	#############################################
 	#											#
@@ -125,43 +125,41 @@ unless (defined $run_flag){
 	#############################################
 
 	#02.SampleFiltering
-	print MH "time $udocker_cmd 'HPGAP.pl --run step2_relatedness --config $allcfg' && echo 'relatedness done'\n" if (exists $step{2}{relatedness});
+	print MH "time $udocker_cmd 'hpgap --run relatedness --config $allcfg' && echo 'relatedness done'\n" if (exists $step{2}{relatedness});
 
-	print MH "time $udocker_cmd 'HPGAP.pl --run step3_phylogeny --config $allcfg' && echo 'phylogeny done'\n" if (exists $step{3}{phylogeny});
+	print MH "time $udocker_cmd 'hpgap --run phylogeny --config $allcfg' && echo 'phylogeny done'\n" if (exists $step{3}{phylogeny});
 
-	print MH "time $udocker_cmd 'HPGAP.pl --run step3_admixture --config $allcfg' && echo 'admixture done'\n" if (exists $step{3}{admixture});
+	print MH "time $udocker_cmd 'hpgap --run admixture --config $allcfg' && echo 'admixture done'\n" if (exists $step{3}{admixture});
 
-	print MH "time $udocker_cmd 'HPGAP.pl --run step4_homozygosity --config $allcfg' && echo 'homozygosity done'\n" if (exists $step{5}{homozygosity});
+	print MH "time $udocker_cmd 'hpgap --run homozygosity --config $allcfg' && echo 'homozygosity done'\n" if (exists $step{5}{homozygosity});
 
-	print MH "time $udocker_cmd 'HPGAP.pl --run step4_roh --config $allcfg' && echo 'roh done'\n" if (exists $step{4}{roh});
+	print MH "time $udocker_cmd 'hpgap --run roh --config $allcfg' && echo 'roh done'\n" if (exists $step{4}{roh});
 
-	print MH "time $udocker_cmd 'HPGAP.pl --run step4_ld --config $allcfg' && echo 'ld done'\n" if (exists $step{4}{ld});
+	print MH "time $udocker_cmd 'hpgap --run ld --config $allcfg' && echo 'ld done'\n" if (exists $step{4}{ld});
 
 	#05.IntraPopulation
-	print MH "time $udocker_cmd 'HPGAP.pl --run step4_slidingwindow --config $allcfg' && echo 'slidingwindow done'\n" if (exists $step{4}{slidingwindow});
+	print MH "time $udocker_cmd 'hpgap --run slidingwindow --config $allcfg' && echo 'slidingwindow done'\n" if (exists $step{4}{slidingwindow});
 
-	print MH "time $udocker_cmd 'HPGAP.pl --run step4_sfs --config $allcfg' && echo 'sfs done'\n" if (exists $step{4}{sfs});
+	print MH "time $udocker_cmd 'hpgap --run sfs --config $allcfg' && echo 'sfs done'\n" if (exists $step{4}{sfs});
 
 	#06.Selection
-	print MH "time $udocker_cmd 'HPGAP.pl --run step6_mktest --config $allcfg' && echo 'MKtest done'\n" if (exists $step{6}{MKtest});
+	print MH "time $udocker_cmd 'hpgap --run mktest --config $allcfg' && echo 'MKtest done'\n" if (exists $step{6}{MKtest});
 	close MH;
 }
 
 #	PopGenome_Indexing::INDEXING($allcfg,$skipsh) if ($run eq 'step0_indexing');
 
-#	PopGenome_Data_Filtering::DATA_FILTERING($allcfg,$skipsh) if ($run eq 'step1_read_filtering');
+#	PopGenome_Data_Filtering::DATA_FILTERING($allcfg,$skipsh) if ($run eq 'read_filtering');
 
-	PopGenome_Mapping::MAPPING($allcfg,$skipsh) if ($run eq 'step1_read_mapping');
+	PopGenome_Mapping::MAPPING($allcfg,$skipsh) if ($run eq 'read_mapping');
 
-#	PopGenome_Read_Report::READ_REPORT($allcfg,$skipsh) if ($run eq 'step1_read_report');
+	PopGenome_Read_Report::READ_REPORT($allcfg,$skipsh) if ($run eq 'read_report');
 
-#	PopGenome_Calibration::CALIBRATION($allcfg,$skipsh) if ($run eq 'step1_recalibration');
+	PopGenome_Variant_Calling::VARIANT_CALLING($allcfg,$skipsh) if ($run eq 'variant_calling');
 
-	PopGenome_Variant_Calling::VARIANT_CALLING($allcfg,$skipsh) if ($run eq 'step1_variant_calling');
+	PopGenome_Combine_Calling::COMBINE_CALLING($allcfg,$skipsh) if ($run eq 'combine_calling');
 
-	PopGenome_Combine_Calling::COMBINE_CALLING($allcfg,$skipsh) if ($run eq 'step1_combine_calling');
-
-#	PopGenome_Variant_Filtering::VARIANT_FILTERING($allcfg,$skipsh) if ($run eq 'step1_variant_filtering');
+#	PopGenome_Variant_Filtering::VARIANT_FILTERING($allcfg,$skipsh) if ($run eq 'variant_filtering');
 
 
 	#############################################
@@ -171,25 +169,25 @@ unless (defined $run_flag){
 	#############################################
 
 	#02.SampleFiltering
-#	PopGenome_Relatedness::RELATEDNESS($allcfg,$skipsh) if ($run eq 'step2_relatedness');
+#	PopGenome_Relatedness::RELATEDNESS($allcfg,$skipsh) if ($run eq 'relatedness');
 
-#	PopGenome_Phylogeny::PHYLOGENY($allcfg,$skipsh) if ($run eq 'step3_phylogeny');
+#	PopGenome_Phylogeny::PHYLOGENY($allcfg,$skipsh) if ($run eq 'phylogeny');
 	
-#	PopGenome_Admixture::ADMIXTURE($allcfg,$skipsh) if ($run eq 'step3_admixture');
+#	PopGenome_Admixture::ADMIXTURE($allcfg,$skipsh) if ($run eq 'admixture');
 
 #	PopGenome_Homozygosity::HOMOZYGOSITY($allcfg,$skipsh) if ($run eq 'step4_homozygosity');
 
-#	PopGenome_ROH::ROH($allcfg,$skipsh) if ($run eq 'step4_roh');
+#	PopGenome_ROH::ROH($allcfg,$skipsh) if ($run eq 'roh');
 
-#	PopGenome_LD::LD($allcfg,$skipsh) if ($run eq 'step4_ld');
+#	PopGenome_LD::LD($allcfg,$skipsh) if ($run eq 'ld');
 
 	#05.IntraPopulation
-#	PopGenome_Slidingwindow::SLIDINGWINDOW($allcfg,$skipsh) if ($run eq 'step4_slidingwindow');
+#	PopGenome_Slidingwindow::SLIDINGWINDOW($allcfg,$skipsh) if ($run eq 'slidingwindow');
 
-#	PopGenome_SFS::SFS($allcfg,$skipsh) if ($run eq 'step4_sfs');
+#	PopGenome_SFS::SFS($allcfg,$skipsh) if ($run eq 'sfs');
 
 	#06.Selection
-#	PopGenome_MKTEST::MKTEST($allcfg,$skipsh) if ($run eq 'step6_mktest');
+#	PopGenome_MKTEST::MKTEST($allcfg,$skipsh) if ($run eq 'mktest');
 
 #----------------------------------- usage sub progamm ------------------------------------------
 
@@ -208,25 +206,29 @@ Author
 	please contact me if you find any bug.
 							   	
 Usage
-	HPGAP.pl --config <path to the .yml config file> --run <String> [-options]
+	hpgap --config <path to the .yml config file> --run <String> [-options]
 	
 	--run <String> use this option choose one of steps below (the option should not be used with --step at the same time)
-		step0_indexing
-		step1_read_filtering
-		step1_read_mapping
-		step1_read_report
-		step1_recalibration
-		step1_variant_calling
-		step1_combine_calling
-		step1_variant_filtering
-		step2_relatedness
-		step3_phylogeny
-		step3_admixture
-		step4_homozygosity
-		step4_roh
-		step4_ld
-		step4_slidingwindow
-		step4_sfs
+		step0: 
+			indexing
+		step1:
+			read_filtering
+			read_mapping
+			read_report
+			variant_calling
+			combine_calling
+			variant_filtering
+		step2:
+			relatedness
+		step3:
+			phylogeny
+			admixture
+		step4:
+			homozygosity
+			roh
+			ld
+			slidingwindow
+			sfs
 
 	--config path to the .yml config file
 	
