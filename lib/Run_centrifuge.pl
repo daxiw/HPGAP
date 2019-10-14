@@ -45,12 +45,12 @@ foreach my $sample (keys %samplelist){
 	#when there is only one library/lane for each sample
 		if ($samplelist{$sample}{rawdata}{$lib}{Flag} eq "PE"){
 			#foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
-			print SH "/ldfssz1/ST_INFECTION/P17Z10200N0536_Echinococcus/USER/wangdaxi/Programs/centrifuge/centrifuge-1.0.3-beta/centrifuge -x /ldfssz1/ST_INFECTION/P17Z10200N0536_Echinococcus/USER/wangdaxi/Programs/centrifuge/index/nt -1 $lib\_head1M_1.fq -2 $lib\_head1M_2.fq --report-file -p 4 $lib\_centrifuge.report -S $lib\_centrifuge.classification\n";
+			print SH "/ldfssz1/ST_INFECTION/P17Z10200N0536_Echinococcus/USER/wangdaxi/Programs/centrifuge/centrifuge-1.0.3-beta/centrifuge -x /ldfssz1/ST_INFECTION/P17Z10200N0536_Echinococcus/USER/wangdaxi/Programs/centrifuge/index/nt -1 $lib\_head1M_1.fq -2 $lib\_head1M_2.fq --report-file $lib\_centrifuge.report -S $lib\_centrifuge.classification\n";
 		}
 
 		#when there is more than one library/lane for each sample
 		elsif ($samplelist{$sample}{rawdata}{$lib}{Flag} eq "SE"){
-			print SH "/ldfssz1/ST_INFECTION/P17Z10200N0536_Echinococcus/USER/wangdaxi/Programs/centrifuge/centrifuge-1.0.3-beta/centrifuge -x /ldfssz1/ST_INFECTION/P17Z10200N0536_Echinococcus/USER/wangdaxi/Programs/centrifuge/index/nt -1 $lib\_head1M_1.fq --report-file $lib\_centrifuge.report -p 4 -S $lib\_centrifuge.classification\n";
+			print SH "/ldfssz1/ST_INFECTION/P17Z10200N0536_Echinococcus/USER/wangdaxi/Programs/centrifuge/centrifuge-1.0.3-beta/centrifuge -x /ldfssz1/ST_INFECTION/P17Z10200N0536_Echinococcus/USER/wangdaxi/Programs/centrifuge/index/nt -1 $lib\_head1M_1.fq --report-file $lib\_centrifuge.report -S $lib\_centrifuge.classification\n";
 		}
 	}
 
@@ -60,5 +60,5 @@ foreach my $sample (keys %samplelist){
 close CL;
 
 my $threads = $cfg{args}{threads};
-`perl $Bin/qsub.pl -d $shpath/centrifuge_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=4 -binding linear:1' -m 100 -r $shpath/centrifuge.list` unless ($skipsh ==1);
+`perl $Bin/qsub.pl -d $shpath/centrifuge_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $shpath/centrifuge.list` unless ($skipsh ==1);
 
