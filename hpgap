@@ -15,7 +15,7 @@ use lib "$Bin/lib";
 #require PopGenome_Indexing;
 #require PopGenome_Data_Filtering;
 require PopGenome_Mapping;
-#require PopGenome_Read_Report;
+require PopGenome_Read_Report;
 #require PopGenome_Calibration;
 require PopGenome_Variant_Calling;
 require PopGenome_Combine_Calling;
