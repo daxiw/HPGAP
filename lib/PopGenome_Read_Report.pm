@@ -32,6 +32,8 @@ sub READ_REPORT{
 
 		my $report_sample_outpath="$outpath/Report/Samples"; if ( !-d $report_sample_outpath ) {make_path $report_sample_outpath or die "Failed to create path: $report_outpath";}
 
+		open OT, ">$outpath/Report/read_quality_summary.xls";
+
 		foreach my $sample (keys %samplelist){
 			
 			my $sample_report_outpath="$outpath/Report/Samples/$sample"; if ( !-d $sample_report_outpath ) {make_path $sample_report_outpath or die "Failed to create path: $sample_report_outpath";}
@@ -50,9 +52,19 @@ sub READ_REPORT{
 
 			my $data = decode_json($json);
 
-			$data->{'boss'}->{'Hobbies'}->[0];
-			
+			print "$sample\t";
+			print OT $data->{'summary'}->{'before_filtering'}->{'total_reads'}, "\t";
+			print OT $data->{'summary'}->{'before_filtering'}->{'total_bases'}, "\t";
+			print OT $data->{'summary'}->{'after_filtering'}->{'total_reads'}, "\t";
+			print OT $data->{'summary'}->{'after_filtering'}->{'total_bases'}, "\t";
+			print OT $data->{'summary'}->{'after_filtering'}->{'q20_rate'}, "\t";
+			print OT $data->{'summary'}->{'after_filtering'}->{'q30_rate'}, "\t";
+			print OT $data->{'summary'}->{'after_filtering'}->{'gc_content'}, "\t";
+			print OT $data->{'summary'}->{'after_filtering'}->{'total_reads'}, "\t";
+
 		}
+		close OT;
+
 	}
 }
 
