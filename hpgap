@@ -161,6 +161,10 @@ unless (defined $run_flag){
 
 #	PopGenome_Variant_Filtering::VARIANT_FILTERING($allcfg,$skipsh) if ($run eq 'variant_filtering');
 	
+	if ($run eq 'mtphylogeny'){
+		require PopGenome_Mtphylogeny;
+		PopGenome_Mtphylogeny::MTPHYLOGENY($yaml,$skipsh);
+	}
 
 	#############################################
 	#											#
