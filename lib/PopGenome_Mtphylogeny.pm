@@ -39,7 +39,7 @@ sub MTPHYLOGENY{
 			my $sample_outpath="$outpath/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
 
 			open SH, ">$shpath/$sample.mt_genome_mapping.sh";
-			if(-e "$shpath/$sample.mt_genome_mapping.01_mapping.finished.txt"){`rm $shpath/$sample.mt_genome_mapping.01_mapping.finished.txt`;}	
+			if(-e "$shpath/$sample.mt_genome_mapping.finished.txt"){`rm $shpath/$sample.mt_genome_mapping.finished.txt`;}	
 
 			print SH "#!/bin/sh\ncd $sample_outpath\n";
 			foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
@@ -82,13 +82,17 @@ sub MTPHYLOGENY{
 			sleep(10);
 			my $sample_number = keys %samplelist;
 			foreach my $sample (keys %samplelist){
-				if(-e "$shpath/$sample.mt_genome_mapping.finished.txt"){$flag_finish +=1;}
+				if(-e "$shpath/$sample.mt_genome_variant_calling.finished.txt"){$flag_finish +=1;}
 			}
 			last if($flag_finish == $sample_number);
 		}
+
 		open CL, ">$shpath/cmd_mt_genome_variant_calling.list";
 		foreach my $sample (keys %samplelist){
 			my $sample_outpath="$outpath/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
+
+			if(-e "$shpath/$sample.mt_genome_variant_calling.finished.txt"){`rm $shpath/$sample.mt_genome_variant_calling.finished.txt`;}	
+
 			open SH, ">$shpath/$sample.mt_genome_variant_calling.sh";
 
 			print SH "#!/bin/sh\ncd $sample_outpath\n";
