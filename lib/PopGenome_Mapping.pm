@@ -18,7 +18,8 @@ use PopGenome_Shared;
 ############################
 sub MAPPING{
 	my ($yml_file,$skipsh) = @_;
-	my $yaml = YAML::Tiny->read( $yml_file );
+	my $yaml = $yml_file;
+	#my $yaml = YAML::Tiny->read( $yml_file );
 	my %cfg = %{$yaml->[0]};
 	my %samplelist = %{$cfg{fqdata}};
 

@@ -55,7 +55,7 @@ unless ( defined ($config) ) {
 	&usage;
 	exit;
 }	
-#my $yml_file = shift;
+#read in and add other settings into the configuration file
 my $yaml = YAML::Tiny->read( $config );
 my %cfg = %{$yaml->[0]};
 unless (exists $cfg{args}{threads}){$cfg{args}{threads}=40}
@@ -151,16 +151,16 @@ unless (defined $run_flag){
 
 #	PopGenome_Data_Filtering::DATA_FILTERING($allcfg,$skipsh) if ($run eq 'read_filtering');
 
-	PopGenome_Mapping::MAPPING($allcfg,$skipsh) if ($run eq 'read_mapping');
+	PopGenome_Mapping::MAPPING($yaml,$skipsh) if ($run eq 'read_mapping');
 
-	PopGenome_Read_Report::READ_REPORT($allcfg,$skipsh) if ($run eq 'read_report');
+	PopGenome_Read_Report::READ_REPORT($yaml,$skipsh) if ($run eq 'read_report');
 
-	PopGenome_Variant_Calling::VARIANT_CALLING($allcfg,$skipsh) if ($run eq 'variant_calling');
+	PopGenome_Variant_Calling::VARIANT_CALLING($yaml,$skipsh) if ($run eq 'variant_calling');
 
-	PopGenome_Combine_Calling::COMBINE_CALLING($allcfg,$skipsh) if ($run eq 'combine_calling');
+	PopGenome_Combine_Calling::COMBINE_CALLING($yaml,$skipsh) if ($run eq 'combine_calling');
 
 #	PopGenome_Variant_Filtering::VARIANT_FILTERING($allcfg,$skipsh) if ($run eq 'variant_filtering');
-
+	
 
 	#############################################
 	#											#
