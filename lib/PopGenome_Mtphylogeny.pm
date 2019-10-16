@@ -25,9 +25,9 @@ sub MTPHYLOGENY{
 	die "please add mt genome information into configuration file" unless (defined $cfg{mtref}{db});
 	
 	foreach my $temp_ref(keys %{$cfg{mtref}{db}}){
-		my $outpath = "$cfg{args}{outdir}/01.QualityControl/mt_genome_mapping.$temp_ref"; 
+		my $outpath = "$cfg{args}{outdir}/01.QualityControl/mt_phylogeny.$temp_ref"; 
 		if ( !-d $outpath ) {make_path $outpath or die "Failed to create path: $outpath";} 
-		my $shpath = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/mt_genome_mapping.$temp_ref";
+		my $shpath = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/mt_phylogeny.$temp_ref";
 		if ( !-d $shpath ) {make_path $shpath or die "Failed to create path: $shpath";}
 
 		die "please add mt genome path into configuration file" unless (defined $cfg{ref}{db}{$temp_ref}{path});
