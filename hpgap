@@ -147,31 +147,25 @@ unless (defined $run_flag){
 
 #	PopGenome_Data_Filtering::DATA_FILTERING($allcfg,$skipsh) if ($run eq 'read_filtering');
 
-switch ($run) {
-	case 'read_mapping' {
+if ($run eq 'read_mapping') {
 		require PopGenome_Mapping;
 		PopGenome_Mapping::MAPPING($yaml,$skipsh);
-	}
-
-	case 'read_report' {
+}
+elsif ($run eq 'read_report') {
 		require PopGenome_Read_Report;
-		PopGenome_Read_Report::READ_REPORT($yaml,$skipsh);
-	}
-
-	case 'variant_calling' {
+		PopGeome_Read_Report::READ_REPORT($yaml,$skipsh);
+}
+elsif ($run eq 'variant_calling') {
 		require PopGenome_Variant_Calling;
 		PopGenome_Variant_Calling::VARIANT_CALLING($yaml,$skipsh);
-	}
-
-	case 'combine_calling' {
+}
+elsif ($run eq 'combine_calling') {
 		require PopGenome_Combine_Calling;
 		PopGenome_Combine_Calling::COMBINE_CALLING($yaml,$skipsh);
-	}
-
-	case 'mtphylogeny' {
+}
+elsif ($run eq 'mtphylogeny' {
 		require PopGenome_Mtphylogeny;
 		PopGenome_Mtphylogeny::MTPHYLOGENY($yaml,$skipsh);
-	}
 }
 
 #	PopGenome_Variant_Filtering::VARIANT_FILTERING($allcfg,$skipsh) if ($run eq 'variant_filtering');
