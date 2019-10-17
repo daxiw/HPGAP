@@ -163,7 +163,7 @@ elsif ($run eq 'combine_calling') {
 		require PopGenome_Combine_Calling;
 		PopGenome_Combine_Calling::COMBINE_CALLING($yaml,$skipsh);
 }
-elsif ($run eq 'mtphylogeny' {
+elsif ($run eq 'mtphylogeny') {
 		require PopGenome_Mtphylogeny;
 		PopGenome_Mtphylogeny::MTPHYLOGENY($yaml,$skipsh);
 }
