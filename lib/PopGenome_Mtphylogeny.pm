@@ -119,10 +119,10 @@ sub MTPHYLOGENY{
 		}
 		
 		close CL;
-		my $threads = $cfg{args}{threads};
+
 		`perl $Bin/lib/qsub.pl -d $shpath/cmd_mt_genome_variant_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=1 -binding linear:1' -m 100 -r $shpath/cmd_mt_genome_variant_calling.list` unless ($skipsh ==1);
 	
-		my $flag_finish = 0;
+		$flag_finish = 0;
 		while(1){
 			sleep(10);
 			my $sample_number = keys %samplelist;
@@ -193,10 +193,10 @@ sub MTPHYLOGENY{
 		`perl $Bin/lib/qsub.pl -d $shpath/cmd_mt_genome_joint_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $shpath/cmd_mt_genome_joint_calling.list` unless ($skipsh ==1);
 
 
-		my $flag_finish = 0;
+		$flag_finish = 0;
 		while(1){
 			sleep(10);
-			if(-e "$shpath/$sample.mt_genome_variant_calling.finished.txt"){last;}
+			if(-e "$shpath/mt_genome_joint_calling.finished.txt"){last;}
 		}
 
 		#### estimate phylogeny of mt genomes ###
