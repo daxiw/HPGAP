@@ -28,7 +28,7 @@ sub MTPHYLOGENY{
 		my $shpath = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/mt_phylogeny.$temp_ref";
 		if ( !-d $shpath ) {make_path $shpath or die "Failed to create path: $shpath";}
 
-		die "please add mt genome path into configuration file" unless (defined $cfg{ref}{db}{$temp_ref}{path});
+		die "please add mt genome path into configuration file" unless (defined $cfg{mtref}{db}{$temp_ref}{path});
 		my $reference = $cfg{mtref}{db}{$temp_ref}{path};
 		die "$reference does not exists" unless (-e $reference);
 
