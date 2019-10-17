@@ -70,6 +70,9 @@ sub MTPHYLOGENY{
 				#print SH "samtools sort -@ $cfg{args}{threads} $sample.bam -o $sample.sorted.bam --output-fmt BAM && echo \"** $sample.sorted.bam done **\" && rm -f $sample.bam\n";
 				print SH "samtools stats -@ $cfg{args}{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** finish mt_genome_mapping **\" > $shpath/$sample.mt_genome_mapping.finished.txt\n";
 			}
+
+			print SH "bedtools genomecov -d -ibam $sample.sorted.bam > $sample.genomecov\n";
+
 			close SH;
 			print CL "sh $shpath/$sample.mt_genome_mapping.sh 1>$shpath/$sample.mt_genome_mapping.sh.o 2>$shpath/$sample.mt_genome_mapping.sh.e \n";
 		}
@@ -111,7 +114,7 @@ sub MTPHYLOGENY{
 			print SH "	-R $reference \\\n";
 			print SH "	-ploidy 1 \\\n";
 			print SH "	-I $sample.sorted.markdup.bam \\\n";
-			print SH "	-O $sample.HC.gvcf.gz && echo \"** GVCF ${sample}.HC.g.vcf.gz done\" && echo \"** finish mt_genome_variant_calling*\" > $shpath/$sample.mt_genome_variant_calling.finished.txt **\" \n";
+			print SH "	-O $sample.HC.gvcf.gz && echo \"** GVCF ${sample}.HC.g.vcf.gz done\" && echo \"** finish mt_genome_variant_calling **\" > $shpath/$sample.mt_genome_variant_calling.finished.txt \n";
 
 			close SH;
 			print CL "sh $shpath/$sample.mt_genome_variant_calling.sh 1>$shpath/$sample.mt_genome_variant_calling.sh.o 2>$shpath/$sample.mt_genome_variant_calling.sh.e \n";
@@ -131,9 +134,11 @@ sub MTPHYLOGENY{
 			last if($flag_finish == $sample_number);
 		}
 
-
+		#### joint variant calling on mt genomes ###
 		if ( !-d "$outpath/Joint_calling" ) {make_path "$outpath/Joint_calling" or die "Failed to create path: $outpath/Joint_calling";} 
 		
+		if(-e "$shpath/mt_genome_joint_calling.finished.txt"){`rm $shpath/mt_genome_joint_calling.finished.txt`;}
+
 		open CL, ">$shpath/cmd_mt_genome_joint_calling.list";
 
 		print SH "#!/bin/sh\ncd $outpath/Joint_calling\n";
@@ -154,13 +159,73 @@ sub MTPHYLOGENY{
 		print SH "	-R $reference \\\n";
 		print SH "	-ploidy $cfg{args}{ploidy} \\\n";
 		print SH "	-V $outpath/Joint_calling/Joint.HC.g.vcf.gz \\\n";
-		print SH "	-O $outpath/Joint_calling/Joint.HC.vcf.gz && echo \"** Combined.HC.vcf.gz done ** \"\n";
+		print SH "	-O $outpath/Joint_calling/Joint.HC.vcf.gz && echo \"** finish mt_genome_joint_calling *\"\n";
+
+		print SH "gatk SelectVariants \\\n";
+		print SH "	-R $reference \\\n";
+		print SH "	-V $outpath/Joint.HC.vcf.gz \\\n";
+		print SH "	--select-type-to-include SNP \\\n";
+		print SH "	-O $outpath/Joint_raw_snps1st.vcf && echo \"** GVCF Joint_raw_snps1st done\" && \\\n";
+
+		print SH "gatk VariantFiltration \\\n";
+		print SH "	-R $reference \\\n";
+		print SH "	-V $outpath/Joint_raw_snps1st.vcf \\\n";
+		print SH "	--filter-expression \"$cfg{step1}{variant_filtering}{snp}\" \\\n";
+		print SH "	--filter-name \"my_snp_filter\" \\\n";
+		print SH "	-O $outpath/Joint_filtered_snps1st.vcf && echo \"** GVCF Combined_raw_snps1st done\" \n";
+
+		print SH "gatk SelectVariants \\\n";
+		print SH "	-R $reference \\\n";
+		print SH "	-V $outpath/Joint.HC.vcf.gz \\\n";
+		print SH "	--select-type-to-include INDEL \\\n";
+		print SH "	--maxIndelSize 60 \\\n";
+		print SH "	-O $outpath/Joint_raw_indels1st.vcf && echo \"** GVCF Combined_raw_snps1st done\" && \\\n";
+
+		print SH "gatk VariantFiltration \\\n";
+		print SH "	-R $reference \\\n";
+		print SH "	-V $outpath/Combined_raw_indels1st.vcf \\\n";
+		print SH "	--filter-expression \"$cfg{step1}{variant_filtering}{indel}\" \\\n";
+		print SH "	--filter-name \"my_indel_filter\" \\\n";
+		print SH "	-O $outpath/Joint_filtered_indels1st.vcf && echo \"** finish mt_genome_joint_calling **\" > $shpath/mt_genome_joint_calling.finished.txt \n";
 
 		close SH;
 		print CL "sh $shpath/mt_genome_joint_calling.sh 1>$shpath/mt_genome_joint_calling.sh.o 2>$shpath/mt_genome_joint_calling.sh.e \n";
 		close CL;
 
 		`perl $Bin/lib/qsub.pl -d $shpath/cmd_mt_genome_joint_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $shpath/cmd_mt_genome_joint_calling.list` unless ($skipsh ==1);
+
+
+		my $flag_finish = 0;
+		while(1){
+			sleep(10);
+			if(-e "$shpath/$sample.mt_genome_variant_calling.finished.txt"){last;}
+		}
+
+		#### estimate phylogeny of mt genomes ###
+		if ( !-d "$outpath/Mt_genome_phylogeny" ) {make_path "$outpath/Mt_genome_phylogeny" or die "Failed to create path: $outpath/Mt_genome_phylogeny";}
+
+		open CL, ">$shpath/cmd_mt_genome_phylogeny.list";
+
+		print SH "#!/bin/sh\ncd $outpath/Mt_genome_phylogeny\n";
+		open SH, ">$shpath/mt_genome_phylogeny.sh";
+
+		print SH "cd $outpath/Mt_genome_phylogeny\n";
+		print SH "rm -rf $outpath/Mt_genome_phylogeny/RAxML_*\n";
+
+		print SH "zcat $outpath/Joint_calling/Joint.HC.g.vcf.gz|vcf-to-tab >$outpath/Mt_genome_phylogeny/mt_genome.tab\n";
+		print SH "vcf_tab_to_fasta_alignment.pl -i $outpath/Mt_genome_phylogeny/mt_genome.tab > $outpath/mt_genome.fasta\n";
+
+		print SH "seqmagick convert $outpath/Mt_genome_phylogeny/mt_genome.fasta $outpath/mt_genome.phy\n";
+		print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $outpath/Mt_genome_phylogeny/mt_genome.phy -n trees -T 24 -# 20 -p 12345\n";
+		print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $outpath/Mt_genome_phylogeny/mt_genome.phy -n boots -T 24 -# 100 -p 23456 -b 23456\n";
+		print SH "raxmlHPC-PTHREADS -m GTRGAMMA -p 12345 -f b -t RAxML_bestTree.trees -T 2 -z RAxML_bootstrap.boots -n consensus\n";
+		print SH "sumtrees.py --percentages --min-clade-freq=0.50 --target=RAxML_bestTree.trees --output=result2.tre RAxML_bootstrap.boots";
+
+		close SH;
+		print CL "sh $shpath/mt_genome_phylogeny.sh 1>$shpath/mt_genome_phylogeny.sh.o 2>$shpath/mt_genome_phylogeny.sh.e \n";
+		close CL;
+
+#		`perl $Bin/lib/qsub.pl -d $shpath/cmd_mt_genome_joint_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $shpath/cmd_mt_genome_joint_calling.list` unless ($skipsh ==1);
 
 	}	
 
