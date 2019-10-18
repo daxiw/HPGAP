@@ -80,7 +80,9 @@ sub MTPHYLOGENY{
 
 		my $flag_finish = 0;
 		while(1){
-			sleep(10);
+			sleep(60);
+			my $datestring = localtime();
+			print "waiting for mt_genome_mapping to be done at $datestring\n";
 			my $sample_number = keys %samplelist;
 			foreach my $sample (keys %samplelist){
 				if(-e "$shpath/$sample.mt_genome_mapping.finished.txt"){$flag_finish +=1;}
@@ -180,7 +182,9 @@ sub MTPHYLOGENY{
 	
 		$flag_finish = 0;
 		while(1){
-			sleep(10);
+			sleep(60);
+			my $datestring = localtime();
+			print "waiting for mt_genome_variant_calling to be done at $datestring\n";
 			my $sample_number = keys %samplelist;
 			foreach my $sample (keys %samplelist){
 				if(-e "$shpath/$sample.mt_genome_variant_calling.finished.txt"){$flag_finish +=1;}
@@ -251,7 +255,9 @@ sub MTPHYLOGENY{
 
 		$flag_finish = 0;
 		while(1){
-			sleep(10);
+			sleep(60);
+			my $datestring = localtime();
+			print "waiting for mt_genome_joint_calling to be done at $datestring\n";
 			if(-e "$shpath/mt_genome_joint_calling.finished.txt"){last;}
 		}
 
