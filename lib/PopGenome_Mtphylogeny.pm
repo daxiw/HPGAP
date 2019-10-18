@@ -37,7 +37,7 @@ sub MTPHYLOGENY{
 			my $sample_outpath="$outpath/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
 
 			open SH, ">$shpath/$sample.mt_genome_mapping.sh";
-			if(-e "$shpath/$sample.mt_genome_mapping.finished.txt"){`rm $shpath/$sample.mt_genome_mapping.finished.txt`;}	
+			#if(-e "$shpath/$sample.mt_genome_mapping.finished.txt"){`rm $shpath/$sample.mt_genome_mapping.finished.txt`;}	
 
 			print SH "#!/bin/sh\ncd $sample_outpath\n";
 			foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
@@ -75,8 +75,8 @@ sub MTPHYLOGENY{
 			print CL "sh $shpath/$sample.mt_genome_mapping.sh 1>$shpath/$sample.mt_genome_mapping.sh.o 2>$shpath/$sample.mt_genome_mapping.sh.e \n";
 		}
 		close CL;
-		my $threads = $cfg{args}{threads};
-		`perl $Bin/lib/qsub.pl -d $shpath/cmd_mt_genome_mapping_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=$threads -binding linear:1' -m 100 -r $shpath/cmd_mt_genome_mapping.list` unless ($skipsh ==1);
+		my $threads = 4;
+		#`perl $Bin/lib/qsub.pl -d $shpath/cmd_mt_genome_mapping_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=$threads -binding linear:1' -m 100 -r $shpath/cmd_mt_genome_mapping.list` unless ($skipsh ==1);
 
 		my $flag_finish = 0;
 		while(1){
@@ -88,11 +88,67 @@ sub MTPHYLOGENY{
 			last if($flag_finish == $sample_number);
 		}
 
+
+		## check whether the fai and dict files of reference exist 
+		my $ref_name=$reference;
+		if ($ref_name =~ /\.fasta$/){
+			$ref_name =~ s/\.fasta$//; 
+		}elsif ($ref_name =~ /\.fa$/){
+			$ref_name =~ s/\.fa$//;
+		}elsif ($ref_name =~ /\.fas$/){
+			$ref_name =~ s/\.fas$//;
+		}
+
+		if ( !-e "$reference.fai" ) {
+		  		`samtools faidx $reference`;
+		}
+		if ( !-e "$ref_name.dict" ) {
+		  		`picard CreateSequenceDictionary R=$reference O=$ref_name.dict`;
+		}
+
+		###############
+
 		open CL, ">$shpath/cmd_mt_genome_variant_calling.list";
 		foreach my $sample (keys %samplelist){
 			my $sample_outpath="$outpath/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
 
-			if(-e "$shpath/$sample.mt_genome_variant_calling.finished.txt"){`rm $shpath/$sample.mt_genome_variant_calling.finished.txt`;}	
+			if(-e "$shpath/$sample.mt_genome_variant_calling.finished.txt"){`rm -f $shpath/$sample.mt_genome_variant_calling.finished.txt`;}	
+
+			if (-e "$outpath/$sample/$sample.genomecov"){
+				open IN, "$outpath/$sample/$sample.genomecov";
+				my $n_base = 0;
+				my $n_sum = 0;
+				my %depth;
+				while (<IN>){
+					$n_base ++;
+					my @a = split /\t/;
+					my $n_sum += $a[2];
+					if ($a[2]>=1000){
+						$depth{1000}++;
+					}elsif($a[2]>=100){
+						$depth{100}++;
+					}elsif($a[2]>=50){
+						$depth{50}++;
+					}elsif($a[2]>=10){
+						$depth{10}++;
+					}elsif($a[2]>=10){
+						$depth{1}++;
+					}elsif($a[2]==0){
+						$depth{0}++;
+					}
+				}
+				close IN;
+				open OT, ">$outpath/$sample/$sample.genomecov.summary.txt";
+				print OT $sample, "\t";
+				print OT $depth{0}, "\t";
+				print OT $depth{10}, "\t";
+				print OT $depth{50}, "\t";
+				print OT $depth{100}, "\t";
+				print OT $depth{1000}, "\t";
+				print OT $n_base, "\t";
+				print OT $n_sum, "\n";
+				close OT;
+			}
 
 			open SH, ">$shpath/$sample.mt_genome_variant_calling.sh";
 
@@ -104,7 +160,6 @@ sub MTPHYLOGENY{
 		  	print SH "	--OUTPUT $sample.sorted.markdup.bam \\\n";
 		  	print SH "	--METRICS_FILE $sample.sorted.markdup_metrics.txt && \\\n";
 		  	print SH "rm -f $sample.sorted.bam && \\\n";
-		  	print SH "echo \"** $sample.sorted.markdup.bam done **\" \n";
 		  	print SH "samtools index $sample.sorted.markdup.bam && echo \"** $sample.sorted.markdup.bam index done **\" \n";
 
 		  	print SH "gatk HaplotypeCaller \\\n";
@@ -112,12 +167,12 @@ sub MTPHYLOGENY{
 			print SH "	-R $reference \\\n";
 			print SH "	-ploidy 1 \\\n";
 			print SH "	-I $sample.sorted.markdup.bam \\\n";
-			print SH "	-O $sample.HC.gvcf.gz && echo \"** GVCF ${sample}.HC.g.vcf.gz done\" && echo \"** finish mt_genome_variant_calling **\" > $shpath/$sample.mt_genome_variant_calling.finished.txt \n";
+			print SH "	-O $sample.HC.gvcf.gz && echo \"** GVCF ${sample}.HC.g.vcf.gz done\" && \\\n"; 
+			print SH "echo \"** finish mt_genome_variant_calling **\" > $shpath/$sample.mt_genome_variant_calling.finished.txt \n";
 
 			close SH;
 			print CL "sh $shpath/$sample.mt_genome_variant_calling.sh 1>$shpath/$sample.mt_genome_variant_calling.sh.o 2>$shpath/$sample.mt_genome_variant_calling.sh.e \n";
 		}
-		
 		close CL;
 
 		`perl $Bin/lib/qsub.pl -d $shpath/cmd_mt_genome_variant_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=1 -binding linear:1' -m 100 -r $shpath/cmd_mt_genome_variant_calling.list` unless ($skipsh ==1);
@@ -135,7 +190,7 @@ sub MTPHYLOGENY{
 		#### joint variant calling on mt genomes ###
 		if ( !-d "$outpath/Joint_calling" ) {make_path "$outpath/Joint_calling" or die "Failed to create path: $outpath/Joint_calling";} 
 		
-		if(-e "$shpath/mt_genome_joint_calling.finished.txt"){`rm $shpath/mt_genome_joint_calling.finished.txt`;}
+		if(-e "$shpath/mt_genome_joint_calling.finished.txt"){`rm -f $shpath/mt_genome_joint_calling.finished.txt`;}
 
 		open CL, ">$shpath/cmd_mt_genome_joint_calling.list";
 
@@ -151,13 +206,13 @@ sub MTPHYLOGENY{
 		print SH "gatk CombineGVCFs \\\n";
 		print SH "	-R $reference \\\n";
 		print SH "$sample_gvcfs";
-		print SH "	-O $outpath/Joint_calling/Joint.HC.g.vcf.gz && echo \"** Combined.HC.g.vcf.gz done ** \"\n";
+		print SH "	-O $outpath/Joint_calling/Joint.HC.g.vcf.gz && echo \"** Joint.HC.g.vcf.gz done ** \"\n";
 
 		print SH "gatk GenotypeGVCFs \\\n";
 		print SH "	-R $reference \\\n";
 		print SH "	-ploidy $cfg{args}{ploidy} \\\n";
 		print SH "	-V $outpath/Joint_calling/Joint.HC.g.vcf.gz \\\n";
-		print SH "	-O $outpath/Joint_calling/Joint.HC.vcf.gz && echo \"** finish mt_genome_joint_calling *\"\n";
+		print SH "	-O $outpath/Joint_calling/Joint.HC.vcf.gz && echo \"** finish mt_genome_joint_calling **\"\n";
 
 		print SH "gatk SelectVariants \\\n";
 		print SH "	-R $reference \\\n";

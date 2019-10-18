@@ -29,11 +29,11 @@ use lib "$Bin/lib";
 my ($config, $step, $run, $skipsh, $help, $run_flag);
 
 GetOptions (
-	"config=s" => \$config,
-	"step=s" => \$step, #string
-	"run=s" => \$run,
+	"c|config=s" => \$config,
+	"s|step=s" => \$step, #string
+	"r|run=s" => \$run,
 	"skipsh" => \$skipsh,
-	"help"  => \$help)   # flag
+	"h|help"  => \$help)   # flag
 or die ("Error in command line arguments\n");
 if (defined $run){ $run_flag = 1;}
 #------------------------------------- default parameters ---------------------------------------

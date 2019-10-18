@@ -5,7 +5,6 @@ use strict;
 use warnings;
 use FindBin '$Bin';
 use YAML::Tiny;
-#use Bio::SeqIO;
 use lib "$Bin/lib";
 #use lib '/root/miniconda3/lib/site_perl/5.26.2';
 use PopGenome_Shared;
@@ -75,7 +74,7 @@ sub MAPPING{
 	# create this yaml object
 	$yaml = YAML::Tiny->new( \%cfg );
 	# Save both documents to a file
-	$yml_file = s/\.yml$//g;
+	$yml_file =~ s/\.yml$//g;
 	$yml_file = $yml_file."_mapping_modified.yml";
 	$yaml->write( $yml_file );
 }
