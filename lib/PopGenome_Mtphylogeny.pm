@@ -83,7 +83,7 @@ sub MTPHYLOGENY{
 			sleep(10);
 			my $sample_number = keys %samplelist;
 			foreach my $sample (keys %samplelist){
-				if(-e "$shpath/$sample.mt_genome_variant_calling.finished.txt"){$flag_finish +=1;}
+				if(-e "$shpath/$sample.mt_genome_mapping.finished.txt"){$flag_finish +=1;}
 			}
 			last if($flag_finish == $sample_number);
 		}
