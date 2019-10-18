@@ -69,7 +69,7 @@ sub MTPHYLOGENY{
 				print SH "samtools stats -@ $cfg{args}{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** finish mt_genome_mapping **\" > $shpath/$sample.mt_genome_mapping.finished.txt\n";
 			}
 
-			print SH "bedtools genomecov -d -ibam $sample.sorted.bam > $sample.genomecov\n";
+			#print SH "bedtools genomecov -d -ibam $sample.sorted.bam > $sample.genomecov\n";
 
 			close SH;
 			print CL "sh $shpath/$sample.mt_genome_mapping.sh 1>$shpath/$sample.mt_genome_mapping.sh.o 2>$shpath/$sample.mt_genome_mapping.sh.e \n";
@@ -87,7 +87,6 @@ sub MTPHYLOGENY{
 			}
 			last if($flag_finish == $sample_number);
 		}
-
 
 		## check whether the fai and dict files of reference exist 
 		my $ref_name=$reference;
@@ -113,6 +112,8 @@ sub MTPHYLOGENY{
 			my $sample_outpath="$outpath/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
 
 			if(-e "$shpath/$sample.mt_genome_variant_calling.finished.txt"){`rm -f $shpath/$sample.mt_genome_variant_calling.finished.txt`;}	
+
+			`bedtools genomecov -d -ibam $outpath/$sample/$sample.sorted.bam > $outpath/$sample/$sample.genomecov`;
 
 			if (-e "$outpath/$sample/$sample.genomecov"){
 				open IN, "$outpath/$sample/$sample.genomecov";
