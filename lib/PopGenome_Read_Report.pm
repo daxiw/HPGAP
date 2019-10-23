@@ -20,8 +20,6 @@ sub READ_REPORT{
 	my %cfg = %{$yaml->[0]};
 	my %samplelist = %{$cfg{fqdata}};
 
-	my %rs;
-	my %rs_ref;
 	foreach my $temp_ref(keys %{$cfg{ref}{db}}){
 		my $outpath = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$temp_ref"; 
 		if ( !-d $outpath ) {make_path $outpath or die "Failed to create path: $outpath";} 

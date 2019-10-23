@@ -3,37 +3,72 @@ use File::Basename;
 use File::Path qw(make_path);
 use strict;
 use warnings;
+use Getopt::Long qw(GetOptionsFromArray);
 use FindBin '$Bin';
-use lib "$Bin/lib";
-use lib '/root/miniconda3/lib/site_perl/5.26.2';
-use PopGenome_Shared;
 use YAML::Tiny;
-use Bio::SeqIO;
+use lib "$Bin/lib";
+use PopGenome_Shared;
 
 ############################
-#			   #
-#   Step 1a Data filtering #
-#			   #
+#			   			   #
+#   	Data filtering     #
+#			               #
 ############################
-sub DATA_FILTERING{
+sub Main{
 
-	my ($yml_file,$skipsh) = @_;
-	my $yaml = YAML::Tiny->read( $yml_file );
+	my $args = shift; 
+	my @args = @{$args};
+	my %opts;
+	my %var;
+
+	GetOptionsFromArray (\@args, \%opts, 
+		'config=s',
+		'overwrite',
+		'allsteps',
+		'filter',
+		'report',
+		'help',
+		'skipsh=i');
+
+	$opts{config}||="allcfg.yml";
+	$opts{skipsh}||= 0;
+
+	if (defined $opts{allsteps}){
+		$opts{filter} = 1;
+		$opts{report = 1;
+	}
+
+	my $yaml = YAML::Tiny->read( $opts{config} );
 	my %cfg = %{$yaml->[0]};
-	
-	my $outpath = "$cfg{args}{outdir}/01.QualityControl/read_filtering/"; 
-	if ( !-d $outpath ) {make_path $outpath or die "Failed to create path: $outpath";} 
-	my $shpath = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_filtering/";
-	if ( !-d $shpath ) {make_path $shpath or die "Failed to create path: $shpath";}
-
 	my %samplelist = %{$cfg{fqdata}};
 
-	open CL, ">$shpath/cmd_step1a.list";
+	$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_filtering/"; 
+	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
+	my $var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_filtering/";
+	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
+	$var{samplelist}=\%samplelist;
+	$var{cfg}=\%cfg;
+
+	if (defined $opts{filter}){ &DataFiltering(\%var);}
+
+	if (defined $opts{report}){ &ReadReport(\%var);}
+}
+
+sub DataFiltering{
+	my $var = shift;
+
+	my %var = %{$var};
+	my %cfg = %{$var{cfg}};
+	my %samplelist = %{$var{samplelist}};
+
+	open CL, ">$var{shpath}/cmd_read_filtering.list";
 	foreach my $sample (keys %samplelist){
-		my $sample_outpath="$outpath/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
-		open SH, ">$shpath/$sample.step1a.sh";
+		my $sample_outpath="$var{outpath}/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
+
+		open SH, ">$var{shpath}/$sample.read_filtering.sh";
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
 		foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
+			
 			my $read;
 			if ($samplelist{$sample}{rawdata}{$lib}{fq1} =~ /gz$/){
 				$read = `gunzip -c $samplelist{$sample}{rawdata}{$lib}{fq1}|head -n 2|tail -n 1`;
@@ -41,22 +76,96 @@ sub DATA_FILTERING{
 				$read = `cat $samplelist{$sample}{rawdata}{$lib}{fq1}|head -n 2|tail -n 1`;
 			}
 			$samplelist{$sample}{rawdata}{$lib}{Length} = split //, $read;
-			$samplelist{$sample}{rawdata}{$lib}{Length}=int($samplelist{$sample}{rawdata}{$lib}{Length}*0.7);
+			$samplelist{$sample}{rawdata}{$lib}{Length} = int($samplelist{$sample}{rawdata}{$lib}{Length}*0.5);
+			
+			if (-e "$sample_outpath/$lib\_1.filt.fq.gz"){ print SH "#" unless (defined $opts{overwrite});}
 			if($samplelist{$sample}{rawdata}{$lib}{Flag} eq "PE"){
-				print SH "reformat.sh overwrite=true in1=$samplelist{$sample}{rawdata}{$lib}{fq1} in2=$samplelist{$sample}{rawdata}{$lib}{fq2} bhist=$lib\_bhist.txt qhist=$lib\_qhist.txt aqhist=$lib\_aqhist.txt lhist=$lib\_lhist.txt  gchist=$lib\_gchist.txt && \\\n";
-				print SH "trimmomatic PE -threads $cfg{args}{threads} -phred$samplelist{$sample}{rawdata}{$lib}{Phred} $samplelist{$sample}{rawdata}{$lib}{fq1} $samplelist{$sample}{rawdata}{$lib}{fq2} $lib\_1.filt.fq.gz $lib\_1.filt.unpaired.fq.gz $lib\_2.filt.fq.gz $lib\_2.filt.unpaired.fq.gz LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:$samplelist{$sample}{rawdata}{$lib}{Length} && \\\n";
-				print SH "reformat.sh overwrite=true in1=$lib\_1.filt.fq.gz in2=$lib\_2.filt.fq.gz bhist=$lib\_bhist.filt.txt qhist=$lib\_qhist.filt.txt aqhist=$lib\_aqhist.filt.txt lhist=$lib\_lhist.filt.txt gchist=$lib\_gchist.filt.txt \n";
-			}if($samplelist{$sample}{rawdata}{$lib}{Flag} eq "SE"){
-				print SH "reformat.sh overwrite=true in1=$samplelist{$sample}{rawdata}{$lib}{fq1} bhist=$lib\_bhist.txt qhist=$lib\_qhist.txt aqhist=$lib\_aqhist.txt lhist=$lib\_lhist.txt  gchist=$lib\_gchist.txt && \\\n";
-				print SH "trimmomatic SE -threads $cfg{args}{threads} -phred$samplelist{$sample}{rawdata}{$lib}{Phred} $samplelist{$sample}{rawdata}{$lib}{fq1} $lib\_1.filt.fq.gz LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:$samplelist{$sample}{rawdata}{$lib}{Length} && \\\n";
-				print SH "reformat.sh overwrite=true in1=$lib\_1.filt.fq.gz bhist=$lib\_bhist.filt.txt qhist=$lib\_qhist.filt.txt aqhist=$lib\_aqhist.filt.txt lhist=$lib\_lhist.filt.txt gchist=$lib\_gchist.filt.txt \n";			
+				print SH "fastp -i $samplelist{$sample}{rawdata}{$lib}{fq1} -I $samplelist{$sample}{rawdata}{$lib}{fq2} -o $lib\_1.filt.fq.gz -O $lib\_2.filt.fq.gz --adapter_sequence AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA --adapter_sequence_r2 AAGTCGGATCGTAGCCATGTCGTTCTGTGAGCCAAGGAGTTG --detect_adapter_for_pe --disable_trim_poly_g -q 20 -u 30 -n 2 --length_required $samplelist{$sample}{rawdata}{$lib}{Length} -w 4 -j $lib.fastp.json -h $lib\_1.fastp.html -R \"$sample $lib fastp report\" && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.$lib.read_filtering.finished.txt\n";
 			}
+			if($samplelist{$sample}{rawdata}{$lib}{Flag} eq "SE"){
+				print SH "fastp -i $samplelist{$sample}{rawdata}{$lib}{fq1} -o $lib\_1.filt.fq.gz --adapter_sequence AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA --detect_adapter_for_pe --disable_trim_poly_g -q 20 -u 30 -n 2 --length_required $samplelist{$sample}{rawdata}{$lib}{Length} -w 4 -j $lib.fastp.json -h $lib\_1.fastp.html -R \"$sample $lib fastp report\" && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.$lib.read_filtering.finished.txt\n";
+			}
+
 		}
 		close SH;
-		print CL "sh $shpath/$sample.step1a.sh 1>$shpath/$sample.step1a.sh.o 2>$shpath/$sample.step1a.sh.e\n";
+		print CL "sh $var{shpath}/$sample.step1a.sh 1>$var{shpath}/$sample.step1a.sh.o 2>$var{shpath}/$sample.step1a.sh.e\n";
 	}
 	close CL;
-	`parallel -j $cfg{args}{threads} < $shpath/cmd_step1a.list` unless ($skipsh ==1);
+
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_read_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=$threads -binding linear:1' -m 100 -r $var{shpath}/cmd_read_filtering.list` unless ($skipsh ==1);
+
+	my $flag_finish = 0;
+	my $sample_number = 0;
+	while(1){
+		sleep(10);
+		foreach my $sample (keys %samplelist){
+			foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
+				$sample_number ++;
+				if(-e "$var{shpath}/$sample.$lib.read_filtering.finished.txt"){$flag_finish +=1;}
+			}
+		}
+		my $datestring = localtime();
+		print "waiting for read_filtering to be done [$flag_finish out of $sample_number samples are finished] at $datestring\n";
+		last if($flag_finish == $sample_number);
+	}
+}
+
+sub ReadReport{
+
+	my $var = shift;
+	my %var = %{$var};
+
+	my %cfg = %{$var{cfg}};
+	my %samplelist = %{$var{samplelist}};
+
+	my $report_outpath="$var{outpath}/Report"; 
+	if ( !-d $report_outpath ) {make_path $report_outpath or die "Failed to create path: $report_outpath";}
+	my $report_sample_outpath="$var{outpath}/Report/Samples"; 
+	if ( !-d $report_sample_outpath ) {make_path $report_sample_outpath or die "Failed to create path: $report_outpath";}
+
+	open OT, ">$var{outpath}/Report/read_quality_summary.xls";
+    
+    print OT "sampleID","\t";
+    print OT "before_filtering_reads","\t";
+    print OT "before_filtering_bases","\t";
+    print OT "after_filtering_reads","\t";
+    print OT "after_filtering_bases","\t";
+    print OT "q20_rate","\t";
+    print OT "q30_rate","\t";
+    print OT "gc_content","\t";
+    print OT "duplication_rate","\t";
+    print OT "adapter_trimmed_reads","\n";
+
+	foreach my $sample (keys %samplelist){	
+		my $sample_report_outpath="$var{outpath}/Report/Samples/$sample"; 
+		if ( !-d $sample_report_outpath ) {make_path $sample_report_outpath or die "Failed to create path: $sample_report_outpath";}
+
+		# copy filtering statistics from read_filtering
+
+		`cp $var{outpath}/$sample/*json $sample_report_outpath`;
+
+		my $json;
+		{
+		  local $/; #Enable 'slurp' mode
+		  open my $fh, "<", "$sample_report_outpath/$sample.fastp.json";
+		  $json = <$fh>;
+		  close $fh;
+		}
+
+		my $data = decode_json($json);
+
+		print OT "$sample\t";
+		print OT $data->{'summary'}->{'before_filtering'}->{'total_reads'}, "\t";
+		print OT $data->{'summary'}->{'before_filtering'}->{'total_bases'}, "\t";
+		print OT $data->{'summary'}->{'after_filtering'}->{'total_reads'}, "\t";
+		print OT $data->{'summary'}->{'after_filtering'}->{'total_bases'}, "\t";
+		print OT $data->{'summary'}->{'after_filtering'}->{'q20_rate'}, "\t";
+		print OT $data->{'summary'}->{'after_filtering'}->{'q30_rate'}, "\t";
+		print OT $data->{'summary'}->{'after_filtering'}->{'gc_content'}, "\t";
+		print OT $data->{'duplication'}->{'rate'}, "\t";
+        print OT $data->{'adapter_cutting'}->{'adapter_trimmed_reads'}, "\n";
+	}
+	close OT;
 }
 
 1;
