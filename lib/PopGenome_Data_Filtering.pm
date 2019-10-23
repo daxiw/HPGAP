@@ -28,10 +28,9 @@ sub Main{
 		'filter',
 		'report',
 		'help',
-		'skipsh=i');
+		'skipsh');
 
 	$opts{config}||="allcfg.yml";
-	$opts{skipsh}||= 0;
 
 	if (defined $opts{allsteps}){
 		$opts{filter} = 1;
@@ -93,7 +92,7 @@ sub DataFiltering{
 	}
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_read_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=4 -binding linear:1' -m 100 -r $var{shpath}/cmd_read_filtering.list` unless ($skipsh ==1);
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_read_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=4 -binding linear:1' -m 100 -r $var{shpath}/cmd_read_filtering.list` unless (defined $opts{skipsh});
 
 	my $flag_finish = 0;
 	my $sample_number = 0;
