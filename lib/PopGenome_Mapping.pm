@@ -72,11 +72,11 @@ sub MAPPING{
 	}
 
 	# create this yaml object
-	$yaml = YAML::Tiny->new( \%cfg );
+	#$yaml = YAML::Tiny->new( \%cfg );
 	# Save both documents to a file
-	$yml_file =~ s/\.yml$//g;
-	$yml_file = $yml_file."_mapping_modified.yml";
-	$yaml->write( $yml_file );
+	#$yml_file =~ s/\.yml$//g;
+	#$yml_file = $yml_file."_mapping_modified.yml";
+	#$yaml->write( $yml_file );
 }
 
 1;

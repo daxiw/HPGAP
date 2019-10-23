@@ -49,14 +49,14 @@ sub Main{
 	$var{samplelist}=\%samplelist;
 	$var{cfg}=\%cfg;
 
-	if (defined $opts{filter}){ &DataFiltering(\%var);}
+	if (defined $opts{filter}){ &DataFiltering (\%var,\%opts);}
 
-	if (defined $opts{report}){ &ReadReport(\%var);}
+	if (defined $opts{report}){ &ReadReport (\%var,\%opts);}
 }
 
 sub DataFiltering{
-	my $var = shift;
-
+	my ($var,$opts) = @_;
+	my %opts = %{$opts};
 	my %var = %{$var};
 	my %cfg = %{$var{cfg}};
 	my %samplelist = %{$var{samplelist}};
@@ -75,7 +75,8 @@ sub DataFiltering{
 			}else{
 				$read = `cat $samplelist{$sample}{rawdata}{$lib}{fq1}|head -n 2|tail -n 1`;
 			}
-			$samplelist{$sample}{rawdata}{$lib}{Length} = split //, $read;
+			my @temp = split //, $read;
+			$samplelist{$sample}{rawdata}{$lib}{Length} = @temp;
 			$samplelist{$sample}{rawdata}{$lib}{Length} = int($samplelist{$sample}{rawdata}{$lib}{Length}*0.5);
 			
 			if (-e "$sample_outpath/$lib\_1.filt.fq.gz"){ print SH "#" unless (defined $opts{overwrite});}
@@ -92,7 +93,7 @@ sub DataFiltering{
 	}
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_read_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=$threads -binding linear:1' -m 100 -r $var{shpath}/cmd_read_filtering.list` unless ($skipsh ==1);
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_read_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=4 -binding linear:1' -m 100 -r $var{shpath}/cmd_read_filtering.list` unless ($skipsh ==1);
 
 	my $flag_finish = 0;
 	my $sample_number = 0;
@@ -112,7 +113,8 @@ sub DataFiltering{
 
 sub ReadReport{
 
-	my $var = shift;
+	my ($var,$opts) = @_;
+	my %opts = %{$opts};
 	my %var = %{$var};
 
 	my %cfg = %{$var{cfg}};
