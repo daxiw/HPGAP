@@ -66,8 +66,12 @@ sub DataFiltering{
 
 		open SH, ">$var{shpath}/$sample.read_filtering.sh";
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
+
+		my $n_lib = 0;
+		my $n_done = 0; 
 		foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
 			
+			$n_lib ++;
 			my $read;
 			if ($samplelist{$sample}{rawdata}{$lib}{fq1} =~ /gz$/){
 				$read = `gunzip -c $samplelist{$sample}{rawdata}{$lib}{fq1}|head -n 2|tail -n 1`;
@@ -78,7 +82,7 @@ sub DataFiltering{
 			$samplelist{$sample}{rawdata}{$lib}{Length} = @temp;
 			$samplelist{$sample}{rawdata}{$lib}{Length} = int($samplelist{$sample}{rawdata}{$lib}{Length}*0.5);
 			
-			if (-e "$sample_outpath/$lib\_1.filt.fq.gz"){ print SH "#" unless (defined $opts{overwrite});}
+			if (-e "$sample_outpath/$lib\_1.filt.fq.gz"){ $n_done++; print SH "#" unless (defined $opts{overwrite});}
 			if($samplelist{$sample}{rawdata}{$lib}{Flag} eq "PE"){
 				print SH "fastp -i $samplelist{$sample}{rawdata}{$lib}{fq1} -I $samplelist{$sample}{rawdata}{$lib}{fq2} -o $lib\_1.filt.fq.gz -O $lib\_2.filt.fq.gz --adapter_sequence AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA --adapter_sequence_r2 AAGTCGGATCGTAGCCATGTCGTTCTGTGAGCCAAGGAGTTG --detect_adapter_for_pe --disable_trim_poly_g -q 20 -u 30 -n 2 --length_required $samplelist{$sample}{rawdata}{$lib}{Length} -w 4 -j $lib.fastp.json -h $lib\_1.fastp.html -R \"$sample $lib fastp report\" && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.$lib.read_filtering.finished.txt\n";
 			}
@@ -88,7 +92,7 @@ sub DataFiltering{
 
 		}
 		close SH;
-		print CL "sh $var{shpath}/$sample.step1a.sh 1>$var{shpath}/$sample.step1a.sh.o 2>$var{shpath}/$sample.step1a.sh.e\n";
+		print CL "sh $var{shpath}/$sample.read_filtering.sh 1>$var{shpath}/$sample.read_filtering.sh.o 2>$var{shpath}/$sample.read_filtering.sh.e\n" if ($n_lib != $n_done);
 	}
 	close CL;
 
