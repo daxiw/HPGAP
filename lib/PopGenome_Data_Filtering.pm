@@ -35,7 +35,7 @@ sub Main{
 
 	if (defined $opts{allsteps}){
 		$opts{filter} = 1;
-		$opts{report = 1;
+		$opts{report} = 1;
 	}
 
 	my $yaml = YAML::Tiny->read( $opts{config} );
@@ -44,7 +44,7 @@ sub Main{
 
 	$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_filtering/"; 
 	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
-	my $var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_filtering/";
+	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_filtering/";
 	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 	$var{samplelist}=\%samplelist;
 	$var{cfg}=\%cfg;
