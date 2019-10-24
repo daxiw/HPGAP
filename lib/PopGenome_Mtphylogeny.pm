@@ -34,7 +34,7 @@ sub Main{
 
 	if (defined $opts{allsteps}){
 		$opts{mt_genome_mapping} = 1;
-		$opts{mt_genome_variant_calling = 1;
+		$opts{mt_genome_variant_calling} = 1;
 		$opts{mt_genome_phylogeny} = 1;
 	}
 
@@ -47,7 +47,7 @@ sub Main{
 	$var{ploidy} = 1;
 
 	#set the number of threads
-	if (defined $opts{threads}}){
+	if (defined $opts{threads}){
 		$var{threads} = $opts{threads};
 	}elsif(defined $cfg{args}{threads}){
 		$var{threads} = $cfg{args}{threads};
@@ -373,7 +373,7 @@ sub MtGenomePhylogeny{
 
 	print SH "cd $var{outpath}/Mt_genome_phylogeny\n";
 	print SH "rm -rf $var{outpath}/Mt_genome_phylogeny/RAxML_*\n";
-	
+
 	print SH "zcat $var{outpath}/Joint_calling/Joint.HC.g.vcf.gz|vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
 	print SH "vcf_tab_to_fasta_alignment.pl -i $var{outpath}/Mt_genome_phylogeny/mt_genome.tab > $var{outpath}/mt_genome.fasta\n";
 
