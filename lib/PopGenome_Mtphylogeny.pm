@@ -64,7 +64,7 @@ sub Main{
 		if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 
 		die "please add mt genome path into configuration file" unless (defined $cfg{mtref}{db}{$temp_ref}{path});
-		my $var{reference} = $cfg{mtref}{db}{$temp_ref}{path};
+		$var{reference} = $cfg{mtref}{db}{$temp_ref}{path};
 		die "$var{reference} does not exists" unless (-e $var{reference});
 
 		if (defined $opts{mt_genome_mapping}){ &MtGenomeMapping (\%var,\%opts);}
