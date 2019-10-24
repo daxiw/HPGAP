@@ -88,11 +88,12 @@ sub MtGenomeMapping {
 	my %samplelist = %{$var{samplelist}};
 
 	open CL, ">$var{shpath}/cmd_mt_genome_mapping.list";
+	my $sample_number = 0;
 	foreach my $sample (keys %samplelist){
 		my $sample_outpath="$var{outpath}/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
 
 		open SH, ">$var{shpath}/$sample.mt_genome_mapping.sh";
-		#if(-e "$var{shpath}/$sample.mt_genome_mapping.finished.txt"){`rm $var{shpath}/$sample.mt_genome_mapping.finished.txt`;}	
+		if(-e "$var{shpath}/$sample.mt_genome_mapping.finished.txt"){`rm $var{shpath}/$sample.mt_genome_mapping.finished.txt`;}	
 
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
 
@@ -145,6 +146,7 @@ sub MtGenomeMapping {
 		if (($run_flag == 0)||($n_done!=$n_lib)){
 			print SH "bedtools genomecov -d -ibam $sample.sorted.bam > $sample.genomecov\n";
 			$written_flag ++;
+			$sample_number ++;
 		}
 
 		close SH;
@@ -157,8 +159,6 @@ sub MtGenomeMapping {
 	while(1){
 		sleep(20);
 		
-		my $sample_number = keys %samplelist;
-
 		foreach my $sample (keys %samplelist){
 
 			if(-e "$var{shpath}/$sample.mt_genome_mapping.finished.txt"){$flag_finish +=1;}
