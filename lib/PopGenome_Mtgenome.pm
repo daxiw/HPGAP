@@ -1,4 +1,4 @@
-package PopGenome_Mtphylogeny;
+package PopGenome_Mtgenome;
 use File::Basename;
 use File::Path qw(make_path);
 use strict;
@@ -44,7 +44,7 @@ sub Main{
 	
 	$var{samplelist}=\%samplelist;
 	$var{cfg}=\%cfg;
-	
+
 	#set ploidy
 	$var{ploidy} = 1;
 
