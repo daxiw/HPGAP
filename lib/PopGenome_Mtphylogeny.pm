@@ -274,7 +274,7 @@ sub MtGenomeVariantCalling{
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_variant_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_variant_calling.list` unless (defined $opts{skipsh});
 
-	$flag_finish = 0;
+	my $flag_finish = 0;
 	while(1){
 		sleep(20);
 		
@@ -349,7 +349,7 @@ sub MtGenomeVariantCalling{
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_joint_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_joint_calling.list` unless ($opts{skipsh} ==1);
 
 
-	$flag_finish = 0;
+	my $flag_finish = 0;
 	while(1){
 		sleep(20);
 		my $datestring = localtime();
