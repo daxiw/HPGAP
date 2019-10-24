@@ -373,7 +373,7 @@ sub MtGenomePhylogeny{
 
 	print SH "cd $var{outpath}/Mt_genome_phylogeny\n";
 	print SH "rm -rf $var{outpath}/Mt_genome_phylogeny/RAxML_*\n";
-
+	
 	print SH "zcat $var{outpath}/Joint_calling/Joint.HC.g.vcf.gz|vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
 	print SH "vcf_tab_to_fasta_alignment.pl -i $var{outpath}/Mt_genome_phylogeny/mt_genome.tab > $var{outpath}/mt_genome.fasta\n";
 
