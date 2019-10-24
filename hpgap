@@ -43,7 +43,7 @@ elsif ($run eq 'combine_calling') {
 }
 elsif ($run eq 'mtphylogeny') {
 		require PopGenome_Mtphylogeny;
-		PopGenome_Mtphylogeny::MTPHYLOGENY(\@args);
+		PopGenome_Mtphylogeny::Main(\@args);
 }
 elsif ($run eq 'test') {
 		require PopGenome_test;
