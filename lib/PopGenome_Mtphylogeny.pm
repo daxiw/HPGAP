@@ -42,7 +42,9 @@ sub Main{
 	my %cfg = %{$yaml->[0]};
 	my %samplelist = %{$cfg{fqdata}};
 	
-
+	$var{samplelist}=\%samplelist;
+	$var{cfg}=\%cfg;
+	
 	#set ploidy
 	$var{ploidy} = 1;
 
