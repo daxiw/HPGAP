@@ -92,7 +92,7 @@ sub DataFiltering{
 
 		}
 		close SH;
-		print CL "sh $var{shpath}/$sample.read_filtering.sh 1>$var{shpath}/$sample.read_filtering.sh.o 2>$var{shpath}/$sample.read_filtering.sh.e\n" if ($n_lib != $n_done);
+		print CL "sh $var{shpath}/$sample.read_filtering.sh 1>$var{shpath}/$sample.read_filtering.sh.o 2>$var{shpath}/$sample.read_filtering.sh.e\n" if (($n_lib != $n_done) || (defined $opts{overwrite}));
 	}
 	close CL;
 

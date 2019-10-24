@@ -26,6 +26,10 @@ sub TEST{
 		print "triggered TEST3 and show opts $opts{steps}\n";
 	}
 	TEST3();
+	my %var;
+	my ($a,$b)=qw(1 2);
+	if (($a==2)&&!(defined $var{new})){print "oh\n"}
+#	print "$a,hi\n" unless ((! defined $var{new}) && ($var{new} ==3));
 
 }
 
