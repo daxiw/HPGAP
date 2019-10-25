@@ -273,6 +273,10 @@ sub JointCalling{
 	my %cfg = %{$var{cfg}};
 	my %samplelist = %{$var{samplelist}};
 
+	if ( !-d "$var{outpath}/JointCalling/" ) {
+		make_path "$var{outpath}/JointCalling/" or die "Failed to create path: $var{outpath}/JointCalling/";
+	}
+
 	open CL, ">$var{shpath}/cmd_joint_calling.list";
 
 	open SH, ">$var{shpath}/joint_calling.sh";
