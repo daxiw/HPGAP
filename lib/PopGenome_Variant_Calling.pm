@@ -284,7 +284,7 @@ sub JointCalling{
 	## First, merge all the gvcf results, then perform GenotypeGVCFs
 	my $sample_gvcfs = "";
 	foreach my $sample (keys %samplelist){
-		$sample_gvcfs .= "	-V $var{outpath}/read_mapping.$cfg{ref}{choose}/$sample/$sample.HC.gvcf.gz \\\n";
+		$sample_gvcfs .= "	-V $var{outpath}/$sample/$sample.HC.gvcf.gz \\\n";
 	}
 	print SH "#!/bin/sh\ncd $var{outpath}\n";
 

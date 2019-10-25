@@ -62,13 +62,17 @@ sub DataFiltering{
 
 	open CL, ">$var{shpath}/cmd_read_filtering.list";
 	foreach my $sample (keys %samplelist){
-		my $sample_outpath="$var{outpath}/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
+		my $sample_outpath="$var{outpath}/$sample"; 
+		if ( !-d $sample_outpath ) {
+			make_path $sample_outpath or die "Failed to create path: $sample_outpath";
+		}
 
 		open SH, ">$var{shpath}/$sample.read_filtering.sh";
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
 
 		my $n_lib = 0;
-		my $n_done = 0; 
+		my $n_done = 0;
+		my $n_doing = 0;
 		foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
 			
 			$n_lib ++;
@@ -83,6 +87,7 @@ sub DataFiltering{
 			$samplelist{$sample}{rawdata}{$lib}{Length} = int($samplelist{$sample}{rawdata}{$lib}{Length}*0.5);
 			
 			if (-e "$sample_outpath/$lib\_1.filt.fq.gz"){ $n_done++; print SH "#" unless (defined $opts{overwrite});}
+			$n_doing ++; 
 			if($samplelist{$sample}{rawdata}{$lib}{Flag} eq "PE"){
 				print SH "fastp -i $samplelist{$sample}{rawdata}{$lib}{fq1} -I $samplelist{$sample}{rawdata}{$lib}{fq2} -o $lib\_1.filt.fq.gz -O $lib\_2.filt.fq.gz --adapter_sequence AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA --adapter_sequence_r2 AAGTCGGATCGTAGCCATGTCGTTCTGTGAGCCAAGGAGTTG --detect_adapter_for_pe --disable_trim_poly_g -q 20 -u 30 -n 2 --length_required $samplelist{$sample}{rawdata}{$lib}{Length} -w 4 -j $lib.fastp.json -h $lib\_1.fastp.html -R \"$sample $lib fastp report\" && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.$lib.read_filtering.finished.txt\n";
 			}
@@ -110,7 +115,7 @@ sub DataFiltering{
 		}
 		my $datestring = localtime();
 		print "waiting for read_filtering to be done [$flag_finish out of $sample_number samples are finished] at $datestring\n";
-		last if($flag_finish == $sample_number);
+		last if($flag_finish == $n_doing);
 	}
 }
 
