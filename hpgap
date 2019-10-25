@@ -17,7 +17,11 @@ my @args = @ARGV;
 #	PopGenome_Indexing::INDEXING($allcfg,$skipsh) if ($run eq 'step0_indexing');
 
 #	PopGenome_Data_Filtering::DATA_FILTERING($allcfg,$skipsh) if ($run eq 'read_filtering');
-if ($run eq 'steps') {
+
+if ($run eq 'preparecfg') {
+		require PopGenome_Preparecfg;
+		PopGenome_Preparecfg::Main(\@args);
+}elsif ($run eq 'steps') {
 		require PopGenome_arrange;
 		PopGenome_arrange::ARRANGE(\@args);
 }
@@ -35,11 +39,11 @@ elsif ($run eq 'read_report') {
 }
 elsif ($run eq 'variant_calling') {
 		require PopGenome_Variant_Calling;
-		PopGenome_Variant_Calling::VARIANT_CALLING(\@args);
+		PopGenome_Variant_Calling::Main(\@args);
 }
 elsif ($run eq 'combine_calling') {
 		require PopGenome_Combine_Calling;
-		PopGenome_Combine_Calling::COMBINE_CALLING(\@args);
+		PopGenome_Combine_Calling::Main(\@args);
 }
 elsif ($run eq 'mtgenome') {
 		require PopGenome_Mtgenome;

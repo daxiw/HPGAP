@@ -24,6 +24,7 @@ sub Main{
 		'config=s',
 		'overwrite',
 		'allsteps',
+		'threads',
 		'mt_genome_mapping',
 		'mt_genome_variant_calling',
 		'mt_genome_phylogeny',
@@ -376,10 +377,10 @@ sub MtGenomePhylogeny{
 	print SH "cd $var{outpath}/Mt_genome_phylogeny\n";
 	print SH "rm -rf $var{outpath}/Mt_genome_phylogeny/RAxML_*\n";
 
-	print SH "zcat $var{outpath}/Joint_calling/Joint.HC.g.vcf.gz|vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
-	print SH "vcf_tab_to_fasta_alignment.pl -i $var{outpath}/Mt_genome_phylogeny/mt_genome.tab > $var{outpath}/mt_genome.fasta\n";
+	print SH "zcat $var{outpath}/Joint_calling/Joint.HC.g.vcf.gz|$Bin/Tools/vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
+	print SH "$Bin/Tools/vcf_tab_to_fasta_alignment.pl -i $var{outpath}/Mt_genome_phylogeny/mt_genome.tab > $var{outpath}/mt_genome.fasta\n";
 
-	print SH "seqmagick convert $var{outpath}/Mt_genome_phylogeny/mt_genome.fasta $var{outpath}/Mt_genome_phylogeny/mt_genome.phy\n";
+	print SH "$Bin/Tools/fasta-to-phylip --input-fasta $var{outpath}/Mt_genome_phylogeny/mt_genome.fasta --output-phy $var{outpath}/Mt_genome_phylogeny/mt_genome.phy\n";
 	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/mt_genome.phy -n trees -T 24 -# 20 -p 12345\n";
 	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/mt_genome.phy -n boots -T 24 -# 100 -p 23456 -b 23456\n";
 	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -p 12345 -f b -t RAxML_bestTree.trees -T 2 -z RAxML_bootstrap.boots -n consensus\n";

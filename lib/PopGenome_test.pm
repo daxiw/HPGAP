@@ -15,17 +15,14 @@ sub TEST{
 	my %opts;
 
 	GetOptionsFromArray(\@args, \%opts, 
-		'config=s','steps=i','flag');
+		'config=s','steps=i','flag'
+	);
 	print "Hey, my config is $opts{config}\n";
 	$opts{steps}||= 1;
 	print "steps: $opts{steps}\n" if (defined $opts{flag});
 
 	TEST2(\%opts);
 
-	sub TEST3{
-		print "triggered TEST3 and show opts $opts{steps}\n";
-	}
-	TEST3();
 	my %var;
 	my ($a,$b)=qw(1 2);
 	if (($a==2)&&!(defined $var{new})){print "oh\n"}
@@ -37,6 +34,7 @@ sub TEST{
 sub TEST2{
 	my $opts = shift;
 	my %opts = %{$opts};
+	print "$Bin\n";
 	print "triggered TEST2 and show opts $opts{steps}\n";
 }
 1;

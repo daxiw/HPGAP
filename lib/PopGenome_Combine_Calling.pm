@@ -3,6 +3,7 @@ use File::Basename;
 use File::Path qw(make_path);
 use strict;
 use warnings;
+use Getopt::Long qw(GetOptionsFromArray);
 use FindBin '$Bin';
 use YAML::Tiny;
 use lib "$Bin/lib";
