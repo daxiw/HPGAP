@@ -31,11 +31,11 @@ elsif ($run eq 'read_filtering') {
 }
 elsif ($run eq 'read_mapping') {
 		require PopGenome_Mapping;
-		PopGenome_Mapping::MAPPING(\@args);
+		PopGenome_Mapping::Main(\@args);
 }
 elsif ($run eq 'read_report') {
 		require PopGenome_Read_Report;
-		PopGeome_Read_Report::READ_REPORT(\@args);
+		PopGeome_Read_Report::Main(\@args);
 }
 elsif ($run eq 'variant_calling') {
 		require PopGenome_Variant_Calling;

@@ -19,6 +19,7 @@ sub TEST{
 	);
 	print "Hey, my config is $opts{config}\n";
 	$opts{steps}||= 1;
+	
 	print "steps: $opts{steps}\n" if (defined $opts{flag});
 
 	TEST2(\%opts);
