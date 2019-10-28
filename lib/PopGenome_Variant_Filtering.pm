@@ -112,7 +112,7 @@ sub VariantFiltering {
 	open CL, ">$var{shpath}/cmd_variant_filtering_s1.list";
 	print CL "sh $var{shpath}/variant_filtering_s1.sh 1>$var{shpath}/variant_filtering_s1.sh.o 2>$var{shpath}/variant_filtering_s1.sh.e\n";
 	close CL;
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=4 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s1.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s1.list` unless (defined $opts{skipsh});
 	
 	my $flag_finish = 0;
 	unless (defined $opts{skipsh}){
@@ -154,7 +154,7 @@ sub VariantFiltering {
 	open CL, ">$var{shpath}/cmd_variant_filtering_s2.list";
 	print CL "sh $var{shpath}/variant_filtering_s2.sh 1>$var{shpath}/variant_filtering_s2.sh.o 2>$var{shpath}/variant_filtering_s2.sh.e\n";
 	close CL;
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s2_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=4 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s2.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s2_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s2.list` unless (defined $opts{skipsh});
 	
 	$flag_finish = 0;
 	unless (defined $opts{skipsh}){
@@ -199,20 +199,20 @@ sub VariantFiltering {
 	#Based on high quality SNV sites + low LD
 	print SH 'bcftools annotate --threads 6 --rename-chrs', " $var{outpath}/chr_map.list" ," $var{outpath}/high_confidence.vcf.gz", '|perl -ne \'if (/#\S+ID=(\d+)/){if($1<=',"$scaffold_number_limit",'){print;}}elsif(/^#/){print;}elsif(/^(\d+)\s+/){if($1<= ',"$scaffold_number_limit",'){print;}}\'|vcftools --vcf - --plink',"\n";
 	
-	print SH <<EOF;
-plink --file out --make-bed --chr-set $scaffold_number_limit no-xy no-mt no-y
-plink --bfile plink --indep-pairwise $cfg{step1}{variant_filtering}{ldwindowsize} $cfg{step1}{variant_filtering}{ldwindowstep} $cfg{step1}{variant_filtering}{ldcutoff} --chr-set $scaffold_number_limit no-xy no-mt no-y
-plink --bfile plink --extract plink.prune.in --make-bed --out high_confidence_prunned --chr-set $scaffold_number_limit no-xy no-mt no-y
-plink --bfile high_confidence_prunned --chr-set $scaffold_number_limit no-xy no-mt no-y --recode vcf --out high_confidence_pre
-cat high_confidence_pre.vcf|perl -ne 'print unless (/CHROM/);if(/CHROM/){s/_\\S+//g;print;}' | bgzip -c >$var{outpath}/high_confidence_prunned.vcf.gz 
-EOF
+	print SH "plink --file out --make-bed --chr-set $scaffold_number_limit no-xy no-mt no-y\n";
+	print SH "plink --bfile plink --indep-pairwise $cfg{step1}{variant_filtering}{ldwindowsize} $cfg{step1}{variant_filtering}{ldwindowstep} $cfg{step1}{variant_filtering}{ldcutoff} --chr-set $scaffold_number_limit no-xy no-mt no-y\n";
+	print SH "plink --bfile plink --extract plink.prune.in --make-bed --out high_confidence_prunned --chr-set $scaffold_number_limit no-xy no-mt no-y\n";
+	print SH "plink --bfile high_confidence_prunned --chr-set $scaffold_number_limit no-xy no-mt no-y --recode vcf --out high_confidence_pre\n";
+	print SH "cat high_confidence_pre.vcf |perl -ne \'print unless (/CHROM/);if(/CHROM/){s/_\\S+//g;print;}\' | bgzip -c >$var{outpath}/high_confidence_prunned.vcf.gz\n";
+
 	print SH "ls $var{outpath}/high_confidence_prunned.vcf.gz && echo \"** finish variant_filtering_s3 **\" > $var{shpath}/variant_filtering_s3.finished.txt";
+	
 	close SH;
 
 	open CL, ">$var{shpath}/cmd_variant_filtering_s3.list";
 	print CL "sh $var{shpath}/variant_filtering_s3.sh 1>$var{shpath}/variant_filtering_s3.sh.o 2>$var{shpath}/variant_filtering_s3.sh.e\n";
 	close CL;
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s3_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=4 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s3.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s3_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s3.list` unless (defined $opts{skipsh});
 
 	$flag_finish = 0;
 	unless (defined $opts{skipsh}){
