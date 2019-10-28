@@ -55,7 +55,7 @@ sub Main{
 	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/Variant_filtering";
 	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 
-	die "please add genome path into configuration file" unless (defined $cfg{ref}{db}{$choose}{path});
+	die "please add genome path into configuration file" unless (defined $cfg{ref}{db}{choose}{path});
 	$var{reference} = $cfg{ref}{db}{$cfg{ref}{choose}}{path};
 	die "$var{reference} does not exists" unless (-e $var{reference});
 
