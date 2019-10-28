@@ -1,4 +1,4 @@
-package PopGenome_Mtgenome;
+package PopGenome_Variant_Filtering;
 use File::Basename;
 use File::Path qw(make_path);
 use strict;

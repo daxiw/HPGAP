@@ -41,6 +41,10 @@ elsif ($run eq 'variant_calling') {
 		require PopGenome_Variant_Calling;
 		PopGenome_Variant_Calling::Main(\@args);
 }
+elsif ($run eq 'variant_filtering') {
+		require PopGenome_Variant_Calling;
+		PopGenome_Variant_Calling::Main(\@args);
+}
 #elsif ($run eq 'combine_calling') {
 #		require PopGenome_Combine_Calling;
 #		PopGenome_Combine_Calling::Main(\@args);
