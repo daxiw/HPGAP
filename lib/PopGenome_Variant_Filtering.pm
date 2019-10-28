@@ -49,10 +49,10 @@ sub Main{
 	}
 
 
-	$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/Filtered_variants";
+	$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$cfg{ref}{choose}/Filtered_variants";
 	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
 
-	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/Variant_filtering";
+	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$cfg{ref}{choose}/Filtered_variants";
 	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 
 	die "please add genome path into configuration file" unless (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path});
