@@ -115,11 +115,13 @@ sub VariantFiltering {
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=4 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s1.list` unless (defined $opts{skipsh});
 	
 	my $flag_finish = 0;
-	while(1){
-		sleep(20);
-		my $datestring = localtime();
-		print "waiting for variant_filtering_s1 to be done at $datestring\n";
-		if(-e "$var{shpath}/variant_filtering_s1.finished.txt"){last;}
+	unless (defined $opts{skipsh}){
+		while(1){
+			sleep(20);
+			my $datestring = localtime();
+			print "waiting for variant_filtering_s1 to be done at $datestring\n";
+			if(-e "$var{shpath}/variant_filtering_s1.finished.txt"){last;}
+		}
 	}
 
 	###filter SNP by depth if needed
@@ -155,13 +157,14 @@ sub VariantFiltering {
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s2_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=4 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s2.list` unless (defined $opts{skipsh});
 	
 	$flag_finish = 0;
-	while(1){
-		sleep(20);
-		my $datestring = localtime();
-		print "waiting for variant_filtering_s2 to be done at $datestring\n";
-		if(-e "$var{shpath}/variant_filtering_s2.finished.txt"){last;}
+	unless (defined $opts{skipsh}){
+		while(1){
+			sleep(20);
+			my $datestring = localtime();
+			print "waiting for variant_filtering_s2 to be done at $datestring\n";
+			if(-e "$var{shpath}/variant_filtering_s2.finished.txt"){last;}
+		}
 	}
-
 	$cfg{step1}{variant_filtering}{vcf}="$var{outpath}/PASS.SNP.DP.vcf.gz";
 
 	### prepare the setting for low LD prunning
@@ -212,11 +215,13 @@ EOF
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s3_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=4 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s3.list` unless (defined $opts{skipsh});
 
 	$flag_finish = 0;
-	while(1){
-		sleep(20);
-		my $datestring = localtime();
-		print "waiting for variant_filtering_s3 to be done at $datestring\n";
-		if(-e "$var{shpath}/variant_filtering_s3.finished.txt"){last;}
+	unless (defined $opts{skipsh}){
+		while(1){
+			sleep(20);
+			my $datestring = localtime();
+			print "waiting for variant_filtering_s3 to be done at $datestring\n";
+			if(-e "$var{shpath}/variant_filtering_s3.finished.txt"){last;}
+		}
 	}
 
 	$cfg{step1}{variant_filtering}{plink_data}="$var{outpath}/high_confidence_prunned";
