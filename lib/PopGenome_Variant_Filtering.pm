@@ -49,14 +49,14 @@ sub Main{
 	}
 
 
-	my $var{outpath} = "$cfg{args}{outdir}/01.QualityControl/Filtered_variants";
+	$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/Filtered_variants";
 	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
 
-	my $var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/Variant_filtering";
+	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/Variant_filtering";
 	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 
 	die "please add mt genome path into configuration file" unless (defined $cfg{ref}{db}{$temp_ref}{path});
-	my $var{reference} = $cfg{ref}{db}{$cfg{ref}{choose}}{path};
+	$var{reference} = $cfg{ref}{db}{$cfg{ref}{choose}}{path};
 	die "$var{reference} does not exists" unless (-e $var{reference});
 
 	if (defined $opts{variant_filtering}){ &VariantFiltering (\%var,\%opts);}
