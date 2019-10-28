@@ -79,33 +79,34 @@ sub VariantFiltering {
 	my $genome=PopGenome_Shared::LOADREF($var{reference});
 
 	open SH, ">$var{shpath}/variant_filtering_s1.sh";
+	print SH "cd $var{outpath}\n";
 	print SH "gatk SelectVariants \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointCalling/JointCalling.HC.vcf.gz \\\n";
+	print SH "	-V $var{outpath}/../JointCalling/JointCalling.HC.vcf.gz \\\n";
 	print SH "	--select-type-to-include SNP \\\n";
-	print SH "	-O $var{outpath}/JointCalling/JointCalling_raw_snps1st.vcf && echo \"** GVCF JointCalling/JointCalling_raw_snps1st done\" && \\\n";
+	print SH "	-O $var{outpath}/../JointCalling/JointCalling_raw_snps1st.vcf && echo \"** GVCF JointCalling/JointCalling_raw_snps1st done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointCalling/JointCalling_raw_snps1st.vcf \\\n";
+	print SH "	-V $var{outpath}/../JointCalling/JointCalling_raw_snps1st.vcf \\\n";
 	print SH "	--filter-expression \"$cfg{step1}{variant_filtering}{snp}\" \\\n";
 	print SH "	--filter-name \"my_snp_filter\" \\\n";
-	print SH "	-O $var{outpath}/JointCalling/JointCalling_filtered_snps1st.vcf && echo \"** GVCF JointCalling/JointCalling_raw_snps1st done\" \n";
+	print SH "	-O $var{outpath}/../JointCalling/JointCalling_filtered_snps1st.vcf && echo \"** GVCF JointCalling/JointCalling_raw_snps1st done\" \n";
 
 	print SH "gatk SelectVariants \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointCalling/JointCalling.HC.vcf.gz \\\n";
+	print SH "	-V $var{outpath}/../JointCalling/JointCalling.HC.vcf.gz \\\n";
 	print SH "	--select-type-to-include INDEL \\\n";
 	print SH "	--maxIndelSize 60 \\\n";
-	print SH "	-O $var{outpath}/JointCalling/JointCalling_raw_indels1st.vcf && echo \"** GVCF JointCalling/JointCalling_raw_snps1st done\" && \\\n";
+	print SH "	-O $var{outpath}/../JointCalling/JointCalling_raw_indels1st.vcf && echo \"** GVCF JointCalling/JointCalling_raw_snps1st done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointCalling/JointCalling_raw_indels1st.vcf \\\n";
+	print SH "	-V $var{outpath}/../JointCalling/JointCalling_raw_indels1st.vcf \\\n";
 	print SH "	--filter-expression \"$cfg{step1}{variant_filtering}{indel}\" \\\n";
 	print SH "	--filter-name \"my_indel_filter\" \\\n";
-	print SH "	-O $var{outpath}/JointCalling/JointCalling_filtered_indels1st.vcf && echo \"** JointCalling/JointCalling_raw_snps1st done\" \n";
-	print SH "vcftools --vcf $var{outpath}/JointCalling/JointCalling_filtered_snps1st.vcf --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/PASS.SNP.vcf.gz && echo \"** finish variant_filtering_s1 **\" > $var{shpath}/variant_filtering_s1.finished.txt \n";
+	print SH "	-O $var{outpath}/../JointCalling/JointCalling_filtered_indels1st.vcf && echo \"** JointCalling/JointCalling_raw_snps1st done\" \n";
+	print SH "vcftools --vcf $var{outpath}/../JointCalling/JointCalling_filtered_snps1st.vcf --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/PASS.SNP.vcf.gz && echo \"** finish variant_filtering_s1 **\" > $var{shpath}/variant_filtering_s1.finished.txt \n";
 	close SH;
 
 	#switch on the bash running
