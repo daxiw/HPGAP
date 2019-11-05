@@ -11,7 +11,7 @@ sub Main{
     my $usage="
     Usage:
     Options:
-        -i <input>   input list_file contain 2 col (or 3 col for PE),name and raw_path(must be fastq format)
+        -i <input>   input list_file contain 3 col (or 4 col for PE),name and raw_path(must be fastq format)
         -s <seqtype> input sequence type [SE]|PE
         -o <opath>   output file [./result.yml]
         -m <mem>     memory needed[2G]
