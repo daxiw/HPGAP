@@ -38,7 +38,7 @@ sub Main{
         'phred=s',
         'help');
 
-    print "$opts{outpath}\n";
+ #   print "$opts{outpath}\n";
 
     if($opts{help} or !$opts{input}){die "$usage\n";}
     $opts{seqtype} ||= "PE";
@@ -54,7 +54,7 @@ sub Main{
     my $yaml = YAML::Tiny->read( $template );
     my %cfg = %{$yaml->[0]};
 
-    print "$opts{outpath}\n";
+#    print "$opts{outpath}\n";
 
     unless (exists $cfg{args}{threads}){$cfg{args}{threads}=$opts{threads}}
     unless (exists $cfg{args}{prj}){$cfg{args}{prj}=$opts{prj}}
@@ -86,7 +86,7 @@ sub Main{
     $yaml = YAML::Tiny->new( \%cfg );
     # Save both documents to a file
     $yaml->write( $opts{outpath} );
-    print "$opts{outpath}\n";
+#    print "$opts{outpath}\n";
 
 }
 
