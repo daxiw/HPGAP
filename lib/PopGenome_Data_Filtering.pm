@@ -70,34 +70,34 @@ sub DataFiltering{
 		open SH, ">$var{shpath}/$sample.read_filtering.sh";
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
 
-		my $n_lib = 0;
+		my $n_readgroup = 0;
 		my $n_done = 0;
 		my $n_doing = 0;
-		foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
+		foreach my $readgroup (keys %{$samplelist{$sample}{rawdata}}){
 			
-			$n_lib ++;
+			$n_readgroup ++;
 			my $read;
-			if ($samplelist{$sample}{rawdata}{$lib}{fq1} =~ /gz$/){
-				$read = `gunzip -c $samplelist{$sample}{rawdata}{$lib}{fq1}|head -n 2|tail -n 1`;
+			if ($samplelist{$sample}{rawdata}{$readgroup}{fq1} =~ /gz$/){
+				$read = `gunzip -c $samplelist{$sample}{rawdata}{$readgroup}{fq1}|head -n 2|tail -n 1`;
 			}else{
-				$read = `cat $samplelist{$sample}{rawdata}{$lib}{fq1}|head -n 2|tail -n 1`;
+				$read = `cat $samplelist{$sample}{rawdata}{$readgroup}{fq1}|head -n 2|tail -n 1`;
 			}
 			my @temp = split //, $read;
-			$samplelist{$sample}{rawdata}{$lib}{Length} = @temp;
-			$samplelist{$sample}{rawdata}{$lib}{Length} = int($samplelist{$sample}{rawdata}{$lib}{Length}*0.5);
+			$samplelist{$sample}{rawdata}{$readgroup}{Length} = @temp;
+			$samplelist{$sample}{rawdata}{$readgroup}{Length} = int($samplelist{$sample}{rawdata}{$readgroup}{Length}*0.5);
 			
-			if (-e "$sample_outpath/$lib\_1.filt.fq.gz"){ $n_done++; print SH "#" unless (defined $opts{overwrite});}
+			if (-e "$sample_outpath/$readgroup\_1.filt.fq.gz"){ $n_done++; print SH "#" unless (defined $opts{overwrite});}
 			$n_doing ++; 
-			if($samplelist{$sample}{rawdata}{$lib}{Flag} eq "PE"){
-				print SH "fastp -i $samplelist{$sample}{rawdata}{$lib}{fq1} -I $samplelist{$sample}{rawdata}{$lib}{fq2} -o $lib\_1.filt.fq.gz -O $lib\_2.filt.fq.gz --adapter_sequence AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA --adapter_sequence_r2 AAGTCGGATCGTAGCCATGTCGTTCTGTGAGCCAAGGAGTTG --detect_adapter_for_pe --disable_trim_poly_g -q 20 -u 30 -n 2 --length_required $samplelist{$sample}{rawdata}{$lib}{Length} -w 4 -j $lib.fastp.json -h $lib\_1.fastp.html -R \"$sample $lib fastp report\" && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.$lib.read_filtering.finished.txt\n";
+			if($samplelist{$sample}{rawdata}{$readgroup}{Flag} eq "PE"){
+				print SH "fastp -i $samplelist{$sample}{rawdata}{$readgroup}{fq1} -I $samplelist{$sample}{rawdata}{$readgroup}{fq2} -o $readgroup\_1.filt.fq.gz -O $readgroup\_2.filt.fq.gz --adapter_sequence AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA --adapter_sequence_r2 AAGTCGGATCGTAGCCATGTCGTTCTGTGAGCCAAGGAGTTG --detect_adapter_for_pe --disable_trim_poly_g -q 20 -u 30 -n 2 --length_required $samplelist{$sample}{rawdata}{$readgroup}{Length} -w 4 -j $readgroup.fastp.json -h $readgroup\_1.fastp.html -R \"$sample $readgroup fastp report\" && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.$readgroup.read_filtering.finished.txt\n";
 			}
-			if($samplelist{$sample}{rawdata}{$lib}{Flag} eq "SE"){
-				print SH "fastp -i $samplelist{$sample}{rawdata}{$lib}{fq1} -o $lib\_1.filt.fq.gz --adapter_sequence AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA --detect_adapter_for_pe --disable_trim_poly_g -q 20 -u 30 -n 2 --length_required $samplelist{$sample}{rawdata}{$lib}{Length} -w 4 -j $lib.fastp.json -h $lib\_1.fastp.html -R \"$sample $lib fastp report\" && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.$lib.read_filtering.finished.txt\n";
+			if($samplelist{$sample}{rawdata}{$readgroup}{Flag} eq "SE"){
+				print SH "fastp -i $samplelist{$sample}{rawdata}{$readgroup}{fq1} -o $readgroup\_1.filt.fq.gz --adapter_sequence AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA --detect_adapter_for_pe --disable_trim_poly_g -q 20 -u 30 -n 2 --length_required $samplelist{$sample}{rawdata}{$readgroup}{Length} -w 4 -j $readgroup.fastp.json -h $readgroup\_1.fastp.html -R \"$sample $readgroup fastp report\" && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.$readgroup.read_filtering.finished.txt\n";
 			}
 
 		}
 		close SH;
-		print CL "sh $var{shpath}/$sample.read_filtering.sh 1>$var{shpath}/$sample.read_filtering.sh.o 2>$var{shpath}/$sample.read_filtering.sh.e\n" if (($n_lib != $n_done) || (defined $opts{overwrite}));
+		print CL "sh $var{shpath}/$sample.read_filtering.sh 1>$var{shpath}/$sample.read_filtering.sh.o 2>$var{shpath}/$sample.read_filtering.sh.e\n" if (($n_readgroup != $n_done) || (defined $opts{overwrite}));
 	}
 	close CL;
 
@@ -108,9 +108,9 @@ sub DataFiltering{
 	while(1){
 		sleep(10);
 		foreach my $sample (keys %samplelist){
-			foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
+			foreach my $readgroup (keys %{$samplelist{$sample}{rawdata}}){
 				$sample_number ++;
-				if(-e "$var{shpath}/$sample.$lib.read_filtering.finished.txt"){$flag_finish +=1;}
+				if(-e "$var{shpath}/$sample.$readgroup.read_filtering.finished.txt"){$flag_finish +=1;}
 			}
 		}
 		my $datestring = localtime();
@@ -178,4 +178,40 @@ sub ReadReport{
 	close OT;
 }
 
+sub WriteCfg{
+	my ($var,$opts) = @_;
+	my %opts = %{$opts};
+	my %var = %{$var};
+	my %cfg = %{$var{cfg}};
+	my %samplelist = %{$var{samplelist}};
+
+	foreach my $sample (keys %samplelist){
+		my $sample_outpath="$var{outpath}/$sample"; 
+		if ( !-d $sample_outpath ) {
+			make_path $sample_outpath or die "Failed to create path: $sample_outpath";
+		}
+
+		foreach my $readgroup (keys %{$samplelist{$sample}{rawdata}}){
+			if($samplelist{$sample}{rawdata}{$readgroup}{Flag} eq "PE"){
+				if (-e "$sample_outpath/$readgroup\_1.filt.fq.gz"){
+					$cfg{fqdata}{$sample}{cleandata}{$readgroup}{fq1}="$sample_outpath/$readgroup\_1.filt.fq.gz";
+				}
+				if (-e "$sample_outpath/$readgroup\_2.filt.fq.gz"){
+					$cfg{fqdata}{$sample}{cleandata}{$readgroup}{fq2}="$sample_outpath/$readgroup\_2.filt.fq.gz";
+				}
+			}
+			if($samplelist{$sample}{cleandata}{$readgroup}{Flag} eq "SE"){
+				#$readgroup\_1.filt.fq.gz
+				if (-e "$sample_outpath/$readgroup\_1.filt.fq.gz"){
+					$cfg{fqdata}{$sample}{cleandata}{$readgroup}{fq1}="$sample_outpath/$readgroup\_1.filt.fq.gz";
+				}
+			}
+		}
+	}
+
+	# create this yaml object
+	$yaml = YAML::Tiny->new( \%cfg );
+	# Save both documents to a file
+	$yaml->write( "$var{outpath}/Data_Filtering.yml" );
+}
 1;
