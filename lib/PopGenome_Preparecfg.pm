@@ -36,7 +36,7 @@ sub Main{
         'prj=s',
         'platform=s',
         'phred=s',
-        'outdir=s'
+        'outdir=s',
         'cleandata',
         'help');
 
