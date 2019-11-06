@@ -29,13 +29,14 @@ sub Main{
     GetOptionsFromArray (\@args, \%opts, 
         'input=s',
         'seqtype=s',
-        'outpath=s',
+        'outcfg=s',
         'mem=s',
         'threads=s',
         'queue=s',
         'prj=s',
         'platform=s',
         'phred=s',
+        'outdir=s'
         'cleandata',
         'help');
 
@@ -43,7 +44,7 @@ sub Main{
 
     if($opts{help} or !$opts{input}){die "$usage\n";}
     $opts{seqtype} ||= "PE";
-    $opts{outpath} ||= "./result.yml";
+    $opts{outcfg} ||= "./result.yml";
     $opts{mem} ||= "2G";
     $opts{threads} ||= 4;
     $opts{queue} ||= "st.q";
@@ -51,11 +52,15 @@ sub Main{
     $opts{platform} ||= "BGISEQ500";
     $opts{phred} ||= 33;
 
+    if (defined $opts{outdir}){
+        $cfg{args}{outdir}=$opts{outdir};
+    }
+
     my $fiterflag = "rawdata";
     if (defined $opts{cleandata}){
         $fiterflag = "cleandata";
     }
-    
+
     my $template = "$Bin/lib/template.yml";
     my $yaml = YAML::Tiny->read( $template );
     my %cfg = %{$yaml->[0]};
@@ -91,7 +96,7 @@ sub Main{
     # create this yaml object
     $yaml = YAML::Tiny->new( \%cfg );
     # Save both documents to a file
-    $yaml->write( $opts{outpath} );
+    $yaml->write( $opts{outcfg} );
 #    print "$opts{outpath}\n";
 
 }
