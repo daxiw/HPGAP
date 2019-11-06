@@ -6,6 +6,8 @@ use FindBin '$Bin';
 use YAML::Tiny;
 use lib "$Bin/lib";
 
+# pending function: check cleandata, check readgroup uniqueness
+
 sub Main{
 
     my $usage="

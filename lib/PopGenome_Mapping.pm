@@ -69,6 +69,7 @@ sub Main{
 		#### estimate phylogeny of mt genomes ###		
 	}
 }
+
 ############################
 #			   #
 #    Step 1b Mapping       #
@@ -87,30 +88,30 @@ sub ReadMapping {
 
 		open SH, ">$shpath/$sample.readmapping.sh";		
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
-		foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
-			if($samplelist{$sample}{rawdata}{$lib}{Flag} eq "PE"){
-				print SH "bwa mem $reference ../../read_filtering/$sample/$lib\_1.filt.fq.gz ../../read_filtering/$sample/$lib\_2.filt.fq.gz -t $var{threads} -R \"\@RG\\tID:$lib\\tSM:$sample\\tLB:$lib\\tPL:$samplelist{$sample}{rawdata}{$lib}{PL}\"\| samtools view -bS -@ $cfg{args}{threads} -F 4 - -o $lib\_filt.bam && \\\n";
+		foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
+			if($samplelist{$sample}{cleandata}{$readgroup}{Flag} eq "PE"){
+				print SH "bwa mem $reference $samplelist{$sample}{cleandata}{$readgroup}{fq1} $samplelist{$sample}{cleandata}{$readgroup}{fq2} -t $var{threads} -R \"\@RG\\tID:$readgroup\\tSM:$sample\\tLB:$readgroup\\tPL:$samplelist{$sample}{cleandata}{$readgroup}{PL}\"\| samtools view -bS -@ $cfg{args}{threads} -F 4 - -o $readgroup\_filt.bam && \\\n";
 			}
-			elsif($samplelist{$sample}{rawdata}{$lib}{Flag} eq "SE"){
-				print SH "bwa mem $reference ../../read_filtering/$sample/$lib\_1.filt.fq.gz -t $cfg{args}{threads} -R \"\@RG\\tID:$lib\\tSM:$sample\\tLB:$lib\\tPL:$samplelist{$sample}{rawdata}{$lib}{PL}\"\| samtools view -bS -@ 10 -F 4 - -o $lib\_filt.bam && \\\n";
+			elsif($samplelist{$sample}{cleandata}{$readgroup}{Flag} eq "SE"){
+				print SH "bwa mem $reference $samplelist{$sample}{cleandata}{$readgroup}{fq1} -t $cfg{args}{threads} -R \"\@RG\\tID:$readgroup\\tSM:$sample\\tLB:$readgroup\\tPL:$samplelist{$sample}{cleandata}{$readgroup}{PL}\"\| samtools view -bS -@ 10 -F 4 - -o $readgroup\_filt.bam && \\\n";
 			}
 			#summarise statistics for each library bam file 
-			print SH "samtools stats -@ $cfg{args}{threads} $lib\_filt.bam 1>$lib\_filt.bamstat.txt 2>$lib\_filt.bamstat.txt.e && echo \"** $lib\_filt.bamstat.txt done **\"\n";
+			print SH "samtools stats -@ $cfg{args}{threads} $readgroup\_filt.bam 1>$readgroup\_filt.bamstat.txt 2>$readgroup\_filt.bamstat.txt.e && echo \"** $readgroup\_filt.bamstat.txt done **\"\n";
 			#then sort each library bam file 
-			print SH "samtools sort -@ $cfg{args}{threads} $lib\_filt.bam -o $lib\_filt.sort.bam --output-fmt BAM && \\\n";
+			print SH "samtools sort -@ $cfg{args}{threads} $readgroup\_filt.bam -o $readgroup\_filt.sort.bam --output-fmt BAM && \\\n";
 			#then remove the unsorted bam file
-			print SH "rm -f $lib\_filt.bam\n";
+			print SH "rm -f $readgroup\_filt.bam\n";
 		}
 
 		#when there is only one library/lane for each sample
-		if (keys %{$samplelist{$sample}{rawdata}} == 1){
-			foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
-				print SH "mv $lib\_filt.sort.bam $sample.sorted.bam\n";}
+		if (keys %{$samplelist{$sample}{cleandata}} == 1){
+			foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
+				print SH "mv $readgroup\_filt.sort.bam $sample.sorted.bam\n";}
 			print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** bam.stats.txt done **\"\n";
 		}
 
 		#when there is more than one library/lane for each sample
-		if (keys %{$samplelist{$sample}{rawdata}} > 1){
+		if (keys %{$samplelist{$sample}{cleandata}} > 1){
 			print SH "samtools merge -nr -@ $cfg{args}{threads} $sample.sorted.bam *_filt.sort.bam && echo \"** $sample.sort.bam done **\" && rm -f *_filt.sort.bam\n";
 			#print SH "samtools sort -@ $cfg{args}{threads} $sample.bam -o $sample.sorted.bam --output-fmt BAM && echo \"** $sample.sorted.bam done **\" && rm -f $sample.bam\n";
 			print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** bam.stats.txt done **\"\n";
