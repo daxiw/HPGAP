@@ -86,7 +86,7 @@ sub ReadMapping {
 	foreach my $sample (keys %samplelist){
 		my $sample_outpath="$var{outpath}/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
 
-		open SH, ">$shpath/$sample.readmapping.sh";		
+		open SH, ">$var{shpath}/$sample.readmapping.sh";		
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
 		foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
 			if($samplelist{$sample}{cleandata}{$readgroup}{Flag} eq "PE"){
@@ -117,11 +117,10 @@ sub ReadMapping {
 			print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** bam.stats.txt done **\"\n";
 		}
 		close SH;
-		print CL "sh $shpath/$sample.readmapping.sh 1>$shpath/$sample.readmapping.sh.o 2>$shpath/$sample.readmapping.sh.e \n";
+		print CL "sh $var{shpath}/$sample.readmapping.sh 1>$var{shpath}/$sample.readmapping.sh.o 2>$var{shpath}/$sample.readmapping.sh.e \n";
 	}
 	close CL;
-	my $threads = $cfg{args}{threads};
-	`perl $Bin/lib/qsub.pl -d $shpath/cmd_readmapping_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=$var{threads} -binding linear:1' -m 100 -r $shpath/cmd_readmapping.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_readmapping_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_readmapping.list` unless (defined $opts{skipsh});
 }
 
 1;
