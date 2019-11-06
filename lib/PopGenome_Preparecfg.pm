@@ -52,10 +52,6 @@ sub Main{
     $opts{platform} ||= "BGISEQ500";
     $opts{phred} ||= 33;
 
-    if (defined $opts{outdir}){
-        $cfg{args}{outdir}=$opts{outdir};
-    }
-
     my $fiterflag = "rawdata";
     if (defined $opts{cleandata}){
         $fiterflag = "cleandata";
@@ -71,6 +67,10 @@ sub Main{
     unless (exists $cfg{args}{prj}){$cfg{args}{prj}=$opts{prj}}
     unless (exists $cfg{args}{queue}){$cfg{args}{queue}=$opts{queue}}
     unless (exists $cfg{args}{mem}){$cfg{args}{mem}=$opts{mem}}
+
+    if (defined $opts{outdir}){
+        $cfg{args}{outdir}=$opts{outdir};
+    }
 
     open IN,"$opts{input}" or die $!;
     my %sample;
