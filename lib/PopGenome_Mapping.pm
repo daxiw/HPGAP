@@ -19,7 +19,7 @@ sub Main{
 		'config=s',
 		'overwrite',
 		'allsteps',
-		'threads',
+		'threads=s',
 		'read_mapping',
 		'mapping_report',
 		'reference_selection',
