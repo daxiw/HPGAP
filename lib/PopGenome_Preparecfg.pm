@@ -36,6 +36,7 @@ sub Main{
         'prj=s',
         'platform=s',
         'phred=s',
+        'cleandata',
         'help');
 
  #   print "$opts{outpath}\n";
@@ -50,6 +51,11 @@ sub Main{
     $opts{platform} ||= "BGISEQ500";
     $opts{phred} ||= 33;
 
+    my $fiterflag = "rawdata";
+    if (defined $opts{cleandata}){
+        $fiterflag = "cleandata";
+    }
+    
     my $template = "$Bin/lib/template.yml";
     my $yaml = YAML::Tiny->read( $template );
     my %cfg = %{$yaml->[0]};
@@ -68,12 +74,12 @@ sub Main{
         my @a = (split /\s+/,$_);
         my $name = $a[0];
         $sample{$name}=1;
-        $cfg{fqdata}{$name}{rawdata}{$a[1]}{'Flag'} = $opts{seqtype};
-        $cfg{fqdata}{$name}{rawdata}{$a[1]}{'PL'} = $opts{platform};
-        $cfg{fqdata}{$name}{rawdata}{$a[1]}{'Phred'} = $opts{phred};
-        $cfg{fqdata}{$name}{rawdata}{$a[1]}{'fq1'} = $a[2];
+        $cfg{fqdata}{$name}{$fiterflag}{$a[1]}{'Flag'} = $opts{seqtype};
+        $cfg{fqdata}{$name}{$fiterflag}{$a[1]}{'PL'} = $opts{platform};
+        $cfg{fqdata}{$name}{$fiterflag}{$a[1]}{'Phred'} = $opts{phred};
+        $cfg{fqdata}{$name}{$fiterflag}{$a[1]}{'fq1'} = $a[2];
         if ($opts{seqtype} eq "PE"){
-            $cfg{fqdata}{$name}{rawdata}{$a[1]}{'fq2'} = $a[3];
+            $cfg{fqdata}{$name}{$fiterflag}{$a[1]}{'fq2'} = $a[3];
         }
     }
     close IN;
