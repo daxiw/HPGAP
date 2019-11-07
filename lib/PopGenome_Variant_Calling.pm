@@ -344,11 +344,12 @@ sub FreebayesCalling {
 
 	  	print CL "sh $var{shpath}/$sample.freebayes_calling_markdup.sh 1>$var{shpath}/$sample.freebayes_calling_markdup.sh.o 2>$var{shpath}/$sample.freebayes_calling_markdup.sh.e\n";
 
-	  	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_markdup_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_calling_markdup.list` unless (defined $opts{skipsh});
+	  	
 	}
 	close BAMLIST;
 	close CL;
-
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_markdup_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_calling_markdup.list` unless (defined $opts{skipsh});
+	
 	while(1){
 		sleep(10);
 		my $flag_finish = 1; 
