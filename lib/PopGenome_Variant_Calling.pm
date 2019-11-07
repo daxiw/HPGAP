@@ -22,7 +22,7 @@ sub Main{
 		'threads=i',
 		'individual_variant_calling',
 		'joint_calling',
-		'freebayes',
+		'freebayes_calling',
 		'recalibration_mode',
 		'help',
 		'skipsh');
