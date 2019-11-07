@@ -22,6 +22,7 @@ sub Main{
 		'threads=i',
 		'individual_variant_calling',
 		'joint_calling',
+		'freebayes',
 		'recalibration_mode',
 		'help',
 		'skipsh');
@@ -75,6 +76,8 @@ sub Main{
 	if (defined $opts{individual_variant_calling}){ &IndividualVariantCalling (\%var,\%opts);}
 
 	if (defined $opts{joint_calling}){ &JointCalling (\%var,\%opts);}
+
+	if (defined $opts{freebayes_calling}){ &FreebayesCalling (\%var,\%opts);}
 	#### estimate phylogeny of mt genomes ###
 
 }
@@ -304,6 +307,71 @@ sub JointCalling{
 	close CL;
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_joint_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_joint_calling.list` unless (defined $opts{skipsh});
+}
+
+sub FreebayesCalling {
+
+	my ($var,$opts) = @_;
+	my %opts = %{$opts};
+	my %var = %{$var};
+	my %cfg = %{$var{cfg}};
+	my %samplelist = %{$var{samplelist}};
+
+	if ( !-d "$var{outpath}/JointCalling/" ) {
+		make_path "$var{outpath}/JointCalling/" or die "Failed to create path: $var{outpath}/JointCalling/";
+	}
+
+	open CL, ">$var{shpath}/cmd_freebayes_calling_markdup.list";
+	open BAMLIST, ">$var{outpath}/JointCalling/bam.list";
+	foreach my $sample (keys %samplelist){
+
+		print BAMLIST "$var{outpath}/$sample/$sample.sorted.markdup.bam\n";
+
+		open SH, ">$var{shpath}/$sample_freebayes_calling_markdup.sh";
+
+		print SH "#!/bin/sh\ncd $sample_outpath\n";
+		# MarkDuplicates
+		print SH "gatk MarkDuplicates \\\n";
+	  	print SH "	--INPUT $sample.sorted.bam \\\n";
+	  	print SH "	--OUTPUT $sample.sorted.markdup.bam \\\n";
+	  	print SH "	--METRICS_FILE $sample.sorted.markdup_metrics.txt && \\\n";
+	  	print SH "rm -f $sample.sorted.bam && \\\n";
+	  	print SH "echo \"** $sample.sorted.markdup.bam done **\" \n";
+	  	print SH "samtools index $sample.sorted.markdup.bam && \\\n";
+	  	print SH "echo \"** $sample.sorted.markdup.bam index done **\" > $var{shpath}/$sample_freebayes_calling_markdup.finished.txt\n";
+
+	  	close SH;
+
+	  	print CL "sh $var{shpath}/$sample_freebayes_calling_markdup.sh 1>$var{shpath}/$sample_freebayes_calling_markdup.sh.o 2>$var{shpath}/$sample_freebayes_calling_markdup.sh.e\n";
+
+	  	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_markdup_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_calling_markdup.list` unless (defined $opts{skipsh});
+	}
+	close BAMLIST;
+	close CL;
+
+	while(1){
+		sleep(10);
+		my $flag_finish = 1; 
+		foreach my $sample (keys %samplelist){
+			if(-e "$var{shpath}/$sample_freebayes_calling_markdup.finished.txt"){
+				next;
+			}else{
+				$flag_finish = 0;
+			}
+		}
+		my $datestring = localtime();
+		print "waiting for sample_freebayes_calling_markdup to be done at $datestring\n";
+		last if($flag_finish == 1);
+	}
+
+	open CL, ">$var{shpath}/cmd_freebayes_calling.list";
+	open SH, ">$var{shpath}/freebayes_calling.sh";
+	print SH "freebayes -f $var{reference} -L bam.list  >$var{outpath}/JointCalling/freebayes_joint_calling.vcf";
+	close SH;
+	close CL;
+
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=10 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_calling.list` unless (defined $opts{skipsh});
+
 }
 
 1;

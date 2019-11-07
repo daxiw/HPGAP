@@ -19,6 +19,7 @@ sub Main{
 		'config=s',
 		'overwrite',
 		'allsteps',
+		'outcfg=s',
 		'threads=s',
 		'read_mapping',
 		'mapping_report',
@@ -64,10 +65,44 @@ sub Main{
 
 		if (defined $opts{read_mapping}){ & ReadMapping (\%var,\%opts);}
 
-		if (defined $opts{mapping_report}){ & MappingReport (\%var,\%opts);}
-	
 		#### estimate phylogeny of mt genomes ###		
 	}
+
+	# wait for the read mapping 
+	while(defined $opts{read_mapping}){
+		sleep(10);
+		my $flag_finish = 1; 
+		foreach my $temp_ref(keys %{$cfg{ref}{db}}){
+			$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$temp_ref";
+			foreach my $sample (keys %samplelist){
+				if(-e "$var{shpath}/$sample.readmapping.finished.txt"){
+					next;
+				}else{
+					$flag_finish = 0;
+				}
+			}
+		}
+		my $datestring = localtime();
+		print "waiting for readmapping to be done at $datestring\n";
+		last if($flag_finish == 1);
+	}
+
+	foreach my $temp_ref(keys %{$cfg{ref}{db}}){
+		$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$temp_ref"; 
+		if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
+		$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$temp_ref";
+		if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
+
+		if (defined $opts{mapping_report}){ & MappingReport (\%var,\%opts);}
+	}
+	#$var{outfig} = $opts{config};
+	#$var{outfig} =~ s/\.yml|\.yaml/_mapping_done\.yml/g;
+	#$opts{outcfg} ||= $var{outfig};
+	# create this yaml object
+    #$yaml = YAML::Tiny->new( $var{newcfg} );
+    # Save both documents to a file
+    #$yaml->write( $opts{outcfg} );
+#    print "$opts{outpath}\n";
 }
 
 ############################
@@ -106,20 +141,34 @@ sub ReadMapping {
 		#when there is only one library/lane for each sample
 		if (keys %{$samplelist{$sample}{cleandata}} == 1){
 			foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
-				print SH "mv $readgroup\_filt.sort.bam $sample.sorted.bam\n";}
-			print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** bam.stats.txt done **\"\n";
+				print SH "mv $readgroup\_filt.sort.bam $sample.sorted.bam\n";
+			}
+			#print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** bam.stats.txt done **\"\n";
 		}
 
 		#when there is more than one library/lane for each sample
 		if (keys %{$samplelist{$sample}{cleandata}} > 1){
 			print SH "samtools merge -nr -@ $var{threads} $sample.sorted.bam *_filt.sort.bam && echo \"** $sample.sort.bam done **\" && rm -f *_filt.sort.bam\n";
 			#print SH "samtools sort -@ $cfg{args}{threads} $sample.bam -o $sample.sorted.bam --output-fmt BAM && echo \"** $sample.sorted.bam done **\" && rm -f $sample.bam\n";
-			print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** bam.stats.txt done **\"\n";
+			
 		}
+
+		print SH "gatk MarkDuplicates \\\n";
+	  	print SH "	--INPUT $sample.sorted.bam \\\n";
+	  	print SH "	--OUTPUT $sample.sorted.markdup.bam \\\n";
+	  	print SH "	--METRICS_FILE $sample.sorted.markdup_metrics.txt && \\\n";
+	  	print SH "rm -f $sample.sorted.bam && \\\n";
+	  	print SH "echo \"** $sample.sorted.markdup.bam done **\" \n";
+	  	print SH "samtools index $sample.sorted.markdup.bam && \\\n";
+	  	print SH "echo \"** $sample.sorted.markdup.bam index done **\" \n";
+
+	  	print SH "samtools stats -@ $var{threads} $sample.sorted.markdup.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** bam.stats.txt done **\" > $var{shpath}/$sample.readmapping.finished.txt\n";
+
 		close SH;
 		print CL "sh $var{shpath}/$sample.readmapping.sh 1>$var{shpath}/$sample.readmapping.sh.o 2>$var{shpath}/$sample.readmapping.sh.e \n";
 	}
 	close CL;
+
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_readmapping_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_readmapping.list` unless (defined $opts{skipsh});
 }
 
