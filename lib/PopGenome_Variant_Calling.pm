@@ -370,7 +370,7 @@ sub FreebayesCalling {
 	close SH;
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=10 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_calling.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_calling.list` unless (defined $opts{skipsh});
 
 }
 
