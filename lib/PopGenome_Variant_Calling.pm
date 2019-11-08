@@ -99,6 +99,8 @@ sub IndividualVariantCalling {
 		if ((-e "$sample_outpath/$sample.HC.gvcf.gz") && (!defined $opts{overwrite})){
 			$samplelist{$sample}{finish_flag}="finished";
 			next;
+		}else{
+			`rm -f $var{shpath}/$sample.variant_calling.finished.txt`;
 		}
 
 		open SH, ">$var{shpath}/$sample.variant_calling.sh";
@@ -350,7 +352,6 @@ sub FreebayesCalling {
 	close CL;
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_calling.list` unless (defined $opts{skipsh});
-
 }
 
 1;
