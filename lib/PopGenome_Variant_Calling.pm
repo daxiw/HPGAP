@@ -95,28 +95,27 @@ sub IndividualVariantCalling {
 		my $sample_outpath="$var{outpath}/$sample"; 
 		if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
 
+		### skip finished samples
+		if ((-e "$sample_outpath/$sample.HC.gvcf.gz") && (!defined $opts{overwrite}))
+		{
+			$samplelist{$sample}{finish_flag}="finished";
+			next;
+		}
 
 		open SH, ">$var{shpath}/$sample.variant_calling.sh";
 
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
 
-		# MarkDuplicates
-		print SH "gatk MarkDuplicates \\\n";
-	  	print SH "	--INPUT $sample.sorted.bam \\\n";
-	  	print SH "	--OUTPUT $sample.sorted.markdup.bam \\\n";
-	  	print SH "	--METRICS_FILE $sample.sorted.markdup_metrics.txt && \\\n";
-	  	print SH "rm -f $sample.sorted.bam && \\\n";
-	  	print SH "echo \"** $sample.sorted.markdup.bam done **\" \n";
-	  	print SH "samtools index $sample.sorted.markdup.bam && echo \"** $sample.sorted.markdup.bam index done **\" \n";
 
 		if ($var{variant_calling_mode} eq 'fast'){
+
 			print SH "gatk HaplotypeCaller \\\n";
 			print SH "	--emit-ref-confidence GVCF \\\n";
 			print SH "	-R $var{reference} \\\n";
 			print SH "	-ploidy $var{ploidy} \\\n";
 			print SH "	-I $sample.sorted.markdup.bam \\\n";
 			print SH "	-O $sample.HC.gvcf.gz && echo \"** GVCF ${sample}.HC.g.vcf.gz done\" && \\\n";
-		  	print SH "rm -f $sample.sorted.markdup.BQSR2nd.bam\n";
+		  	print SH "rm -f $sample.sorted.markdup.BQSR2nd.bam && echo \"** variant calling done **\" > $var{shpath}/$sample.variant_calling.finished.txt\n";
 		}
 		else{ #recalibration mode
 			# HaplotypeCaller
@@ -259,13 +258,29 @@ sub IndividualVariantCalling {
 		  	print SH "gatk AnalyzeCovariates \\\n";
 		  	print SH "	--before-report-file $sample.sorted.markdup.recal_data2nd.table \\\n";
 		  	print SH "	--after-report-file $sample.sorted.markdup.recal_data2nd_after.table \\\n";
-		  	print SH "	--plots-report-file $sample.recalQC.2nd.pdf\n";
+		  	print SH "	--plots-report-file $sample.recalQC.2nd.pdf && echo \"** variant calling done **\" > $var{shpath}/$sample.variant_calling.finished.txt\n";
 	  	}
 		close SH;
 		print CL "sh $var{shpath}/$sample.variant_calling.sh 1>$var{shpath}/$sample.variant_calling.sh.o 2>$var{shpath}/$sample.variant_calling.sh.e\n";
 	}
 	close CL;
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_variant_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_calling.list` unless (defined $opts{skipsh});
+
+	while(1){
+		sleep(10);
+		my $flag_finish = 1; 
+		foreach my $sample (keys %samplelist){
+			next if (defined $samplelist{$sample}{finish_flag});
+			if(-e "$var{shpath}/$sample.variant_calling.finished.txt"){
+				next;
+			}else{
+				$flag_finish = 0;
+			}
+		}
+		my $datestring = localtime();
+		print "waiting for sample.variant_calling to be done at $datestring\n";
+		last if($flag_finish == 1);
+	}
 }
 
 sub JointCalling{
@@ -349,7 +364,7 @@ sub FreebayesCalling {
 	close BAMLIST;
 	close CL;
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_markdup_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_calling_markdup.list` unless (defined $opts{skipsh});
-	
+
 	while(1){
 		sleep(10);
 		my $flag_finish = 1; 
@@ -367,8 +382,10 @@ sub FreebayesCalling {
 
 	open CL, ">$var{shpath}/cmd_freebayes_calling.list";
 	open SH, ">$var{shpath}/freebayes_calling.sh";
-	print SH "freebayes -f $var{reference} -L bam.list  >$var{outpath}/JointCalling/freebayes_joint_calling.vcf";
+	print SH "freebayes -f $var{reference} -L $var{outpath}/JointCalling/bam.list -p $var{ploidy} >$var{outpath}/JointCalling/freebayes_joint_calling.vcf";
 	close SH;
+
+	print CL "sh $var{shpath}/freebayes_calling.sh 1>$var{shpath}/freebayes_calling.sh.o 2>$var{shpath}/freebayes_calling.sh.e\n";
 	close CL;
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_calling.list` unless (defined $opts{skipsh});
