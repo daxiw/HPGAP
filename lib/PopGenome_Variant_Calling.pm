@@ -96,8 +96,7 @@ sub IndividualVariantCalling {
 		if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
 
 		### skip finished samples
-		if ((-e "$sample_outpath/$sample.HC.gvcf.gz") && (!defined $opts{overwrite}))
-		{
+		if ((-e "$sample_outpath/$sample.HC.gvcf.gz") && (!defined $opts{overwrite})){
 			$samplelist{$sample}{finish_flag}="finished";
 			next;
 		}
@@ -336,49 +335,11 @@ sub FreebayesCalling {
 		make_path "$var{outpath}/JointCalling/" or die "Failed to create path: $var{outpath}/JointCalling/";
 	}
 
-	open CL, ">$var{shpath}/cmd_freebayes_calling_markdup.list";
 	open BAMLIST, ">$var{outpath}/JointCalling/bam.list";
 	foreach my $sample (keys %samplelist){
-
 		print BAMLIST "$var{outpath}/$sample/$sample.sorted.markdup.bam\n";
-
-		open SH, ">$var{shpath}/$sample.freebayes_calling_markdup.sh";
-
-		print SH "#!/bin/sh\ncd $var{outpath}/$sample\n";
-		# MarkDuplicates
-		print SH "gatk MarkDuplicates \\\n";
-	  	print SH "	--INPUT $sample.sorted.bam \\\n";
-	  	print SH "	--OUTPUT $sample.sorted.markdup.bam \\\n";
-	  	print SH "	--METRICS_FILE $sample.sorted.markdup_metrics.txt && \\\n";
-	  	print SH "rm -f $sample.sorted.bam && \\\n";
-	  	print SH "echo \"** $sample.sorted.markdup.bam done **\" \n";
-	  	print SH "samtools index $sample.sorted.markdup.bam && \\\n";
-	  	print SH "echo \"** $sample.sorted.markdup.bam index done **\" > $var{shpath}/$sample.freebayes_calling_markdup.finished.txt\n";
-
-	  	close SH;
-
-	  	print CL "sh $var{shpath}/$sample.freebayes_calling_markdup.sh 1>$var{shpath}/$sample.freebayes_calling_markdup.sh.o 2>$var{shpath}/$sample.freebayes_calling_markdup.sh.e\n";
-
-	  	
 	}
 	close BAMLIST;
-	close CL;
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_markdup_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_calling_markdup.list` unless (defined $opts{skipsh});
-
-	while(1){
-		sleep(10);
-		my $flag_finish = 1; 
-		foreach my $sample (keys %samplelist){
-			if(-e "$var{shpath}/$sample.freebayes_calling_markdup.finished.txt"){
-				next;
-			}else{
-				$flag_finish = 0;
-			}
-		}
-		my $datestring = localtime();
-		print "waiting for sample.freebayes_calling_markdup to be done at $datestring\n";
-		last if($flag_finish == 1);
-	}
 
 	open CL, ">$var{shpath}/cmd_freebayes_calling.list";
 	open SH, ">$var{shpath}/freebayes_calling.sh";
