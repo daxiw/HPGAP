@@ -73,11 +73,12 @@ sub Main{
 	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$cfg{ref}{choose}";
 	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 
+	if (defined $opts{freebayes_calling}){ &FreebayesCalling (\%var,\%opts);}
+
 	if (defined $opts{individual_variant_calling}){ &IndividualVariantCalling (\%var,\%opts);}
 
 	if (defined $opts{joint_calling}){ &JointCalling (\%var,\%opts);}
 
-	if (defined $opts{freebayes_calling}){ &FreebayesCalling (\%var,\%opts);}
 	#### estimate phylogeny of mt genomes ###
 
 }
@@ -97,7 +98,7 @@ sub IndividualVariantCalling {
 
 		### skip finished samples
 		if ((-e "$sample_outpath/$sample.HC.gvcf.gz") && (!defined $opts{overwrite})){
-			$samplelist{$sample}{finish_flag}="finished";
+			$samplelist{$sample}{finish_flag} = "finished";
 			next;
 		}else{
 			`rm -f $var{shpath}/$sample.variant_calling.finished.txt`;

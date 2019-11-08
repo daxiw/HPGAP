@@ -53,6 +53,7 @@ sub Main{
 
 	if (defined $opts{reference_selection}){ & SelectReference (\%var,\%opts); last;}
 
+	my %mapping;
 	foreach my $temp_ref(keys %{$cfg{ref}{db}}){
 		$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$temp_ref"; 
 		if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
@@ -63,7 +64,7 @@ sub Main{
 		$var{reference} = $cfg{ref}{db}{$temp_ref}{path};
 		die "$var{reference} does not exists" unless (-e $var{reference});
 
-		if (defined $opts{read_mapping}){ & ReadMapping (\%var,\%opts);}
+		if (defined $opts{read_mapping}){ $mapping{$temp_ref} = & ReadMapping (\%var,\%opts);}
 
 		#### estimate phylogeny of mt genomes ###		
 	}
@@ -72,15 +73,22 @@ sub Main{
 	while(defined $opts{read_mapping}){
 		sleep(10);
 		my $flag_finish = 1; 
+
 		foreach my $temp_ref(keys %{$cfg{ref}{db}}){
 			$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$temp_ref";
+			#####
+
+			my %subsamplelist = %{ $mapping{$temp_ref} };
+
 			foreach my $sample (keys %samplelist){
+				next if ($subsamplelist{$sample}{finish_flag} eq "finished");
 				if(-e "$var{shpath}/$sample.readmapping.finished.txt"){
 					next;
 				}else{
 					$flag_finish = 0;
 				}
 			}
+			#####
 		}
 		my $datestring = localtime();
 		print "waiting for readmapping to be done at $datestring\n";
@@ -95,6 +103,7 @@ sub Main{
 
 		if (defined $opts{mapping_report}){ & MappingReport (\%var,\%opts);}
 	}
+
 	#$var{outfig} = $opts{config};
 	#$var{outfig} =~ s/\.yml|\.yaml/_mapping_done\.yml/g;
 	#$opts{outcfg} ||= $var{outfig};
@@ -119,11 +128,29 @@ sub ReadMapping {
 	
 	open CL, ">$var{shpath}/cmd_readmapping.list";
 	foreach my $sample (keys %samplelist){
+
 		my $sample_outpath="$var{outpath}/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
+
+		### skip finished samples 
+		$samplelist{$sample}{finish_flag}="finished";
+		foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
+			if ((-e "$sample_outpath/$readgroup\_filt.bamstat.txt") && (!defined $opts{overwrite})){
+				$samplelist{$sample}{cleandata}{$readgroup}{finish_flag}="finished";
+			}
+			else{
+				$samplelist{$sample}{finish_flag}="unfinished";
+				$samplelist{$sample}{cleandata}{$readgroup}{finish_flag}="unfinished";
+			#	`rm -f $var{shpath}/$sample.variant_calling.finished.txt`;
+			}
+		}
+		next if($samplelist{$sample}{finish_flag} eq "finished";);
 
 		open SH, ">$var{shpath}/$sample.readmapping.sh";		
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
 		foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
+
+			next if ($samplelist{$sample}{cleandata}{$readgroup}{finish_flag} eq "finished");
+
 			if($samplelist{$sample}{cleandata}{$readgroup}{Flag} eq "PE"){
 				print SH "bwa mem $var{reference} $samplelist{$sample}{cleandata}{$readgroup}{fq1} $samplelist{$sample}{cleandata}{$readgroup}{fq2} -t $var{threads} -R \"\@RG\\tID:$readgroup\\tSM:$sample\\tLB:$readgroup\\tPL:$samplelist{$sample}{cleandata}{$readgroup}{PL}\"\| samtools view -bS -@ $cfg{args}{threads} -F 4 - -o $readgroup\_filt.bam && \\\n";
 			}
@@ -143,14 +170,11 @@ sub ReadMapping {
 			foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
 				print SH "mv $readgroup\_filt.sort.bam $sample.sorted.bam\n";
 			}
-			#print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** bam.stats.txt done **\"\n";
 		}
 
 		#when there is more than one library/lane for each sample
 		if (keys %{$samplelist{$sample}{cleandata}} > 1){
-			print SH "samtools merge -nr -@ $var{threads} $sample.sorted.bam *_filt.sort.bam && echo \"** $sample.sort.bam done **\" && rm -f *_filt.sort.bam\n";
-			#print SH "samtools sort -@ $cfg{args}{threads} $sample.bam -o $sample.sorted.bam --output-fmt BAM && echo \"** $sample.sorted.bam done **\" && rm -f $sample.bam\n";
-			
+			print SH "samtools merge -nr -@ $var{threads} $sample.sorted.bam *_filt.sort.bam && echo \"** $sample.sort.bam done **\" && rm -f *_filt.sort.bam\n";			
 		}
 
 		print SH "gatk MarkDuplicates \\\n";
@@ -170,6 +194,9 @@ sub ReadMapping {
 	close CL;
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_readmapping_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_readmapping.list` unless (defined $opts{skipsh});
+
+	return (\%samplelist);
+
 }
 
 1;

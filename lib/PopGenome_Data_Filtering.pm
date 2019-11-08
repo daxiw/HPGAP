@@ -30,7 +30,7 @@ sub Main{
 		'help',
 		'skipsh');
 
-	$opts{config}||="allcfg.yml";
+	die "please provide the correct configuration file" unless ((defined $opts{config}) && (-e $opts{config}));
 
 	if (defined $opts{allsteps}){
 		$opts{filter} = 1;
@@ -67,15 +67,27 @@ sub DataFiltering{
 			make_path $sample_outpath or die "Failed to create path: $sample_outpath";
 		}
 
+		### skip finished samples 
+		$samplelist{$sample}{finish_flag}="finished";
+		foreach my $readgroup (keys %{$samplelist{$sample}{rawdata}}){
+			if ((-e "$sample_outpath/$readgroup\_1.filt.fq.gz") && (!defined $opts{overwrite})){
+				$samplelist{$sample}{rawdata}{$readgroup}{finish_flag}="finished";
+			}
+			else{
+				$samplelist{$sample}{finish_flag}="unfinished";
+				$samplelist{$sample}{rawdata}{$readgroup}{finish_flag}="unfinished";
+			}
+		}
+		next if($samplelist{$sample}{finish_flag} eq "finished";);
+
 		open SH, ">$var{shpath}/$sample.read_filtering.sh";
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
 
-		my $n_readgroup = 0;
-		my $n_done = 0;
-		my $n_doing = 0;
 		foreach my $readgroup (keys %{$samplelist{$sample}{rawdata}}){
 			
-			$n_readgroup ++;
+			next if ($samplelist{$sample}{rawdata}{$readgroup}{finish_flag} eq "finished");
+
+			#estimate read length
 			my $read;
 			if ($samplelist{$sample}{rawdata}{$readgroup}{fq1} =~ /gz$/){
 				$read = `gunzip -c $samplelist{$sample}{rawdata}{$readgroup}{fq1}|head -n 2|tail -n 1`;
@@ -84,38 +96,41 @@ sub DataFiltering{
 			}
 			my @temp = split //, $read;
 			$samplelist{$sample}{rawdata}{$readgroup}{Length} = @temp;
-			$samplelist{$sample}{rawdata}{$readgroup}{Length} = int($samplelist{$sample}{rawdata}{$readgroup}{Length}*0.5);
+			$samplelist{$sample}{rawdata}{$readgroup}{Length} = int($samplelist{$sample}{rawdata}{$readgroup}{Length}*0.7);
 			
-			if (-e "$sample_outpath/$readgroup\_1.filt.fq.gz"){ $n_done++; print SH "#" unless (defined $opts{overwrite});}
-			$n_doing ++; 
 			if($samplelist{$sample}{rawdata}{$readgroup}{Flag} eq "PE"){
 				print SH "fastp -i $samplelist{$sample}{rawdata}{$readgroup}{fq1} -I $samplelist{$sample}{rawdata}{$readgroup}{fq2} -o $readgroup\_1.filt.fq.gz -O $readgroup\_2.filt.fq.gz --adapter_sequence AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA --adapter_sequence_r2 AAGTCGGATCGTAGCCATGTCGTTCTGTGAGCCAAGGAGTTG --detect_adapter_for_pe --disable_trim_poly_g -q 20 -u 30 -n 2 --length_required $samplelist{$sample}{rawdata}{$readgroup}{Length} -w 4 -j $readgroup.fastp.json -h $readgroup\_1.fastp.html -R \"$sample $readgroup fastp report\" && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.$readgroup.read_filtering.finished.txt\n";
 			}
 			if($samplelist{$sample}{rawdata}{$readgroup}{Flag} eq "SE"){
 				print SH "fastp -i $samplelist{$sample}{rawdata}{$readgroup}{fq1} -o $readgroup\_1.filt.fq.gz --adapter_sequence AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA --detect_adapter_for_pe --disable_trim_poly_g -q 20 -u 30 -n 2 --length_required $samplelist{$sample}{rawdata}{$readgroup}{Length} -w 4 -j $readgroup.fastp.json -h $readgroup\_1.fastp.html -R \"$sample $readgroup fastp report\" && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.$readgroup.read_filtering.finished.txt\n";
 			}
-
 		}
 		close SH;
-		print CL "sh $var{shpath}/$sample.read_filtering.sh 1>$var{shpath}/$sample.read_filtering.sh.o 2>$var{shpath}/$sample.read_filtering.sh.e\n" if (($n_readgroup != $n_done) || (defined $opts{overwrite}));
+		print CL "sh $var{shpath}/$sample.read_filtering.sh 1>$var{shpath}/$sample.read_filtering.sh.o 2>$var{shpath}/$sample.read_filtering.sh.e\n";
 	}
 	close CL;
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_read_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=4 -binding linear:1' -m 100 -r $var{shpath}/cmd_read_filtering.list` unless (defined $opts{skipsh});
 
-	my $flag_finish = 0;
-	my $sample_number = 0;
 	while(1){
 		sleep(10);
+		my $flag_finish = 1; 
 		foreach my $sample (keys %samplelist){
+			next if ($samplelist{$sample}{finish_flag} eq "finished");
 			foreach my $readgroup (keys %{$samplelist{$sample}{rawdata}}){
-				$sample_number ++;
-				if(-e "$var{shpath}/$sample.$readgroup.read_filtering.finished.txt"){$flag_finish +=1;}
+				next if ($samplelist{$sample}{rawdata}{$readgroup}{finish_flag} eq "finished");
+
+				if(-e "$var{shpath}/$sample.$readgroup.read_filtering.finished.txt"){
+					next;
+				}else{
+					$flag_finish = 0;
+				}
+
 			}
 		}
 		my $datestring = localtime();
-		print "waiting for read_filtering to be done [$flag_finish out of $sample_number samples are finished] at $datestring\n";
-		last if($flag_finish == $n_doing);
+		print "waiting for sample.read_filtering to be done at $datestring\n";
+		last if($flag_finish == 1);
 	}
 }
 
@@ -214,4 +229,5 @@ sub WriteCfg{
 	# Save both documents to a file
 	$yaml->write( "$var{outpath}/Data_Filtering.yml" );
 }
+
 1;
