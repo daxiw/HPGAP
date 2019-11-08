@@ -50,7 +50,7 @@ sub Main{
 	}else{
 		$var{threads} = 4;
 	}
-	
+
 	$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_filtering/"; 
 	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
 	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_filtering/";
@@ -88,7 +88,7 @@ sub DataFiltering{
 				$samplelist{$sample}{rawdata}{$readgroup}{finish_flag}="unfinished";
 			}
 		}
-		next if($samplelist{$sample}{finish_flag} eq "finished";);
+		next if($samplelist{$sample}{finish_flag} eq "finished");
 
 		open SH, ">$var{shpath}/$sample.read_filtering.sh";
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
@@ -235,7 +235,7 @@ sub WriteCfg{
 	}
 
 	# create this yaml object
-	$yaml = YAML::Tiny->new( \%cfg );
+	my $yaml = YAML::Tiny->new( \%cfg );
 	# Save both documents to a file
 	$yaml->write( "$var{outpath}/Data_Filtering.yml" );
 }
