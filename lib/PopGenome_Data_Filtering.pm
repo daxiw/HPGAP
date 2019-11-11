@@ -229,12 +229,18 @@ sub WriteCfg{
 				}
 				if (-e "$sample_outpath/$readgroup\_2.filt.fq.gz"){
 					$cfg{fqdata}{$sample}{cleandata}{$readgroup}{fq2}="$sample_outpath/$readgroup\_2.filt.fq.gz";
+					$cfg{fqdata}{$sample}{cleandata}{$readgroup}{'Flag'} = $cfg{fqdata}{$sample}{rawdata}{$readgroup}{'Flag'};
+        			$cfg{fqdata}{$sample}{cleandata}{$readgroup}{'PL'} = $cfg{fqdata}{$sample}{rawdata}{$readgroup}{'PL'};
+       				$cfg{fqdata}{$sample}{cleandata}{$readgroup}{'Phred'} = $cfg{fqdata}{$sample}{rawdata}{$readgroup}{'Phred'};
 				}
 			}
-			if($samplelist{$sample}{cleandata}{$readgroup}{Flag} eq "SE"){
+			if($samplelist{$sample}{raw}{$readgroup}{Flag} eq "SE"){
 				#$readgroup\_1.filt.fq.gz
 				if (-e "$sample_outpath/$readgroup\_1.filt.fq.gz"){
 					$cfg{fqdata}{$sample}{cleandata}{$readgroup}{fq1}="$sample_outpath/$readgroup\_1.filt.fq.gz";
+					$cfg{fqdata}{$sample}{cleandata}{$readgroup}{'Flag'} = $cfg{fqdata}{$sample}{rawdata}{$readgroup}{'Flag'};
+        			$cfg{fqdata}{$sample}{cleandata}{$readgroup}{'PL'} = $cfg{fqdata}{$sample}{rawdata}{$readgroup}{'PL'};
+       				$cfg{fqdata}{$sample}{cleandata}{$readgroup}{'Phred'} = $cfg{fqdata}{$sample}{rawdata}{$readgroup}{'Phred'};
 				}
 			}
 		}
