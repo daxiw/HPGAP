@@ -234,7 +234,7 @@ sub WriteCfg{
        				$cfg{fqdata}{$sample}{cleandata}{$readgroup}{'Phred'} = $cfg{fqdata}{$sample}{rawdata}{$readgroup}{'Phred'};
 				}
 			}
-			if($samplelist{$sample}{raw}{$readgroup}{Flag} eq "SE"){
+			if($samplelist{$sample}{rawdata}{$readgroup}{Flag} eq "SE"){
 				#$readgroup\_1.filt.fq.gz
 				if (-e "$sample_outpath/$readgroup\_1.filt.fq.gz"){
 					$cfg{fqdata}{$sample}{cleandata}{$readgroup}{fq1}="$sample_outpath/$readgroup\_1.filt.fq.gz";
