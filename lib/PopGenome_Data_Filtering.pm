@@ -28,7 +28,7 @@ sub Main{
 		'threads=s',
 		'filter',
 		'report',
-		'updateconfig'
+		'updateconfig',
 		'help',
 		'skipsh');
 
