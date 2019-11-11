@@ -143,7 +143,7 @@ sub ReadMapping {
 			#	`rm -f $var{shpath}/$sample.variant_calling.finished.txt`;
 			}
 		}
-		next if($samplelist{$sample}{finish_flag} eq "finished";);
+		next if($samplelist{$sample}{finish_flag} eq "finished");
 
 		open SH, ">$var{shpath}/$sample.readmapping.sh";		
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
