@@ -28,6 +28,7 @@ sub Main{
 		'threads=s',
 		'filter',
 		'report',
+		'updateconfig'
 		'help',
 		'skipsh');
 
@@ -58,9 +59,14 @@ sub Main{
 	$var{samplelist}=\%samplelist;
 	$var{cfg}=\%cfg;
 
-	if (defined $opts{filter}){ &DataFiltering (\%var,\%opts);}
+	if (defined $opts{filter}){ 
+		&DataFiltering (\%var,\%opts);
+		&WriteCfg (\%var,\%opts);
+	}
 
 	if (defined $opts{report}){ &ReadReport (\%var,\%opts);}
+
+	if (defined $opts{updateconfig}){ &WriteCfg (\%var,\%opts);}
 }
 
 sub DataFiltering{
@@ -234,10 +240,14 @@ sub WriteCfg{
 		}
 	}
 
+	var{outfig} = $opts{config};
+	$var{outfig} =~ s/\.yml|\.yaml/_data_filtering\.yml/g;
+	$opts{outcfg} ||= $var{outfig};
 	# create this yaml object
-	my $yaml = YAML::Tiny->new( \%cfg );
-	# Save both documents to a file
-	$yaml->write( "$var{outpath}/Data_Filtering.yml" );
+    $yaml = YAML::Tiny->new( \%cfg );
+    # Save both documents to a file
+    $yaml->write( $opts{outcfg} );
+	# print "$opts{outpath}\n";
 }
 
 1;
