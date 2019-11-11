@@ -240,7 +240,7 @@ sub WriteCfg{
 		}
 	}
 
-	var{outfig} = $opts{config};
+	$var{outfig} = $opts{config};
 	$var{outfig} =~ s/\.yml|\.yaml/_data_filtering\.yml/g;
 	$opts{outcfg} ||= $var{outfig};
 	# create this yaml object
