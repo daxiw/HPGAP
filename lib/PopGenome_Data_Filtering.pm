@@ -244,7 +244,7 @@ sub WriteCfg{
 	$var{outfig} =~ s/\.yml|\.yaml/_data_filtering\.yml/g;
 	$opts{outcfg} ||= $var{outfig};
 	# create this yaml object
-    $yaml = YAML::Tiny->new( \%cfg );
+    my $yaml = YAML::Tiny->new( \%cfg );
     # Save both documents to a file
     $yaml->write( $opts{outcfg} );
 	# print "$opts{outpath}\n";
