@@ -266,7 +266,7 @@ sub IndividualVariantCalling {
 		print CL "sh $var{shpath}/$sample.variant_calling.sh 1>$var{shpath}/$sample.variant_calling.sh.o 2>$var{shpath}/$sample.variant_calling.sh.e\n";
 	}
 	close CL;
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_variant_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_calling.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_variant_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_variant_calling.list` unless (defined $opts{skipsh});
 
 	while(1){
 		sleep(10);
@@ -323,7 +323,7 @@ sub JointCalling{
 	print CL "sh $var{shpath}/joint_calling.sh 1>$var{shpath}/joint_calling.sh.o 2>$var{shpath}/joint_calling.sh.e\n";
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_joint_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_joint_calling.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_joint_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_joint_calling.list` unless (defined $opts{skipsh});
 }
 
 sub FreebayesCalling {
@@ -352,7 +352,7 @@ sub FreebayesCalling {
 	print CL "sh $var{shpath}/freebayes_calling.sh 1>$var{shpath}/freebayes_calling.sh.o 2>$var{shpath}/freebayes_calling.sh.e\n";
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_calling.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_freebayes_calling.list` unless (defined $opts{skipsh});
 }
 
 1;

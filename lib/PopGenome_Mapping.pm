@@ -51,6 +51,7 @@ sub Main{
 		$var{threads} = 4;
 	}
 
+	$var{mem} = $var{threads}."G";
 	if (defined $opts{reference_selection}){ & SelectReference (\%var,\%opts); last;}
 
 	my %mapping;
@@ -193,7 +194,7 @@ sub ReadMapping {
 	}
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_readmapping_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$cfg{args}{mem},num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_readmapping.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_readmapping_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$var{mem},num_proc=$var{threads} -binding linear:1' -m 100 $var{shpath}/cmd_readmapping.list` unless (defined $opts{skipsh});
 
 	return (\%samplelist);
 
