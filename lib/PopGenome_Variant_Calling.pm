@@ -103,7 +103,7 @@ sub IndividualVariantCalling {
 		}else{
 			`rm -f $var{shpath}/$sample.variant_calling.finished.txt`;
 		}
-
+		
 		open SH, ">$var{shpath}/$sample.variant_calling.sh";
 
 		print SH "#!/bin/sh\ncd $sample_outpath\n";

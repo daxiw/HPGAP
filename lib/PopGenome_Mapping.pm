@@ -175,7 +175,7 @@ sub ReadMapping {
 
 		#when there is more than one library/lane for each sample
 		if (keys %{$samplelist{$sample}{cleandata}} > 1){
-			print SH "samtools merge -nr -@ $var{threads} $sample.sorted.bam *_filt.sort.bam && echo \"** $sample.sort.bam done **\" && rm -f *_filt.sort.bam\n";			
+			print SH "samtools merge -f -@ $var{threads} $sample.sorted.bam *_filt.sort.bam && echo \"** $sample.sorted.bam done **\" && rm -f *_filt.sort.bam\n";
 		}
 
 		print SH "gatk MarkDuplicates \\\n";
@@ -187,7 +187,7 @@ sub ReadMapping {
 	  	print SH "samtools index $sample.sorted.markdup.bam && \\\n";
 	  	print SH "echo \"** $sample.sorted.markdup.bam index done **\" \n";
 
-	  	print SH "samtools stats -@ $var{threads} $sample.sorted.markdup.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** bam.stats.txt done **\" > $var{shpath}/$sample.readmapping.finished.txt\n";
+	  	print SH "samtools stats -@ $var{threads} $sample.sorted.markdup.bam 1>$sample.bam.stats.txt 2>$sample.bam.stats.error && echo \"** bam.stats.txt done **\" > $var{shpath}/$sample.readmapping.finished.txt\n";
 
 		close SH;
 		print CL "sh $var{shpath}/$sample.readmapping.sh 1>$var{shpath}/$sample.readmapping.sh.o 2>$var{shpath}/$sample.readmapping.sh.e \n";
