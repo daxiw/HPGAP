@@ -103,7 +103,7 @@ sub IndividualVariantCalling {
 		}else{
 			`rm -f $var{shpath}/$sample.variant_calling.finished.txt`;
 		}
-		
+
 		open SH, ">$var{shpath}/$sample.variant_calling.sh";
 
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
@@ -334,25 +334,46 @@ sub FreebayesCalling {
 	my %cfg = %{$var{cfg}};
 	my %samplelist = %{$var{samplelist}};
 
-	if ( !-d "$var{outpath}/JointCalling/" ) {
-		make_path "$var{outpath}/JointCalling/" or die "Failed to create path: $var{outpath}/JointCalling/";
+	if ( !-d "$var{outpath}/FreebayesCalling/" ) {
+		make_path "$var{outpath}/FreebayesCalling/" or die "Failed to create path: $var{outpath}/FreebayesCalling/";	
 	}
 
-	open BAMLIST, ">$var{outpath}/JointCalling/bam.list";
+	if ( !-d "$var{outpath}/FreebayesCalling/SplitScaffolds/" ) {
+		make_path "$var{outpath}/FreebayesCalling/SplitScaffolds/" or die "Failed to create path: $var{outpath}/FreebayesCalling/SplitScaffolds/";
+	}
+
+	if ( !-d "$var{shpath}/FreebayesCalling_SplitScaffolds/" ) {
+		make_path "$var{shpath}/FreebayesCalling_SplitScaffolds/" or die "Failed to create path: $var{shpath}/FreebayesCalling_SplitScaffolds/";
+	}
+
+	open BAMLIST, ">$var{outpath}/FreebayesCalling/bam.list";
 	foreach my $sample (keys %samplelist){
 		print BAMLIST "$var{outpath}/$sample/$sample.sorted.markdup.bam\n";
 	}
 	close BAMLIST;
 
-	open CL, ">$var{shpath}/cmd_freebayes_calling.list";
-	open SH, ">$var{shpath}/freebayes_calling.sh";
-	print SH "freebayes -f $var{reference} -L $var{outpath}/JointCalling/bam.list -p $var{ploidy} >$var{outpath}/JointCalling/freebayes_joint_calling.vcf";
-	close SH;
+	open REF, "$var{reference}";
+	my %genome;
+	while (<REF>){
+		chomp;
+		if (/\>(\S+)/){
+			$genome{$1}=1;
+		}
+	}
 
-	print CL "sh $var{shpath}/freebayes_calling.sh 1>$var{shpath}/freebayes_calling.sh.o 2>$var{shpath}/freebayes_calling.sh.e\n";
+	open CL, ">$var{shpath}/cmd_freebayes_calling.list";
+
+	foreach my $id (keys %genome){
+		open SH, ">$var{shpath}/FreebayesCalling_SplitScaffolds/freebayes_calling_$id.sh";
+		print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -p $var{ploidy} -r $id >$var{outpath}/FreebayesCalling/SplitScaffolds/freebayes_joint_calling_$id.vcf";
+		close SH;
+		print CL "sh $var{shpath}/FreebayesCalling_SplitScaffolds/freebayes_calling_$id.sh 1>$var{shpath}/FreebayesCalling_SplitScaffolds/freebayes_calling_$id.sh.o 2>$var{shpath}/FreebayesCalling_SplitScaffolds/freebayes_calling_$id.sh.e\n";
+	}
+
 	close CL;
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_freebayes_calling.list` unless (defined $opts{skipsh});
+	
 }
 
 1;
