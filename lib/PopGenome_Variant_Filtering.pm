@@ -69,16 +69,14 @@ sub Main{
 #    Step 1g Variant filtering  #
 #			   #
 #################################
-sub VariantFiltering {
+sub GATKBasicFiltering {
 	my ($var,$opts) = @_;
 	my %opts = %{$opts};
 	my %var = %{$var};
 	my %cfg = %{$var{cfg}};
 	my %samplelist = %{$var{samplelist}};
-	
-	my $genome=PopGenome_Shared::LOADREF($var{reference});
 
-	open SH, ">$var{shpath}/variant_filtering_s1.sh";
+	open SH, ">$var{shpath}/gatk_basic_filtering.sh";
 	print SH "cd $var{outpath}\n";
 	print SH "gatk SelectVariants \\\n";
 	print SH "	-R $var{reference} \\\n";
@@ -106,24 +104,35 @@ sub VariantFiltering {
 	print SH "	--filter-expression \"$cfg{step1}{variant_filtering}{indel}\" \\\n";
 	print SH "	--filter-name \"my_indel_filter\" \\\n";
 	print SH "	-O $var{outpath}/../JointCalling/JointCalling_filtered_indels1st.vcf && echo \"** JointCalling/JointCalling_raw_snps1st done\" \n";
-	print SH "vcftools --vcf $var{outpath}/../JointCalling/JointCalling_filtered_snps1st.vcf --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/PASS.SNP.vcf.gz && echo \"** finish variant_filtering_s1 **\" > $var{shpath}/variant_filtering_s1.finished.txt \n";
+	
 	close SH;
 
 	#switch on the bash running
-	open CL, ">$var{shpath}/cmd_variant_filtering_s1.list";
-	print CL "sh $var{shpath}/variant_filtering_s1.sh 1>$var{shpath}/variant_filtering_s1.sh.o 2>$var{shpath}/variant_filtering_s1.sh.e\n";
+	open CL, ">$var{shpath}/cmd_gatk_basic_filtering.list";
+	print CL "sh $var{shpath}/gatk_basic_filtering.sh 1>$var{shpath}/gatk_basic_filtering.sh.o 2>$var{shpath}/gatk_basic_filtering.sh.e\n";
 	close CL;
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s1.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/gatk_basic_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_gatk_basic_filtering.list` unless (defined $opts{skipsh});
+}
+
+sub FreebayesBasicFiltering {
+	my ($var,$opts) = @_;
+	my %opts = %{$opts};
+	my %var = %{$var};
+	my %cfg = %{$var{cfg}};
+	my %samplelist = %{$var{samplelist}};
+
+	open SH, ">$var{shpath}/freebayes_basic_filtering.sh";
 	
-	my $flag_finish = 0;
-	unless (defined $opts{skipsh}){
-		while(1){
-			sleep(20);
-			my $datestring = localtime();
-			print "waiting for variant_filtering_s1 to be done at $datestring\n";
-			if(-e "$var{shpath}/variant_filtering_s1.finished.txt"){last;}
-		}
-	}
+	close SH;
+	open CL, ">$var{shpath}/cmd_freebayes_basic_filtering.list";
+	print CL "sh $var{shpath}/freebayes_basic_filtering.sh 1>$var{shpath}/freebayes_basic_filtering.sh.o 2>$var{shpath}/freebayes_basic_filtering.sh.e\n";
+	close CL;
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/freebayes_basic_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_basic_filtering.list` unless (defined $opts{skipsh});
+}
+
+sub CustomFiltering {
+	print SH "vcftools --vcf $var{outpath}/../JointCalling/JointCalling_filtered_snps1st.vcf --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/PASS.SNP.vcf.gz && echo \"** finish variant_filtering_s1 **\" > $var{shpath}/variant_filtering_s1.finished.txt \n";
+	my $genome=PopGenome_Shared::LOADREF($var{reference});
 
 	###filter SNP by depth if needed
 	my $sample_size = keys %{$cfg{fqdata}};

@@ -37,7 +37,7 @@ $opt_N = $opt_N || "work";
 my $lines = $opt_b || 1;
 my $maxJob = $opt_m || 30;
 my $sleepTime = $opt_s || 120;
-my $max_try = 10;
+my $max_try = 3;
 $max_try = 1 if(!$opt_r);
 
 

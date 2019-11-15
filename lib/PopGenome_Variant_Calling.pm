@@ -110,7 +110,6 @@ sub IndividualVariantCalling {
 
 
 		if ($var{variant_calling_mode} eq 'fast'){
-
 			print SH "gatk HaplotypeCaller \\\n";
 			print SH "	--emit-ref-confidence GVCF \\\n";
 			print SH "	-R $var{reference} \\\n";
@@ -119,7 +118,8 @@ sub IndividualVariantCalling {
 			print SH "	-O $sample.HC.gvcf.gz && echo \"** GVCF ${sample}.HC.g.vcf.gz done\" && \\\n";
 		  	print SH "rm -f $sample.sorted.markdup.BQSR2nd.bam && echo \"** variant calling done **\" > $var{shpath}/$sample.variant_calling.finished.txt\n";
 		}
-		else{ #recalibration mode
+		else{
+			# recalibration mode
 			# HaplotypeCaller
 		  	print SH "gatk HaplotypeCaller \\\n";
 		  	print SH "	-R $var{reference} \\\n";
@@ -266,7 +266,7 @@ sub IndividualVariantCalling {
 		print CL "sh $var{shpath}/$sample.variant_calling.sh 1>$var{shpath}/$sample.variant_calling.sh.o 2>$var{shpath}/$sample.variant_calling.sh.e\n";
 	}
 	close CL;
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_variant_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_variant_calling.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -r -d $var{shpath}/cmd_variant_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_variant_calling.list` unless (defined $opts{skipsh});
 
 	while(1){
 		sleep(10);
@@ -323,7 +323,7 @@ sub JointCalling{
 	print CL "sh $var{shpath}/joint_calling.sh 1>$var{shpath}/joint_calling.sh.o 2>$var{shpath}/joint_calling.sh.e\n";
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_joint_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_joint_calling.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -r -d $var{shpath}/cmd_joint_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_joint_calling.list` unless (defined $opts{skipsh});
 }
 
 sub FreebayesCalling {
@@ -372,8 +372,9 @@ sub FreebayesCalling {
 
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_freebayes_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_freebayes_calling.list` unless (defined $opts{skipsh});
-	
+	`perl $Bin/lib/qsub.pl -r -d $var{shpath}/cmd_freebayes_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_freebayes_calling.list` unless (defined $opts{skipsh});
+	`vcfcombine $var{outpath}/FreebayesCalling/SplitScaffolds/*.vcf | bgzip -c >$var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf.gz`;
+
 }
 
 1;
