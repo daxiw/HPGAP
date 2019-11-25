@@ -373,8 +373,11 @@ sub FreebayesCalling {
 	close CL;
 
 	`perl $Bin/lib/qsub.pl -r -d $var{shpath}/cmd_freebayes_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_freebayes_calling.list` unless (defined $opts{skipsh});
-	`vcfcombine $var{outpath}/FreebayesCalling/SplitScaffolds/*.vcf | bgzip -c >$var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf.gz`;
 
+	open CL, ">$var{shpath}/cmd_freebayes_joint_calling.list";
+	print CL "vcfcombine $var{outpath}/FreebayesCalling/SplitScaffolds/*.vcf | bgzip -c >$var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf.gz\n";
+	close CL;
+	`perl $Bin/lib/qsub.pl -r -d $var{shpath}/cmd_freebayes_joint_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_freebayes_joint_calling.list` unless (defined $opts{skipsh});
 }
 
 1;
