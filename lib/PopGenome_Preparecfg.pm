@@ -54,14 +54,14 @@ sub Main{
     $opts{prj} ||= "P18Z10200N0119";
     $opts{platform} ||= "BGISEQ500";
     $opts{phred} ||= 33;
+    $opts{template} ||= "$Bin/lib/template.yml";
 
     my $fiterflag = "rawdata";
     if (defined $opts{cleandata}){
         $fiterflag = "cleandata";
     }
-
-    my $template ||= "$Bin/lib/template.yml";
-    my $yaml = YAML::Tiny->read( $template );
+    
+    my $yaml = YAML::Tiny->read( $opts{template} );
     my %cfg = %{$yaml->[0]};
 
 #    print "$opts{outpath}\n";
