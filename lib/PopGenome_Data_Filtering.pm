@@ -165,9 +165,10 @@ sub ReadReport{
 	my $report_sample_outpath="$var{outpath}/Report/Samples"; 
 	if ( !-d $report_sample_outpath ) {make_path $report_sample_outpath or die "Failed to create path: $report_outpath";}
 
-	open OT, ">$var{outpath}/Report/read_quality_summary.xls";
+	open OT, ">$var{outpath}/Report/read_group_quality_summary.xls";
     
     print OT "sampleID","\t";
+    print OT "readgroup","\t";
     print OT "before_filtering_reads","\t";
     print OT "before_filtering_bases","\t";
     print OT "after_filtering_reads","\t";
@@ -178,6 +179,14 @@ sub ReadReport{
     print OT "duplication_rate","\t";
     print OT "adapter_trimmed_reads","\n";
 
+    open SOT, ">$var{outpath}/Report/sample_quality_summary.xls";
+    
+    print SOT "sampleID","\t";
+    print SOT "before_filtering_reads","\t";
+    print SOT "before_filtering_bases","\t";
+    print SOT "after_filtering_reads","\t";
+    print SOT "after_filtering_bases","\t";
+
 	foreach my $sample (keys %samplelist){
 		print "$sample\n";
 		my $sample_report_outpath="$var{outpath}/Report/Samples/$sample";
@@ -187,6 +196,11 @@ sub ReadReport{
 		# copy filtering statistics from read_filtering
 
 		`cp $var{outpath}/$sample/*json $sample_report_outpath`;
+
+		my $before_filtering_reads = 0;
+		my $before_filtering_bases = 0;
+		my $after_filtering_reads = 0;
+		my $after_filtering_bases = 0;
 
 		foreach my $readgroup (keys %{$samplelist{$sample}{rawdata}}){
 			my $json;
@@ -200,6 +214,7 @@ sub ReadReport{
 			my $data = JSON::decode_json($json);
 
 			print OT "$sample\t";
+			print OT "$readgroup\t";
 			print OT $data->{'summary'}->{'before_filtering'}->{'total_reads'}, "\t";
 			print OT $data->{'summary'}->{'before_filtering'}->{'total_bases'}, "\t";
 			print OT $data->{'summary'}->{'after_filtering'}->{'total_reads'}, "\t";
@@ -209,9 +224,20 @@ sub ReadReport{
 			print OT $data->{'summary'}->{'after_filtering'}->{'gc_content'}, "\t";
 			print OT $data->{'duplication'}->{'rate'}, "\t";
 	        print OT $data->{'adapter_cutting'}->{'adapter_trimmed_reads'}, "\n";
+
+	        $before_filtering_reads += $data->{'summary'}->{'before_filtering'}->{'total_reads'};
+	        $before_filtering_bases += $data->{'summary'}->{'before_filtering'}->{'total_bases'};
+	        $after_filtering_reads += $data->{'summary'}->{'after_filtering'}->{'total_reads'};
+	        $after_filtering_bases += $data->{'summary'}->{'after_filtering'}->{'total_bases'};
     	}
+    	print SOT "$sample\t";
+    	print SOT "$before_filtering_reads\t";
+    	print SOT "$before_filtering_bases\t";
+    	print SOT "$after_filtering_reads\t";
+    	print SOT "$after_filtering_bases\n";
 	}
 	close OT;
+	close SOT;
 }
 
 sub WriteCfg{
