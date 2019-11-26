@@ -179,7 +179,8 @@ sub ReadReport{
 
 	foreach my $sample (keys %samplelist){
 		print "$sample\n";
-		my $sample_report_outpath="$var{outpath}/Report/Samples/$sample"; 
+		my $sample_report_outpath="$var{outpath}/Report/Samples/$sample";
+		print "$sample_report_outpath/$sample.fastp.json\n";
 		if ( !-d $sample_report_outpath ) {make_path $sample_report_outpath or die "Failed to create path: $sample_report_outpath";}
 
 		# copy filtering statistics from read_filtering
@@ -189,7 +190,7 @@ sub ReadReport{
 		my $json;
 		{
 		  local $/; #Enable 'slurp' mode
-		  open my JS, "<", "$sample_report_outpath/$sample.fastp.json";
+		  open JS, "$sample_report_outpath/$sample.fastp.json";
 		  $json = <JS>;
 		  close JS;
 		}
