@@ -32,6 +32,7 @@ sub Main{
         'input=s',
         'seqtype=s',
         'outcfg=s',
+        'template=s',
         'mem=s',
         'threads=s',
         'queue=s',
@@ -59,7 +60,7 @@ sub Main{
         $fiterflag = "cleandata";
     }
 
-    my $template = "$Bin/lib/template.yml";
+    my $template ||= "$Bin/lib/template.yml";
     my $yaml = YAML::Tiny->read( $template );
     my %cfg = %{$yaml->[0]};
 
