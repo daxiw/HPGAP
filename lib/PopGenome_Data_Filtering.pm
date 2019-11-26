@@ -6,6 +6,7 @@ use warnings;
 use Getopt::Long qw(GetOptionsFromArray);
 use FindBin '$Bin';
 use YAML::Tiny;
+use JSON;
 use lib "$Bin/lib";
 use PopGenome_Shared;
 
@@ -196,7 +197,7 @@ sub ReadReport{
 			  close JS;
 			}
 
-			my $data = decode_json($json);
+			my $data = JSON::decode_json($json);
 
 			print OT "$sample\t";
 			print OT $data->{'summary'}->{'before_filtering'}->{'total_reads'}, "\t";
