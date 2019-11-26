@@ -187,26 +187,28 @@ sub ReadReport{
 
 		`cp $var{outpath}/$sample/*json $sample_report_outpath`;
 
-		my $json;
-		{
-		  local $/; #Enable 'slurp' mode
-		  open JS, "$sample_report_outpath/$sample.fastp.json";
-		  $json = <JS>;
-		  close JS;
-		}
+		foreach my $readgroup (keys %{$samplelist{$sample}{rawdata}}){
+			my $json;
+			{
+			  local $/; #Enable 'slurp' mode
+			  open JS, "$sample_report_outpath/$readgroup.fastp.json";
+			  $json = <JS>;
+			  close JS;
+			}
 
-		my $data = decode_json($json);
+			my $data = decode_json($json);
 
-		print OT "$sample\t";
-		print OT $data->{'summary'}->{'before_filtering'}->{'total_reads'}, "\t";
-		print OT $data->{'summary'}->{'before_filtering'}->{'total_bases'}, "\t";
-		print OT $data->{'summary'}->{'after_filtering'}->{'total_reads'}, "\t";
-		print OT $data->{'summary'}->{'after_filtering'}->{'total_bases'}, "\t";
-		print OT $data->{'summary'}->{'after_filtering'}->{'q20_rate'}, "\t";
-		print OT $data->{'summary'}->{'after_filtering'}->{'q30_rate'}, "\t";
-		print OT $data->{'summary'}->{'after_filtering'}->{'gc_content'}, "\t";
-		print OT $data->{'duplication'}->{'rate'}, "\t";
-        print OT $data->{'adapter_cutting'}->{'adapter_trimmed_reads'}, "\n";
+			print OT "$sample\t";
+			print OT $data->{'summary'}->{'before_filtering'}->{'total_reads'}, "\t";
+			print OT $data->{'summary'}->{'before_filtering'}->{'total_bases'}, "\t";
+			print OT $data->{'summary'}->{'after_filtering'}->{'total_reads'}, "\t";
+			print OT $data->{'summary'}->{'after_filtering'}->{'total_bases'}, "\t";
+			print OT $data->{'summary'}->{'after_filtering'}->{'q20_rate'}, "\t";
+			print OT $data->{'summary'}->{'after_filtering'}->{'q30_rate'}, "\t";
+			print OT $data->{'summary'}->{'after_filtering'}->{'gc_content'}, "\t";
+			print OT $data->{'duplication'}->{'rate'}, "\t";
+	        print OT $data->{'adapter_cutting'}->{'adapter_trimmed_reads'}, "\n";
+    	}
 	}
 	close OT;
 }
