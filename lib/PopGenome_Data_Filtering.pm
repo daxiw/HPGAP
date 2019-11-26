@@ -177,7 +177,8 @@ sub ReadReport{
     print OT "duplication_rate","\t";
     print OT "adapter_trimmed_reads","\n";
 
-	foreach my $sample (keys %samplelist){	
+	foreach my $sample (keys %samplelist){
+		print "$sample\n";
 		my $sample_report_outpath="$var{outpath}/Report/Samples/$sample"; 
 		if ( !-d $sample_report_outpath ) {make_path $sample_report_outpath or die "Failed to create path: $sample_report_outpath";}
 
