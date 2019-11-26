@@ -189,9 +189,9 @@ sub ReadReport{
 		my $json;
 		{
 		  local $/; #Enable 'slurp' mode
-		  open my $fh, "<", "$sample_report_outpath/$sample.fastp.json";
-		  $json = <$fh>;
-		  close $fh;
+		  open my JS, "<", "$sample_report_outpath/$sample.fastp.json";
+		  $json = <JS>;
+		  close JS;
 		}
 
 		my $data = decode_json($json);
