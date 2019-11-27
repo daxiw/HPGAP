@@ -21,6 +21,7 @@ sub Main{
 		'allsteps',
 		'outcfg=s',
 		'threads=s',
+		'downsize=s',
 		'read_mapping',
 		'mapping_report',
 		'reference_selection',
@@ -64,6 +65,16 @@ sub Main{
 		die "please add mt genome path into configuration file" unless (defined $cfg{ref}{db}{$temp_ref}{path});
 		$var{reference} = $cfg{ref}{db}{$temp_ref}{path};
 		die "$var{reference} does not exists" unless (-e $var{reference});
+
+		open IN, $var{reference};
+		$var{$temp_ref}{length}=0;
+		while (<IN>){
+			if(/\>/){next;}
+			elsif(/\w+/){
+				$var{$temp_ref}{length} += length;
+			}
+		}
+		close IN;
 
 		if (defined $opts{read_mapping}){ $mapping{$temp_ref} = & ReadMapping (\%var,\%opts);}
 
@@ -176,6 +187,14 @@ sub ReadMapping {
 		#when there is more than one library/lane for each sample
 		if (keys %{$samplelist{$sample}{cleandata}} > 1){
 			print SH "samtools merge -f -@ $var{threads} $sample.sorted.bam *_filt.sort.bam && echo \"** $sample.sorted.bam done **\" && rm -f *_filt.sort.bam\n";
+		}
+
+		if (defined $opts{downsize}){
+			my $required_coverage = $opts{downsize}*$var{$temp_ref}{length};
+			print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>$sample.sorted.bam.stats.txt 2>$sample.sorted.bam.stats.error\n";
+			print SH "a=\`cat $sample.sorted.bam.stats.txt|perl -ne \'if(/cigar\\):\\s+(\\d+)/){\$b=$required_coverage/\$1;if(\$b<1){print \$b}else{print 1}}\'\`\n";
+			print SH "mv $sample.sorted.bam $sample.sorted.ori.bam";
+			print SH "samtools view -s \$a $sample.sorted.ori.bam -o $sample.sorted.bam\n";
 		}
 
 		print SH "gatk MarkDuplicates \\\n";

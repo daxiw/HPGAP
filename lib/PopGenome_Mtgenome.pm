@@ -24,7 +24,10 @@ sub Main{
 		'config=s',
 		'overwrite',
 		'allsteps',
-		'threads',
+		'threads=s',
+		'samplelist=s',
+		'downsize=s',
+		'mt_genome=s',
 		'mt_genome_mapping',
 		'mt_genome_variant_calling',
 		'mt_genome_phylogeny',
@@ -41,13 +44,29 @@ sub Main{
 
 	my $yaml = YAML::Tiny->read( $opts{config} );
 	my %cfg = %{$yaml->[0]};
-	my %samplelist = %{$cfg{fqdata}};
-	
+	my %samplelist_ori = %{$cfg{fqdata}};
+	my %samplelist = %samplelist_ori;
+
+	if (defined $opts{samplelist}){
+		my %selected_sample;
+		open IN, $opts{samplelist};
+		while (<IN>){
+			/(\S+)/;
+			$selected_sample{$1}=1;
+		}
+		close IN;
+		foreach my $id %samplelist{
+			unless (exists $selected_sample{$id}){
+				delete $samplelist{$id};
+			}
+		}
+	}
+
 	$var{samplelist}=\%samplelist;
 	$var{cfg}=\%cfg;
 
 	#set ploidy
-	$var{ploidy} = 1;
+	$var{ploidy} = 2;
 
 	#set the number of threads
 	if (defined $opts{threads}){
@@ -66,19 +85,28 @@ sub Main{
 		$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/mt_phylogeny.$temp_ref";
 		if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 
-		die "please add mt genome path into configuration file" unless (defined $cfg{mtref}{db}{$temp_ref}{path});
-		$var{reference} = $cfg{mtref}{db}{$temp_ref}{path};
+		if (defined $opts{mt_genome}){
+			$var{reference} = $opts{mt_genome};
+		}else {
+			die "please add mt genome path into configuration file" unless (defined $cfg{mtref}{db}{$temp_ref}{path});
+			$var{reference} = $cfg{mtref}{db}{$temp_ref}{path};
+		}
 		die "$var{reference} does not exists" unless (-e $var{reference});
 
-		if (defined $opts{mt_genome_mapping}){ &MtGenomeMapping (\%var,\%opts);}
-
-		if (defined $opts{mt_genome_variant_calling}){ &MtGenomeVariantCalling (\%var,\%opts);}
-
-		if (defined $opts{mt_genome_phylogeny}){ &ReadReport (\%var,\%opts);}
-		#### estimate phylogeny of mt genomes ###
+		open IN, $var{reference};
+		$var{$temp_ref}{length}=0;
+		while (<IN>){
+			if(/\>/){next;}
+			elsif(/\w+/){
+				$var{$temp_ref}{length} += length;
+			}
+		}
+		close IN;
 		
+		if (defined $opts{mt_genome_mapping}){ & MtGenomeMapping (\%var,\%opts);}
+		if (defined $opts{mt_genome_variant_calling}){ & MtGenomeVariantCalling (\%var,\%opts);}
+		if (defined $opts{mt_genome_phylogeny}){ & ReadReport (\%var,\%opts);}		
 	}	
-
 }
 
 sub MtGenomeMapping {
@@ -98,78 +126,60 @@ sub MtGenomeMapping {
 
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
 
-		my ($n_lib, $n_done, $run_flag, $written_flag) = qw (0 0 0 0);
-
-		foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
-			$n_lib ++;
-			if (-e "$sample_outpath/$lib\_filt.bamstat.txt"){ $n_done++; next unless (defined $opts{overwrite});}
-
-			if($samplelist{$sample}{rawdata}{$lib}{Flag} eq "PE"){
-				print SH "bwa mem $var{reference} ../../read_filtering/$sample/$lib\_1.filt.fq.gz ../../read_filtering/$sample/$lib\_2.filt.fq.gz -t $var{threads} -R \"\@RG\\tID:$lib\\tSM:$sample\\tLB:$lib\\tPL:$samplelist{$sample}{rawdata}{$lib}{PL}\"\| samtools view -bS -@ $var{threads} -F 4 - -o $lib\_filt.bam && \\\n";
+		foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
+			if($samplelist{$sample}{cleandata}{$readgroup}{Flag} eq "PE"){
+				print SH "bwa mem $var{reference} $samplelist{$sample}{cleandata}{$readgroup}{fq1} $samplelist{$sample}{cleandata}{$readgroup}{fq2} -t $var{threads} -R \"\@RG\\tID:$readgroup\\tSM:$sample\\tLB:$readgroup\\tPL:$samplelist{$sample}{cleandata}{$readgroup}{PL}\"\| samtools view -bS -@ $cfg{args}{threads} -F 4 - -o $readgroup\_filt.bam && \\\n";
 			}
-			elsif($samplelist{$sample}{rawdata}{$lib}{Flag} eq "SE"){
-				print SH "bwa mem $var{reference} ../../read_filtering/$sample/$lib\_1.filt.fq.gz -t $var{threads} -R \"\@RG\\tID:$lib\\tSM:$sample\\tLB:$lib\\tPL:$samplelist{$sample}{rawdata}{$lib}{PL}\"\| samtools view -bS -@ 10 -F 4 - -o $lib\_filt.bam && \\\n";
+			elsif($samplelist{$sample}{cleandata}{$readgroup}{Flag} eq "SE"){
+				print SH "bwa mem $var{reference} $samplelist{$sample}{cleandata}{$readgroup}{fq1} -t $var{threads} -R \"\@RG\\tID:$readgroup\\tSM:$sample\\tLB:$readgroup\\tPL:$samplelist{$sample}{cleandata}{$readgroup}{PL}\"\| samtools view -bS -@ 10 -F 4 - -o $readgroup\_filt.bam && \\\n";
 			}
 			#summarise statistics for each library bam file 
-			print SH "samtools stats -@ $var{threads} $lib\_filt.bam 1>$lib\_filt.bamstat.txt 2>$lib\_filt.bamstat.txt.e && echo \"** $lib\_filt.bamstat.txt done **\"\n";
+			print SH "samtools stats -@ $var{threads} $readgroup\_filt.bam 1>$readgroup\_filt.bamstat.txt 2>$readgroup\_filt.bamstat.txt.e && echo \"** $readgroup\_filt.bamstat.txt done **\"\n";
 			#then sort each library bam file 
-			print SH "samtools sort -@ $var{threads} $lib\_filt.bam -o $lib\_filt.sort.bam --output-fmt BAM && \\\n";
+			print SH "samtools sort -@ $var{threads} $readgroup\_filt.bam -o $readgroup\_filt.sort.bam --output-fmt BAM && \\\n";
 			#then remove the unsorted bam file
-			print SH "rm -f $lib\_filt.bam\n";
-			$written_flag ++;		
+			print SH "rm -f $readgroup\_filt.bam\n";
 		}
 
-		$run_flag = 1 if (!(defined $opts{overwrite}) && (-e "$sample_outpath/bam.stats.txt"));
-
 		#when there is only one library/lane for each sample
-		if (($n_lib == 1) && ($run_flag == 0)){
-			foreach my $lib (keys %{$samplelist{$sample}{rawdata}}){
-				print SH "mv $lib\_filt.sort.bam $sample.sorted.bam\n";
+		if (keys %{$samplelist{$sample}{cleandata}} == 1){
+			foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
+				print SH "mv $readgroup\_filt.sort.bam $sample.sorted.bam\n";
 			}
-			print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.mt_genome_mapping.finished.txt\n";
-			$written_flag ++;
 		}
 
 		#when there is more than one library/lane for each sample
-		elsif (($n_lib > 1) && ($run_flag == 0)){
-			print SH "samtools merge -nr -@ $var{threads} $sample.sorted.bam *_filt.sort.bam && echo \"** $sample.sort.bam done **\" && rm -f *_filt.sort.bam\n";
-			print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.mt_genome_mapping.finished.txt\n";
-			$written_flag ++;
-		}
-		elsif (($n_lib > 1) && ($run_flag > 0) && ($n_done!=$n_lib)){
-			print SH "mv $sample.sorted.bam $sample.previous.sorted.bam && \\\n";
-			print SH "samtools merge -nr -@ $var{threads} $sample.sorted.bam $sample.previous.sorted.bam *_filt.sort.bam && echo \"** $sample.sort.bam done **\" && rm -f *_filt.sort.bam\n";
-			print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>bam.stats.txt 2>bam.stats.txt.e && echo \"** finish mt_genome_mapping **\" > $var{shpath}/$sample.mt_genome_mapping.finished.txt\n";
-			$written_flag ++;
+		if (keys %{$samplelist{$sample}{cleandata}} > 1){
+			print SH "samtools merge -f -@ $var{threads} $sample.sorted.bam *_filt.sort.bam && echo \"** $sample.sorted.bam done **\" && rm -f *_filt.sort.bam\n";
 		}
 
-		# calculate read depth for each base
-		if (($run_flag == 0)||($n_done!=$n_lib)){
-			print SH "bedtools genomecov -d -ibam $sample.sorted.bam > $sample.genomecov\n";
-			$written_flag ++;
-			$sample_number ++;
+		if (defined $opts{downsize}){
+			my $required_coverage = $opts{downsize}*$var{$temp_ref}{length};
+			print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>$sample.sorted.bam.stats.txt 2>$sample.sorted.bam.stats.error\n";
+			print SH "a=\`cat $sample.sorted.bam.stats.txt|perl -ne \'if(/cigar\\):\\s+(\\d+)/){\$b=$required_coverage/\$1;if(\$b<1){print \$b}else{print 1}}\'\`\n";
+			print SH "mv $sample.sorted.bam $sample.sorted.ori.bam";
+			print SH "samtools view -s \$a $sample.sorted.ori.bam -o $sample.sorted.bam\n";
 		}
+
+		print SH "bedtools genomecov -d -ibam $sample.sorted.bam > $sample.genomecov\n";
+
+		print SH "gatk MarkDuplicates \\\n";
+	  	print SH "	--INPUT $sample.sorted.bam \\\n";
+	  	print SH "	--OUTPUT $sample.sorted.markdup.bam \\\n";
+	  	print SH "	--METRICS_FILE $sample.sorted.markdup_metrics.txt && \\\n";
+	  	print SH "rm -f $sample.sorted.bam && \\\n";
+	  	print SH "echo \"** $sample.sorted.markdup.bam done **\" \n";
+	  	print SH "samtools index $sample.sorted.markdup.bam && \\\n";
+	  	print SH "echo \"** $sample.sorted.markdup.bam index done **\" \n";
+
+	  	print SH "samtools stats -@ $var{threads} $sample.sorted.markdup.bam 1>$sample.bam.stats.txt 2>$sample.bam.stats.error && echo \"** bam.stats.txt done **\" > $var{shpath}/$sample.readmapping.finished.txt\n";
 
 		close SH;
-		print CL "sh $var{shpath}/$sample.mt_genome_mapping.sh 1>$var{shpath}/$sample.mt_genome_mapping.sh.o 2>$var{shpath}/$sample.mt_genome_mapping.sh.e \n" if ($written_flag > 0);
+
+		print CL "sh $var{shpath}/$sample.mt_genome_mapping.sh 1>$var{shpath}/$sample.mt_genome_mapping.sh.o 2>$var{shpath}/$sample.mt_genome_mapping.sh.e \n";
 	}
 	close CL;
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_mapping_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_mapping.list` unless (defined $opts{skipsh});
-
-	my $flag_finish = 0;
-	while(1){
-		sleep(20);
-		
-		foreach my $sample (keys %samplelist){
-
-			if(-e "$var{shpath}/$sample.mt_genome_mapping.finished.txt"){$flag_finish +=1;}
-
-		}
-		my $datestring = localtime();
-		print "waiting for mt_genome_mapping to be done [$flag_finish out of $sample_number samples are finished] at $datestring\n";
-
-		last if($flag_finish == $sample_number);
-	}
 }
 
 sub MtGenomeVariantCalling{
@@ -198,13 +208,10 @@ sub MtGenomeVariantCalling{
 
 	###############
 
-	open CL, ">$var{shpath}/cmd_mt_genome_variant_calling.list";
+	open BAMLIST, ">$var{outpath}/FreebayesCalling/bam.list";
 	foreach my $sample (keys %samplelist){
-		my $sample_outpath="$var{outpath}/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
-
-		if(-e "$var{shpath}/$sample.mt_genome_variant_calling.finished.txt"){`rm -f $var{shpath}/$sample.mt_genome_variant_calling.finished.txt`;}	
-
-		if (-e "$var{outpath}/$sample/$sample.genomecov"){
+		if ( !-d "$var{outpath}/$sample") {make_path $sample_outpath or die "Failed to create path: $var{outpath}/$sample";}
+		if ( -e "$var{outpath}/$sample/$sample.genomecov"){
 			open IN, "$var{outpath}/$sample/$sample.genomecov";
 			my $n_base = 0;
 			my $n_sum = 0;
@@ -220,19 +227,12 @@ sub MtGenomeVariantCalling{
 				$n_base ++;
 				my @a = split /\t/;
 				$n_sum += $a[2];
-				if ($a[2]>=1000){
-					$depth{1000}++;
-				}elsif($a[2]>=100){
-					$depth{100}++;
-				}elsif($a[2]>=50){
-					$depth{50}++;
-				}elsif($a[2]>=10){
-					$depth{10}++;
-				}elsif($a[2]>=10){
-					$depth{1}++;
-				}elsif($a[2]==0){
-					$depth{0}++;
-				}
+				if ($a[2]>=1000){ $depth{1000}++; }
+				elsif($a[2]>=100){ $depth{100}++; }
+				elsif($a[2]>=50){ $depth{50}++; }
+				elsif($a[2]>=10){ $depth{10}++; }
+				elsif($a[2]>=10){ $depth{1}++; }
+				elsif($a[2]==0){ $depth{0}++; }
 			}
 			close IN;
 
@@ -249,116 +249,24 @@ sub MtGenomeVariantCalling{
 			print OT $n_sum/$n_base, "\n";
 			close OT;
 		}
-
-		open SH, ">$var{shpath}/$sample.mt_genome_variant_calling.sh";
-
-		print SH "#!/bin/sh\ncd $sample_outpath\n";
-
-		# MarkDuplicates
-		print SH "gatk MarkDuplicates \\\n";
-	  	print SH "	--INPUT $sample.sorted.bam \\\n";
-	  	print SH "	--OUTPUT $sample.sorted.markdup.bam \\\n";
-	  	print SH "	--METRICS_FILE $sample.sorted.markdup_metrics.txt && \\\n";
-	  	print SH "rm -f $sample.sorted.bam && \\\n";
-	  	print SH "samtools index $sample.sorted.markdup.bam && echo \"** $sample.sorted.markdup.bam index done **\" \n";
-
-	  	print SH "gatk HaplotypeCaller \\\n";
-		print SH "	--emit-ref-confidence GVCF \\\n";
-		print SH "	-R $var{reference} \\\n";
-		print SH "	-ploidy $var{ploidy} \\\n";
-		print SH "	-I $sample.sorted.markdup.bam \\\n";
-		print SH "	-O $sample.HC.gvcf.gz && echo \"** GVCF ${sample}.HC.g.vcf.gz done\" && \\\n"; 
-		print SH "echo \"** finish mt_genome_variant_calling **\" > $var{shpath}/$sample.mt_genome_variant_calling.finished.txt \n";
-
-		close SH;
-		print CL "sh $var{shpath}/$sample.mt_genome_variant_calling.sh 1>$var{shpath}/$sample.mt_genome_variant_calling.sh.o 2>$var{shpath}/$sample.mt_genome_variant_calling.sh.e \n";
+		print BAMLIST "$var{outpath}/$sample/$sample.sorted.markdup.bam\n";
 	}
-	close CL;
+	close BAMLIST;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_variant_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_variant_calling.list` unless (defined $opts{skipsh});
-
-	my $flag_finish = 0;
-	while(1){
-		sleep(20);
-		
-		my $sample_number = keys %samplelist;
-		foreach my $sample (keys %samplelist){
-			if(-e "$var{shpath}/$sample.mt_genome_variant_calling.finished.txt"){$flag_finish +=1;}
-		}
-
-		my $datestring = localtime();
-		print "waiting for mt_genome_variant_calling to be done [$flag_finish out of $sample_number samples are finished] at $datestring\n";
-		last if($flag_finish == $sample_number);
-	}
-
-	#### joint variant calling on mt genomes ###
-	if ( !-d "$var{outpath}/Joint_calling" ) {
-		make_path "$var{outpath}/Joint_calling" or die "Failed to create path: $var{outpath}/Joint_calling";
-	} 		
-	if(-e "$var{shpath}/mt_genome_joint_calling.finished.txt"){`rm -f $var{shpath}/mt_genome_joint_calling.finished.txt`;}
-
-	open CL, ">$var{shpath}/cmd_mt_genome_joint_calling.list";
-
-	print SH "#!/bin/sh\ncd $var{outpath}/Joint_calling\n";
-	open SH, ">$var{shpath}/mt_genome_joint_calling.sh";
-	## Joint genotyping
-	## First, merge all the gvcf results, then perform GenotypeGVCFs
-	my $sample_gvcfs = "";
-	foreach my $sample (keys %samplelist){
-		$sample_gvcfs .= "	-V $var{outpath}/$sample/$sample.HC.gvcf.gz \\\n";
-	}
-
-	print SH "gatk CombineGVCFs \\\n";
-	print SH "	-R $var{reference} \\\n";
-	print SH "$sample_gvcfs";
-	print SH "	-O $var{outpath}/Joint_calling/Joint.HC.g.vcf.gz && echo \"** Joint.HC.g.vcf.gz done ** \"\n";
-
-	print SH "gatk GenotypeGVCFs \\\n";
-	print SH "	-R $var{reference} \\\n";
-	print SH "	-ploidy $var{ploidy} \\\n";
-	print SH "	-V $var{outpath}/Joint_calling/Joint.HC.g.vcf.gz \\\n";
-	print SH "	-O $var{outpath}/Joint_calling/Joint.HC.vcf.gz && echo \"** Joint.HC.vcf.gz **\"\n";
-
-	print SH "gatk SelectVariants \\\n";
-	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/Joint_calling/Joint.HC.vcf.gz \\\n";
-	print SH "	--select-type-to-include SNP \\\n";
-	print SH "	-O $var{outpath}/Joint_calling/Joint_raw_snps1st.vcf && echo \"** Joint_raw_snps1st.vcf done\" && \\\n";
-
-	print SH "gatk VariantFiltration \\\n";
-	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/Joint_calling/Joint_raw_snps1st.vcf \\\n";
-	print SH "	--filter-expression \"$cfg{step1}{variant_filtering}{snp}\" \\\n";
-	print SH "	--filter-name \"my_snp_filter\" \\\n";
-	print SH "	-O $var{outpath}/Joint_calling/Joint_filtered_snps1st.vcf && echo \"** Joint_filtered_snps1st done\" \n";
-
-	print SH "gatk SelectVariants \\\n";
-	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/Joint.HC.vcf.gz \\\n";
-	print SH "	--select-type-to-include INDEL \\\n";
-	print SH "	-O $var{outpath}/Joint_calling/Joint_raw_indels1st.vcf && echo \"** Joint_raw_indels1st.vcf done\" && \\\n";
-
-	print SH "gatk VariantFiltration \\\n";
-	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/Joint_calling/Joint_raw_indels1st.vcf \\\n";
-	print SH "	--filter-expression \"$cfg{step1}{variant_filtering}{indel}\" \\\n";
-	print SH "	--filter-name \"my_indel_filter\" \\\n";
-	print SH "	-O $var{outpath}/Joint_calling/Joint_filtered_indels1st.vcf && echo \"** finish mt_genome_joint_calling **\" > $var{shpath}/mt_genome_joint_calling.finished.txt \n";
-
+	#### freebayes variant calling on mt genomes ###
+	if ( !-d "$var{outpath}/FreebayesCalling" ) { make_path "$var{outpath}/FreebayesCalling" or die "Failed to create path: $var{outpath}/FreebayesCalling";}
+	open CL, ">$var{shpath}/cmd_mt_genome_freebayes.list";
+	print SH "#!/bin/sh\ncd $var{outpath}/FreebayesCalling\n";
+	
+	open SH, ">$var{shpath}/mt_genome_freebayes.sh";
+	print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -p $var{ploidy} --standard-filters | vcfsnps >$var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf";
 	close SH;
-	print CL "sh $var{shpath}/mt_genome_joint_calling.sh 1>$var{shpath}/mt_genome_joint_calling.sh.o 2>$var{shpath}/mt_genome_joint_calling.sh.e \n";
+	
+	print CL "sh $var{shpath}/mt_genome_freebayes.sh 1>$var{shpath}/mt_genome_freebayes.sh.o 2>$var{shpath}/mt_genome_freebayes.sh.e \n";
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_joint_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_joint_calling.list` unless ($opts{skipsh} ==1);
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_freebayes_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_freebayes.list` unless ($opts{skipsh} ==1);
 
-
-	$flag_finish = 0;
-	while(1){
-		sleep(20);
-		my $datestring = localtime();
-		print "waiting for mt_genome_joint_calling to be done at $datestring\n";
-		if(-e "$var{shpath}/mt_genome_joint_calling.finished.txt"){last;}
-	}
 }
 
 sub MtGenomePhylogeny{
@@ -377,20 +285,20 @@ sub MtGenomePhylogeny{
 	print SH "cd $var{outpath}/Mt_genome_phylogeny\n";
 	print SH "rm -rf $var{outpath}/Mt_genome_phylogeny/RAxML_*\n";
 
-	print SH "zcat $var{outpath}/Joint_calling/Joint.HC.g.vcf.gz|$Bin/Tools/vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
+	print SH "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf|$Bin/Tools/vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
 	print SH "$Bin/Tools/vcf_tab_to_fasta_alignment.pl -i $var{outpath}/Mt_genome_phylogeny/mt_genome.tab > $var{outpath}/mt_genome.fasta\n";
 
 	print SH "$Bin/Tools/fasta-to-phylip --input-fasta $var{outpath}/Mt_genome_phylogeny/mt_genome.fasta --output-phy $var{outpath}/Mt_genome_phylogeny/mt_genome.phy\n";
 	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/mt_genome.phy -n trees -T 24 -# 20 -p 12345\n";
 	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/mt_genome.phy -n boots -T 24 -# 100 -p 23456 -b 23456\n";
 	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -p 12345 -f b -t RAxML_bestTree.trees -T 2 -z RAxML_bootstrap.boots -n consensus\n";
-	#print SH "sumtrees.py --percentages --min-clade-freq=0.50 --target=RAxML_bestTree.trees --output=result2.tre RAxML_bootstrap.boots";
+	print SH "sumtrees.py --percentages --min-clade-freq=0.50 --target=RAxML_bestTree.trees --output=result2.tre RAxML_bootstrap.boots";
 
 	close SH;
 	print CL "sh $var{shpath}/mt_genome_phylogeny.sh 1>$var{shpath}/mt_genome_phylogeny.sh.o 2>$var{shpath}/mt_genome_phylogeny.sh.e \n";
 	close CL;
 
-	#`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_phylogeny_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=6 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_phylogeny.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_phylogeny_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=6 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_phylogeny.list` unless (defined $opts{skipsh});
 }
 
 1;

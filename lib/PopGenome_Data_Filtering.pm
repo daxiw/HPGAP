@@ -75,7 +75,8 @@ sub DataFiltering{
 	my %opts = %{$opts};
 	my %var = %{$var};
 	my %cfg = %{$var{cfg}};
-	my %samplelist = %{$var{samplelist}};
+	my %samplelist_ori = %{$var{samplelist}};
+	my %samplelist = %samplelist_ori;
 
 	open CL, ">$var{shpath}/cmd_read_filtering.list";
 	foreach my $sample (keys %samplelist){
