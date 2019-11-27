@@ -54,7 +54,7 @@ sub Main{
 			$selected_sample{$1}=1;
 		}
 		close IN;
-		foreach my $id %samplelist{
+		foreach my $id (keys %samplelist){
 			unless (exists $selected_sample{$id}){
 				delete $samplelist{$id};
 			}
@@ -185,7 +185,7 @@ sub MtGenomeMapping {
 		print CL "sh $var{shpath}/$sample.mt_genome_mapping.sh 1>$var{shpath}/$sample.mt_genome_mapping.sh.o 2>$var{shpath}/$sample.mt_genome_mapping.sh.e \n";
 	}
 	close CL;
-	
+
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_mapping_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_mapping.list` unless (defined $opts{skipsh});
 }
 
