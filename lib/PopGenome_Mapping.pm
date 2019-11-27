@@ -68,11 +68,11 @@ sub Main{
 		die "$var{reference} does not exists" unless (-e $var{reference});
 
 		open IN, $var{reference};
-		$var{$temp_ref}{length}=0;
+		$var{temp_ref}{length}=0;
 		while (<IN>){
 			if(/\>/){next;}
 			elsif(/\w+/){
-				$var{$temp_ref}{length} += length;
+				$var{temp_ref}{length} += length;
 			}
 		}
 		close IN;
@@ -191,12 +191,16 @@ sub ReadMapping {
 		}
 
 		if (defined $opts{downsize}){
-			my $required_coverage = $opts{downsize}*$var{$temp_ref}{length};
+			my $required_coverage = $opts{downsize}*$var{temp_ref}{length};
 			print SH "samtools stats -@ $var{threads} $sample.sorted.bam 1>$sample.sorted.bam.stats.txt 2>$sample.sorted.bam.stats.error\n";
-			print SH "a=\`cat $sample.sorted.bam.stats.txt|perl -ne \'if(/cigar\\):\\s+(\\d+)/){\$b=$required_coverage/\$1;if(\$b<1){print \$b}else{print 1}}\'\`\n";
-			print SH "mv $sample.sorted.bam $sample.sorted.ori.bam";
-			print SH "samtools view -s \$a $sample.sorted.ori.bam -o $sample.sorted.bam\n";
+			print SH "a=\`cat $sample.sorted.bam.stats.txt|perl -ne \'if(/cigar\\):\\s+(\\d+)/){print $required_coverage/\$1;}\'\`\n";
+			print SH "if [ $a -le 1 ]\n";
+			print SH "then\n";
+			print SH "	mv $sample.sorted.bam $sample.sorted.ori.bam && \\\n";
+			print SH "	samtools view -s \$a $sample.sorted.ori.bam -o $sample.sorted.bam\n";
+			print SH "fi\n";
 		}
+
 
 		print SH "gatk MarkDuplicates \\\n";
 	  	print SH "	--INPUT $sample.sorted.bam \\\n";
