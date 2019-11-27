@@ -27,7 +27,6 @@ sub Main{
 		'threads=s',
 		'samplelist=s',
 		'downsize=s',
-		'mt_genome=s',
 		'mt_genome_mapping',
 		'mt_genome_variant_calling',
 		'mt_genome_phylogeny',
@@ -85,12 +84,9 @@ sub Main{
 		$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/mt_phylogeny.$temp_ref";
 		if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 
-		if (defined $opts{mt_genome}){
-			$var{reference} = $opts{mt_genome};
-		}else {
-			die "please add mt genome path into configuration file" unless (defined $cfg{mtref}{db}{$temp_ref}{path});
-			$var{reference} = $cfg{mtref}{db}{$temp_ref}{path};
-		}
+		die "please add mt genome path into configuration file" unless (defined $cfg{mtref}{db}{$temp_ref}{path});
+		$var{reference} = $cfg{mtref}{db}{$temp_ref}{path};
+
 		die "$var{reference} does not exists" unless (-e $var{reference});
 
 		open IN, $var{reference};
@@ -102,7 +98,7 @@ sub Main{
 			}
 		}
 		close IN;
-		
+
 		if (defined $opts{mt_genome_mapping}){ & MtGenomeMapping (\%var,\%opts);}
 		if (defined $opts{mt_genome_variant_calling}){ & MtGenomeVariantCalling (\%var,\%opts);}
 		if (defined $opts{mt_genome_phylogeny}){ & ReadReport (\%var,\%opts);}		
@@ -121,11 +117,22 @@ sub MtGenomeMapping {
 	foreach my $sample (keys %samplelist){
 		my $sample_outpath="$var{outpath}/$sample"; if ( !-d $sample_outpath ) {make_path $sample_outpath or die "Failed to create path: $sample_outpath";}
 
-		open SH, ">$var{shpath}/$sample.mt_genome_mapping.sh";
-		if(-e "$var{shpath}/$sample.mt_genome_mapping.finished.txt"){`rm $var{shpath}/$sample.mt_genome_mapping.finished.txt`;}	
+		### skip finished samples 
+		$samplelist{$sample}{finish_flag}="finished";
+		foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
+			if ((-e "$sample_outpath/$readgroup\_filt.bamstat.txt") && (!defined $opts{overwrite})){
+				$samplelist{$sample}{cleandata}{$readgroup}{finish_flag}="finished";
+			}
+			else{
+				$samplelist{$sample}{finish_flag}="unfinished";
+				$samplelist{$sample}{cleandata}{$readgroup}{finish_flag}="unfinished";
+			#	`rm -f $var{shpath}/$sample.variant_calling.finished.txt`;
+			}
+		}
+		next if($samplelist{$sample}{finish_flag} eq "finished");
 
+		open SH, ">$var{shpath}/$sample.mt_genome_mapping.sh";		
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
-
 		foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
 			if($samplelist{$sample}{cleandata}{$readgroup}{Flag} eq "PE"){
 				print SH "bwa mem $var{reference} $samplelist{$sample}{cleandata}{$readgroup}{fq1} $samplelist{$sample}{cleandata}{$readgroup}{fq2} -t $var{threads} -R \"\@RG\\tID:$readgroup\\tSM:$sample\\tLB:$readgroup\\tPL:$samplelist{$sample}{cleandata}{$readgroup}{PL}\"\| samtools view -bS -@ $cfg{args}{threads} -F 4 - -o $readgroup\_filt.bam && \\\n";
@@ -175,10 +182,10 @@ sub MtGenomeMapping {
 	  	print SH "samtools stats -@ $var{threads} $sample.sorted.markdup.bam 1>$sample.bam.stats.txt 2>$sample.bam.stats.error && echo \"** bam.stats.txt done **\" > $var{shpath}/$sample.readmapping.finished.txt\n";
 
 		close SH;
-
 		print CL "sh $var{shpath}/$sample.mt_genome_mapping.sh 1>$var{shpath}/$sample.mt_genome_mapping.sh.o 2>$var{shpath}/$sample.mt_genome_mapping.sh.e \n";
 	}
 	close CL;
+	
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_mapping_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_mapping.list` unless (defined $opts{skipsh});
 }
 

@@ -38,7 +38,8 @@ sub Main{
 
 	my $yaml = YAML::Tiny->read( $opts{config} );
 	my %cfg = %{$yaml->[0]};
-	my %samplelist = %{$cfg{fqdata}};
+	my %samplelist_ori = %{$cfg{fqdata}};
+	my %samplelist = %samplelist_ori;
 	
 	$var{samplelist}=\%samplelist;
 	$var{cfg}=\%cfg;
