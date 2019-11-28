@@ -71,7 +71,7 @@ sub Main{
 	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
 
 	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/GeneticRelationship/";
-	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{var{shpath}}";}
+	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 
 	die "please add genome path into configuration file" unless (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path});
 	$var{reference} = $cfg{ref}{db}{$cfg{ref}{choose}}{path};
@@ -96,11 +96,12 @@ sub ADMIXTURE{
 	my %samplelist = %{$var{samplelist}};
 
 	my $outpath = "$var{outpath}/Admixture/";
+	my $plink_data;
 	if ( !-d $outpath ) {make_path $outpath or die "Failed to create path: $outpath";}
 	if (defined $cfg{variant_filtering}{plink_data}){
-		my $plink_data = $cfg{variant_filtering}{plink_data};
+		$plink_data = $cfg{variant_filtering}{plink_data};
 	}else {
-		my $plink_data = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$cfg{ref}{choose}/Filtered_variants/nosingle_snp_dp_prunned";
+		$plink_data = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$cfg{ref}{choose}/Filtered_variants/nosingle_snp_dp_prunned";
 	}
 
 	open CL, ">$var{shpath}/cmd_admixture_s1.list";
