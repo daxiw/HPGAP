@@ -287,15 +287,25 @@ sub MtGenomePhylogeny{
 
 	if ( !-d "$var{outpath}/Mt_genome_phylogeny" ) {make_path "$var{outpath}/Mt_genome_phylogeny" or die "Failed to create path: $var{outpath}/Mt_genome_phylogeny";}
 
+	my $i = 0;
+	open OT, ">$var{outpath}/Mt_genome_phylogeny/name_map.list";
+	foreach my $sample (keys %samplelist){
+		print OT "$sample ", "NS$i", "E\n";
+		$i++;
+	}
+	close OT;
+
 	open CL, ">$var{shpath}/cmd_mt_genome_phylogeny.list";
 
 	print SH "#!/bin/sh\ncd $var{outpath}/Mt_genome_phylogeny\n";
 	open SH, ">$var{shpath}/mt_genome_phylogeny.sh";
 
 	print SH "cd $var{outpath}/Mt_genome_phylogeny\n";
+
+	print SH "bcftools reheader --samples $var{outpath}/Mt_genome_phylogeny/name_map.list -o $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf\n";
 	print SH "rm -rf $var{outpath}/Mt_genome_phylogeny/RAxML_*\n";
 
-	print SH "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf|$Bin/Tools/vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
+	print SH "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf|$Bin/Tools/vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
 	print SH "$Bin/Tools/vcf_tab_to_fasta_alignment.pl -i $var{outpath}/Mt_genome_phylogeny/mt_genome.tab > $var{outpath}/Mt_genome_phylogeny/mt_genome.fasta\n";
 
 	print SH "$Bin/Tools/fasta-to-phylip --input-fasta $var{outpath}/Mt_genome_phylogeny/mt_genome.fasta --output-phy $var{outpath}/Mt_genome_phylogeny/mt_genome.phy\n";
