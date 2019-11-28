@@ -101,7 +101,7 @@ sub Main{
 
 		if (defined $opts{mt_genome_mapping}){ & MtGenomeMapping (\%var,\%opts);}
 		if (defined $opts{mt_genome_variant_calling}){ & MtGenomeVariantCalling (\%var,\%opts);}
-		if (defined $opts{mt_genome_phylogeny}){ & ReadReport (\%var,\%opts);}		
+		if (defined $opts{mt_genome_phylogeny}){ & MtGenomePhylogeny (\%var,\%opts);}		
 	}	
 }
 
@@ -266,16 +266,16 @@ sub MtGenomeVariantCalling{
 
 	#### freebayes variant calling on mt genomes ###
 	open CL, ">$var{shpath}/cmd_mt_genome_freebayes.list";
-	print SH "#!/bin/sh\ncd $var{outpath}/FreebayesCalling\n";
-	
 	open SH, ">$var{shpath}/mt_genome_freebayes.sh";
+
+	print SH "#!/bin/sh\ncd $var{outpath}/FreebayesCalling\n";
 	print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -p $var{ploidy} --standard-filters | vcfsnps >$var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf";
 	close SH;
 	
 	print CL "sh $var{shpath}/mt_genome_freebayes.sh 1>$var{shpath}/mt_genome_freebayes.sh.o 2>$var{shpath}/mt_genome_freebayes.sh.e \n";
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_freebayes_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_freebayes.list` unless ($opts{skipsh} ==1);
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_freebayes_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_freebayes.list` unless (defined $opts{skipsh});
 
 }
 
