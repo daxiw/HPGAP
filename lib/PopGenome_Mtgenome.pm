@@ -284,7 +284,8 @@ sub MtGenomePhylogeny{
 	my %opts = %{$opts};
 	my %var = %{$var};
 	my %cfg = %{$var{cfg}};
-
+	my %samplelist = %{$var{samplelist}};
+	
 	if ( !-d "$var{outpath}/Mt_genome_phylogeny" ) {make_path "$var{outpath}/Mt_genome_phylogeny" or die "Failed to create path: $var{outpath}/Mt_genome_phylogeny";}
 
 	my $i = 0;
