@@ -124,11 +124,11 @@ sub ADMIXTURE{
 	close SL;
 
 	# generate the arguments for Rscript
-	my @p;
-	push @p, $outpath; 
-	push @p, "$outpath/sample.list";
-	push @p, "K";
-	my $p = join (' ',@p);
+	my @pp;
+	push @pp, $outpath; 
+	push @pp, "$outpath/sample.list";
+	push @pp, "K";
+	my $p = join (' ',@pp);
 
 	`cat $var{shpath}/*admixture.o|grep \"CV error\" >$outpath/CV.error.txt`;
 
