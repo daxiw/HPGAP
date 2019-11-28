@@ -124,7 +124,8 @@ sub ADMIXTURE{
 	close SL;
 
 	# generate the arguments for Rscript
-	#my @pp;
+	undef @pp if (defined @pp);
+	my @pp;
 	push @pp, $outpath; 
 	push @pp, "$outpath/sample.list";
 	push @pp, "K";
