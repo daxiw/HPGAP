@@ -219,6 +219,7 @@ sub MtGenomeVariantCalling{
 	###############
 
 	open BAMLIST, ">$var{outpath}/FreebayesCalling/bam.list";
+	if ( !-d "$var{outpath}/FreebayesCalling") {make_path "$var{outpath}/FreebayesCalling" or die "Failed to create path: $var{outpath}/FreebayesCalling";}
 	foreach my $sample (keys %samplelist){
 		if ( !-d "$var{outpath}/$sample") {make_path "$var{outpath}/$sample" or die "Failed to create path: $var{outpath}/$sample";}
 		if ( -e "$var{outpath}/$sample/$sample.genomecov"){
@@ -264,7 +265,6 @@ sub MtGenomeVariantCalling{
 	close BAMLIST;
 
 	#### freebayes variant calling on mt genomes ###
-	if ( !-d "$var{outpath}/FreebayesCalling" ) { make_path "$var{outpath}/FreebayesCalling" or die "Failed to create path: $var{outpath}/FreebayesCalling";}
 	open CL, ">$var{shpath}/cmd_mt_genome_freebayes.list";
 	print SH "#!/bin/sh\ncd $var{outpath}/FreebayesCalling\n";
 	
