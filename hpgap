@@ -49,7 +49,10 @@ elsif ($run eq 'variant_filtering') {
 		require PopGenome_Variant_Filtering;
 		PopGenome_Variant_Filtering::Main(\@args);
 }
-
+elsif ($run eq 'genetic_relationship') {
+		require PopGenome_Genetic_Relationship;
+		PopGenome_Genetic_Relationship::Main(\@args);
+}
 elsif ($run eq 'test') {
 		require PopGenome_test;
 		PopGenome_test::TEST(\@args);

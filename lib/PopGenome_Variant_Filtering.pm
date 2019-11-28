@@ -212,7 +212,8 @@ sub AdvancedFiltering {
 	print SH "#!/bin/sh\ncd $var{outpath}\n";
 	print SH "vcftools --gzvcf $cfg{variant_filtering}{basic_vcf} --singletons --stdout >$var{outpath}/singletons.list\n";
 	print SH "vcftools --gzvcf $cfg{variant_filtering}{basic_vcf} --exclude-positions $var{outpath}/singletons.list --max-missing 1 --max-alleles 2 --recode --recode-INFO-all --stdout |bgzip -c >$var{outpath}/nosingle_snp_dp.vcf.gz\n";
-
+	print SH "tabix -f $var{outpath}/nosingle_snp_dp.vcf.gz\n";
+	
 	#Based on high quality SNV sites + low LD
 	print SH 'bcftools annotate --threads $var{threads} --rename-chrs', " $var{outpath}/chr_map.list" ," $var{outpath}/nosingle_snp_dp.vcf.gz", '|perl -ne \'if (/#\S+ID=(\d+)/){if($1<=',"$scaffold_number_limit",'){print;}}elsif(/^#/){print;}elsif(/^(\d+)\s+/){if($1<= ',"$scaffold_number_limit",'){print;}}\'|vcftools --vcf - --plink',"\n";
 	
