@@ -138,8 +138,18 @@ sub FreebayesBasicFiltering {
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/freebayes_basic_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_basic_filtering.list` unless (defined $opts{skipsh});
 }
 
-sub CustomFiltering {
-	print SH "vcftools --vcf $var{outpath}/../JointCalling/JointCalling_filtered_snps1st.vcf --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/PASS.SNP.vcf.gz && echo \"** finish variant_filtering_s1 **\" > $var{shpath}/variant_filtering_s1.finished.txt \n";
+sub FinalFiltering {
+	my ($var,$opts) = @_;
+	my %opts = %{$opts};
+	my %var = %{$var};
+	my %cfg = %{$var{cfg}};
+	my %samplelist = %{$var{samplelist}};
+
+	open CL, ">$var{shpath}/cmd_variant_filtering_s1.list";
+	open SH, ">$var{shpath}/variant_filtering_s1.sh";
+
+	#print SH "vcftools --vcf $var{outpath}/../JointCalling/JointCalling_filtered_snps1st.vcf --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/PASS.SNP.vcf.gz && echo \"** finish variant_filtering_s1 **\" > $var{shpath}/variant_filtering_s1.finished.txt \n";
+	
 	my $genome=PopGenome_Shared::LOADREF($var{reference});
 
 	###filter SNP by depth if needed
@@ -164,25 +174,13 @@ sub CustomFiltering {
 	}
 
 	#default SNV sites 1: PASS + max-meanDP: 3*$avgdp50 + max-missing: 0.8 + biallelic + selected chr (optional)
-	open SH, ">$var{shpath}/variant_filtering_s2.sh";
 	print SH "vcftools --gzvcf $var{outpath}/PASS.SNP.vcf.gz $chrcmd --min-meanDP 1 --max-meanDP $avgdp50 --max-missing 0.8 --max-alleles 2 --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/PASS.SNP.DP.vcf.gz && echo \"** finish variant_filtering_s2 **\" > $var{shpath}/variant_filtering_s2.finished.txt\n";
-	close SH;
-	
 	#switch on the bash running
-	open CL, ">$var{shpath}/cmd_variant_filtering_s2.list";
-	print CL "sh $var{shpath}/variant_filtering_s2.sh 1>$var{shpath}/variant_filtering_s2.sh.o 2>$var{shpath}/variant_filtering_s2.sh.e\n";
+	print CL "sh $var{shpath}/variant_filtering_s1.sh 1>$var{shpath}/variant_filtering_s1.sh.o 2>$var{shpath}/variant_filtering_s1.sh.e\n";
 	close CL;
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s2_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s2.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s1.list` unless (defined $opts{skipsh});
 	
-	$flag_finish = 0;
-	unless (defined $opts{skipsh}){
-		while(1){
-			sleep(20);
-			my $datestring = localtime();
-			print "waiting for variant_filtering_s2 to be done at $datestring\n";
-			if(-e "$var{shpath}/variant_filtering_s2.finished.txt"){last;}
-		}
-	}
+
 	$cfg{step1}{variant_filtering}{vcf}="$var{outpath}/PASS.SNP.DP.vcf.gz";
 
 	### prepare the setting for low LD prunning
@@ -209,6 +207,7 @@ sub CustomFiltering {
 	my $scaffold_number_limit = $cfg{step1}{variant_filtering}{scaffold_number_limit};
 
 	#Based on default SNV sites + no singletons + no missing data + minDP 2 + minQ 30  (high quality SNPs)
+	open CL, ">$var{shpath}/cmd_variant_filtering_s3.list";
 	open SH, ">$var{shpath}/variant_filtering_s3.sh";
 	print SH "cd $var{outpath}\n";
 	print SH "vcftools --gzvcf $cfg{step1}{variant_filtering}{vcf} --singletons --stdout >$var{outpath}/singletons.list\n";
@@ -227,20 +226,9 @@ sub CustomFiltering {
 	
 	close SH;
 
-	open CL, ">$var{shpath}/cmd_variant_filtering_s3.list";
 	print CL "sh $var{shpath}/variant_filtering_s3.sh 1>$var{shpath}/variant_filtering_s3.sh.o 2>$var{shpath}/variant_filtering_s3.sh.e\n";
 	close CL;
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s3_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s3.list` unless (defined $opts{skipsh});
-
-	$flag_finish = 0;
-	unless (defined $opts{skipsh}){
-		while(1){
-			sleep(20);
-			my $datestring = localtime();
-			print "waiting for variant_filtering_s3 to be done at $datestring\n";
-			if(-e "$var{shpath}/variant_filtering_s3.finished.txt"){last;}
-		}
-	}
 
 	$cfg{step1}{variant_filtering}{plink_data}="$var{outpath}/high_confidence_prunned";
 	$cfg{step1}{variant_filtering}{high_confidence_vcf}="$var{outpath}/high_confidence.vcf.gz";
@@ -248,8 +236,11 @@ sub CustomFiltering {
 	
 	### format a report
 	my %report;
-	if ($cfg{step1}{variant_filtering}{vcf} =~ /.gz$/) { open(IN, "gunzip -c $cfg{step1}{variant_filtering}{vcf} |") || die "can’t open pipe to $cfg{step1}{variant_filtering}{vcf}";}
-		else { open(IN, $cfg{step1}{variant_filtering}{vcf}) || die "can’t open $cfg{step1}{variant_filtering}{vcf}";}
+	if ($cfg{step1}{variant_filtering}{vcf} =~ /.gz$/) { 
+		open(IN, "gunzip -c $cfg{step1}{variant_filtering}{vcf} |") || die "can’t open pipe to $cfg{step1}{variant_filtering}{vcf}";
+	} else { 
+		open(IN, $cfg{step1}{variant_filtering}{vcf}) || die "can’t open $cfg{step1}{variant_filtering}{vcf}";
+	}
 
 	$report{snv1}{number}=0;
 	while (<IN>){
