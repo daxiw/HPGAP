@@ -21,6 +21,7 @@ sub Main{
 		'allsteps',
 		'threads',
 		'variant_filtering',
+		'freebayes_filtering',
 #		'intersection',
 		'help',
 		'skipsh');
@@ -60,7 +61,7 @@ sub Main{
 	die "$var{reference} does not exists" unless (-e $var{reference});
 
 	if (defined $opts{variant_filtering}){ &VariantFiltering (\%var,\%opts);}
-
+	if (defined $opts{freebayes_filtering}){ &FreebayesBasicFiltering (\%var,\%opts);}
 #	if (defined $opts{intersection}){ &ReadReport (\%var,\%opts);}
 }
 
