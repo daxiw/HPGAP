@@ -66,7 +66,6 @@ sub Main{
 		$var{threads} = 4;
 	}
 
-
 	$var{outpath} = "$cfg{args}{outdir}/GeneticRelationship/";
 	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
 
@@ -119,13 +118,13 @@ sub ADMIXTURE{
 	`cp -f $Bin/lib/admixture.R $var{shpath}/admixture.R`;
 	
 	open SL, ">$outpath/sample.list";
-	foreach (keys %samplelist;){
+	foreach (keys %samplelist){
 		print SL "$_\n";
 	}
 	close SL;
 
 	# generate the arguments for Rscript
-	my @pp;
+	#my @pp;
 	push @pp, $outpath; 
 	push @pp, "$outpath/sample.list";
 	push @pp, "K";
