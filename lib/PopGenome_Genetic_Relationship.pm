@@ -35,14 +35,12 @@ sub Main{
 	}
 
 	my $yaml = YAML::Tiny->read( $opts{config} );
-	my %cfg = %{$yaml->[0]};
-	my %samplelist = %{$cfg{fqdata}};
-	
-	$var{samplelist}=\%samplelist;
+	my %cfg = %{$yaml->[0]};	
 	$var{cfg}=\%cfg;
 
 	my %samplelist_ori = %{$cfg{fqdata}};
 	my %samplelist = %samplelist_ori;
+	$var{samplelist}=\%samplelist;
 
 	if (defined $opts{samplelist}){
 		my %selected_sample;
