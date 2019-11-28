@@ -122,11 +122,18 @@ sub FreebayesBasicFiltering {
 	my %samplelist = %{$var{samplelist}};
 
 	open SH, ">$var{shpath}/freebayes_basic_filtering.sh";
-	
+
+	print SH "#!/bin/sh\ncd $var{outpath}/\n";
+	print SH "vcftools --gzvcf $var{outpath}/../FreebayesCalling/freebayes_joint_calling.vcf.gz --missing-indv\n";
+	print SH "awk \'\$5 > 0.2\' out.imiss | cut -f1 > lowDP.indv\n";
+	print SH "vcftools --gzvcf $var{outpath}/../FreebayesCalling/freebayes_joint_calling.vcf.gz --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout | bgzip -c > freebayes_joint_calling_filtered1.vcf.gz";
+
 	close SH;
+
 	open CL, ">$var{shpath}/cmd_freebayes_basic_filtering.list";
 	print CL "sh $var{shpath}/freebayes_basic_filtering.sh 1>$var{shpath}/freebayes_basic_filtering.sh.o 2>$var{shpath}/freebayes_basic_filtering.sh.e\n";
 	close CL;
+
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/freebayes_basic_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_basic_filtering.list` unless (defined $opts{skipsh});
 }
 

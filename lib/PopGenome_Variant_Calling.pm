@@ -267,22 +267,6 @@ sub IndividualVariantCalling {
 	}
 	close CL;
 	`perl $Bin/lib/qsub.pl -r -d $var{shpath}/cmd_variant_calling_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/cmd_variant_calling.list` unless (defined $opts{skipsh});
-
-	while(1){
-		sleep(10);
-		my $flag_finish = 1; 
-		foreach my $sample (keys %samplelist){
-			next if (defined $samplelist{$sample}{finish_flag});
-			if(-e "$var{shpath}/$sample.variant_calling.finished.txt"){
-				next;
-			}else{
-				$flag_finish = 0;
-			}
-		}
-		my $datestring = localtime();
-		print "waiting for sample.variant_calling to be done at $datestring\n";
-		last if($flag_finish == 1);
-	}
 }
 
 sub JointCalling{
