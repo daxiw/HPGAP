@@ -81,11 +81,6 @@ sub Main{
 	if (defined $opts{pca}){ &PCA (\%var,\%opts);}
 }
 
-#################################
-#			   #
-#   	GeneticRelationships_admixture    		#
-#			   #
-#################################
 sub ADMIXTURE{
 
 	my ($var,$opts) = @_;
@@ -95,6 +90,8 @@ sub ADMIXTURE{
 	my %samplelist = %{$var{samplelist}};
 
 	my $outpath = "$var{outpath}/Admixture/";
+	if ( !-d "$var{outpath}/Admixture" ) {make_path "$var{outpath}/Admixture" or die "Failed to create path: $var{outpath}/Admixture";}
+	
 	my $plink_data;
 	if ( !-d $outpath ) {make_path $outpath or die "Failed to create path: $outpath";}
 	if (defined $cfg{variant_filtering}{plink_data}){
@@ -105,7 +102,7 @@ sub ADMIXTURE{
 
 	open CL, ">$var{shpath}/cmd_admixture_s1.list";
 	open SH, ">$var{shpath}/admixture.sh";
-	print SH "cd $outpath\n";
+	print SH "#!/bin/sh\ncd $var{outpath}/Admixture/\n";
 	print SH "cp -fr $plink_data* ./\n";
 	
 	for (my $k=0; $k<9;$k++){
@@ -140,6 +137,62 @@ sub ADMIXTURE{
 	close CL;
 	
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/admixture_s2_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_admixture_s2.list` unless (defined $opts{skipsh});
+}
+
+sub PHYLOGENY{
+
+	my ($var,$opts) = @_;
+	my %opts = %{$opts};
+	my %var = %{$var};
+	my %cfg = %{$var{cfg}};
+	my %samplelist = %{$var{samplelist}};
+
+	if ( !-d "$var{outpath}/Phylogeny" ) {make_path "$var{outpath}/Phylogeny" or die "Failed to create path: $var{outpath}/Phylogeny";}
+
+	my $i = 0;my %name;
+	open OT, ">$var{outpath}/Phylogeny/name_map.list";
+	foreach my $sample (keys %samplelist){
+		print OT "$sample ", "NS$i", "E\n";
+		my $newid = "NS$i"."E";
+		$name{$newid} = $sample;
+		$i++;
+	}
+	close OT;
+
+	open CL, ">$var{shpath}/cmd_Phylogeny.list";
+
+	open SH, ">$var{shpath}/Phylogeny.sh";
+	print SH "#!/bin/sh\ncd $var{outpath}/Phylogeny\n";
+
+	print SH "bcftools reheader --samples $var{outpath}/Phylogeny/name_map.list -o $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf\n";
+	print SH "rm -rf $var{outpath}/Phylogeny/RAxML_*\n";
+
+	print SH "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf|$Bin/Tools/vcf-to-tab >$var{outpath}/Phylogeny/popgenome.tab\n";
+	print SH "$Bin/Tools/vcf_tab_to_fasta_alignment.pl -i $var{outpath}/Phylogeny/popgenome.tab > $var{outpath}/Phylogeny/popgenome.fasta\n";
+
+	print SH "$Bin/Tools/fasta-to-phylip --input-fasta $var{outpath}/Phylogeny/popgenome.fasta --output-phy $var{outpath}/Phylogeny/popgenome.phy\n";
+	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Phylogeny/popgenome.phy -n trees -T $var{threads} -# 20 -p 12345\n";
+	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Phylogeny/popgenome.phy -n boots -T $var{threads} -# 100 -p 23456 -b 23456\n";
+	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -p 12345 -f b -t RAxML_bestTree.trees -T $var{threads} -z RAxML_bootstrap.boots -n consensus\n";
+	print SH "sumtrees.py --percentages --min-clade-freq=0.50 --target=RAxML_bestTree.trees --output=result2.tre RAxML_bootstrap.boots";
+
+	close SH;
+	print CL "sh $var{shpath}/Phylogeny.sh 1>$var{shpath}/Phylogeny.sh.o 2>$var{shpath}/Phylogeny.sh.e \n";
+	close CL;
+
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_Phylogeny_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_Phylogeny.list` unless (defined $opts{skipsh});
+
+	open my $fh, '<', "$var{outpath}/Phylogeny/result2.tre" or die "error opening $var{outpath}/Phylogeny/result2.tre: $!";
+	my $data = do { local $/; <$fh> };
+
+	foreach my $newid (keys %name){
+		$data =~ s/($newid)/($name{$newid})/g;
+	}
+	close $fh;
+
+	open OT, ">$var{outpath}/Phylogeny/result2.final.tre";
+	print OT $data;
+	close OT;
 }
 
 1;

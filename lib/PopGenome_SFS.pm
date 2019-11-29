@@ -1,4 +1,4 @@
-package PopGenome_SFS;
+ package PopGenome_SFS;
 use File::Basename;
 use File::Path qw(make_path);
 use strict;
