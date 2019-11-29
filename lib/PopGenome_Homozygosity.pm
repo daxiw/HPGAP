@@ -73,12 +73,12 @@ sub Main{
 
 	my %pop;
 	foreach my $sample (keys %{$cfg{population}}){
-		unless (exists $pop{$cfg{population}{$sample}{'presumed population'}}{line}){
-			$pop{$cfg{population}{$sample}{'presumed population'}}{count} = 0;
-			$pop{$cfg{population}{$sample}{'presumed population'}}{line} = "";
+		unless (exists $pop{$cfg{population}{$sample}{'presumed_population'}}{line}){
+			$pop{$cfg{population}{$sample}{'presumed_population'}}{count} = 0;
+			$pop{$cfg{population}{$sample}{'presumed_population'}}{line} = "";
 		}
-		$pop{$cfg{population}{$sample}{'presumed population'}}{count}++;
-		$pop{$cfg{population}{$sample}{'presumed population'}}{line} .= "$sample\n";
+		$pop{$cfg{population}{$sample}{'presumed_population'}}{count}++;
+		$pop{$cfg{population}{$sample}{'presumed_population'}}{line} .= "$sample\n";
 	}
 	$var{pop}=\%pop;
 
@@ -148,7 +148,7 @@ sub ROH{
 	my %pop = %{$var{pop}};
 	
 	if ( !-d "$var{outpath}/ROH" ) {make_path "$var{outpath}/ROH" or die "Failed to create path: $var{outpath}/ROH";}
-	
+
 	$cfg{ROH}{windowsize} = 100 unless (defined $cfg{ROH}{windowsize});
 	$cfg{ROH}{scaffold_number_limit} = 95 unless (defined $cfg{ROH}{scaffold_number_limit});
 	$cfg{ROH}{scaffold_length_cutoff} = 1000000 unless (defined $cfg{ROH}{scaffold_length_cutoff});
