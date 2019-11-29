@@ -7,6 +7,7 @@ use Getopt::Long qw(GetOptionsFromArray);
 use FindBin '$Bin';
 use YAML::Tiny;
 use lib "$Bin/lib";
+use PopGenome_Shared;
 
 sub Main{
 	my $args = shift; 
