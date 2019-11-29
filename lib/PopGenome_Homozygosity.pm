@@ -95,11 +95,9 @@ sub Main{
 	$var{genome}= PopGenome_Shared::LOADREF($cfg{ref}{db}{$cfg{ref}{choose}}{path});
 
 	if (defined $opts{homozygosity}){ 
-		if ( !-d "$var{outpath}/Homozygosity" ) {make_path "$var{outpath}/Homozygosity" or die "Failed to create path: $var{outpath}/Homozygosity";}
 		& HOMOZYGOSITY (\%var,\%opts);
 	}
 	if (defined $opts{roh}){ 
-		if ( !-d "$var{outpath}/ROH" ) {make_path "$var{outpath}/ROH" or die "Failed to create path: $var{outpath}/ROH";}
 		& ROH (\%var,\%opts);
 	}
 }
@@ -116,6 +114,8 @@ sub HOMOZYGOSITY{
 	my %cfg = %{$var{cfg}};
 	my %samplelist = %{$var{samplelist}};
 	my %pop = %{$var{pop}};
+
+	if ( !-d "$var{outpath}/Homozygosity" ) {make_path "$var{outpath}/Homozygosity" or die "Failed to create path: $var{outpath}/Homozygosity";}
 
 	open CL, ">$var{shpath}/cmd_Homozygosity.list";
 	
@@ -146,6 +146,8 @@ sub ROH{
 	my %cfg = %{$var{cfg}};
 	my %samplelist = %{$var{samplelist}};
 	my %pop = %{$var{pop}};
+	
+	if ( !-d "$var{outpath}/ROH" ) {make_path "$var{outpath}/ROH" or die "Failed to create path: $var{outpath}/ROH";}
 	
 	$cfg{ROH}{windowsize} = 100 unless (defined $cfg{ROH}{windowsize});
 	$cfg{ROH}{scaffold_number_limit} = 95 unless (defined $cfg{ROH}{scaffold_number_limit});

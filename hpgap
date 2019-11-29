@@ -53,6 +53,10 @@ elsif ($run eq 'genetic_relationship') {
 		require PopGenome_Genetic_Relationship;
 		PopGenome_Genetic_Relationship::Main(\@args);
 }
+elsif ($run eq 'homozygosity') {
+		require PopGenome_Homozygosity;
+		PopGenome_Homozygosity::Main(\@args);
+}
 elsif ($run eq 'test') {
 		require PopGenome_test;
 		PopGenome_test::TEST(\@args);
