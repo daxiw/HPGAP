@@ -126,7 +126,7 @@ sub HOMOZYGOSITY{
 		print OT $pop{$pop_name}{line};
 		close OT;
 
-		open SH, ">$shpath/Homozygosity.$pop_name.sh";
+		open SH, ">$var{shpath}/Homozygosity.$pop_name.sh";
 		print SH "cd $var{outpath}/Homozygosity\n";
 		print SH "vcftools --gzvcf $var{vcf} --keep $var{outpath}/Homozygosity/$pop_name.list --het --stdout ",'|perl -ne \'if(/INDV/){print "INDV\tO_HOM\tE_HOM\tN_SITES\tPERCENTAGE\tF\n";}else{@a=split /\t/;$p=$a[1]/$a[3]*100;$p=sprintf("%.2f", $p);print "$a[0]\t$a[1]\t$a[2]\t$a[3]\t$p\t$a[4]";}\'', ">$pop_name.het.list\n";
 		close SH;
@@ -172,7 +172,7 @@ sub ROH{
 	open CL, ">$var{shpath}/cmd_ROH.list";
 	foreach my $pop_name (keys %pop){
 		next unless ($pop{$pop_name}{count} > 4);
-		open SH, ">$shpath/ROH.$pop_name.sh";
+		open SH, ">$var{shpath}/ROH.$pop_name.sh";
 
 		open OT, ">$var{outpath}/ROH/$pop_name.list";
 		print OT $pop{$pop_name}{line};
