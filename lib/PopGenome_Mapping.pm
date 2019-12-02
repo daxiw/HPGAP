@@ -250,7 +250,26 @@ sub MappingReport {
 		print SOT $sample_summary{$sample}{"mean_covreage"},"\t";
 		print SOT $sample_summary{$sample}{"mapping_rate"},"\n";
 	}
+	close SOT;
 
+	open SOT, ">$var{outpath}/Report/sample_mapping_summary_formatted.xls";
+
+	print SOT "sampleID","\t";
+	print SOT "reference","\t";
+	print SOT "percentage_of_cleandata (%)","\t";
+	print SOT "clean_data ","\t";
+	print SOT "mean_covreage","\t";
+	print SOT "mapping_rate (%)","\n";
+
+	foreach my $sample (keys %samplelist){
+		print SOT "$sample\t";
+		print SOT "$var{temp_ref}{name}\t";
+
+		print SOT sprintf("%.2f",100*$sample_summary{$sample}{"percentage_of_cleandata"}),"\t";
+		print SOT sprintf("%.2f",$sample_summary{$sample}{"clean_data"}/1000000000),"\t";
+		print SOT sprintf("%.2f",$sample_summary{$sample}{"mean_covreage"}),"\t";
+		print SOT sprintf("%.2f",100*$sample_summary{$sample}{"mapping_rate"}),"\n";
+	}
 	close SOT;
 }
 
