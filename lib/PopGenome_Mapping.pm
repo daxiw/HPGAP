@@ -210,6 +210,7 @@ sub MappingReport {
 		my @a = split /\t/;
 		$sample_summary{$a[0]}{"raw_data"} = $a[2];
 		$sample_summary{$a[0]}{"clean_data"} = $a[4];
+		print $a[0],"\t",$sample_summary{$a[0]}{"clean_data"},"\n";
 		if ($a[2] > 0) {
 			$sample_summary{$a[0]}{"percentage_of_cleandata"} = $a[4]/$a[2];
 		} else {
