@@ -203,7 +203,7 @@ sub MappingReport {
 	my $report_sample_outpath="$var{outpath}/Report/Samples"; 
 	if ( !-d $report_sample_outpath ) {make_path $report_sample_outpath or die "Failed to create path: $report_outpath";}
 
-	open FOT, "$var{outpath}/../read_filtering/Report/read_group_quality_summary.xls";
+	open FOT, "$var{outpath}/../read_filtering/Report/sample_mapping_summary.xls";
 	my %sample_summary;
 	while (<FOT>) {
 		next if (/ampleID/);
