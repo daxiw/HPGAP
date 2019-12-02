@@ -68,6 +68,7 @@ sub Main{
 		die "$var{reference} does not exists" unless (-e $var{reference});
 
 		open IN, $var{reference};
+		$var{temp_ref}{name}=$temp_ref;
 		$var{temp_ref}{length}=0;
 		while (<IN>){
 			if(/\>/){next;}
@@ -79,42 +80,8 @@ sub Main{
 
 		if (defined $opts{read_mapping}){ $mapping{$temp_ref} = & ReadMapping (\%var,\%opts);}
 
-		#### estimate phylogeny of mt genomes ###		
-	}
-
-	# wait for the read mapping 
-	while(defined $opts{read_mapping}){
-		sleep(10);
-		my $flag_finish = 1; 
-
-		foreach my $temp_ref(keys %{$cfg{ref}{db}}){
-			$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$temp_ref";
-			#####
-
-			my %subsamplelist = %{ $mapping{$temp_ref} };
-
-			foreach my $sample (keys %samplelist){
-				next if ($subsamplelist{$sample}{finish_flag} eq "finished");
-				if(-e "$var{shpath}/$sample.readmapping.finished.txt"){
-					next;
-				}else{
-					$flag_finish = 0;
-				}
-			}
-			#####
-		}
-		my $datestring = localtime();
-		print "waiting for readmapping to be done at $datestring\n";
-		last if($flag_finish == 1);
-	}
-
-	foreach my $temp_ref(keys %{$cfg{ref}{db}}){
-		$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$temp_ref"; 
-		if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
-		$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$temp_ref";
-		if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
-
 		if (defined $opts{mapping_report}){ & MappingReport (\%var,\%opts);}
+		#### estimate phylogeny of mt genomes ###		
 	}
 
 	#$var{outfig} = $opts{config};
@@ -222,6 +189,67 @@ sub ReadMapping {
 
 	return (\%samplelist);
 
+}
+
+sub MappingReport {
+	my ($var,$opts) = @_;
+	my %opts = %{$opts};
+	my %var = %{$var};
+	my %cfg = %{$var{cfg}};
+	my %samplelist = %{$var{samplelist}};
+
+	my $report_outpath="$var{outpath}/Report"; 
+	if ( !-d $report_outpath ) {make_path $report_outpath or die "Failed to create path: $report_outpath";}
+	my $report_sample_outpath="$var{outpath}/Report/Samples"; 
+	if ( !-d $report_sample_outpath ) {make_path $report_sample_outpath or die "Failed to create path: $report_outpath";}
+
+	open FOT, "$var{outpath}/../read_filtering/Report/read_group_quality_summary.xls";
+	my %sample_summary;
+	while <FOT> {
+		next if (/ampleID/);
+		my @a = split /\t/;
+		$sample_summary{$a[0]}{"raw_data"} = $a[3];
+		$sample_summary{$a[0]}{"clean_data"} = $a[5];
+		if ($a[5] > 0) {
+			$sample_summary{$a[0]}{"percentage_of_cleandata"} = $a[3]/$a[5] if ($a[5] > 0)
+		} else {
+			$sample_summary{$a[0]}{"percentage_of_cleandata"} = 0;
+		}
+	}
+	close FOT;
+
+	open SOT, ">$var{outpath}/Report/sample_mapping_summary.xls";
+
+	print SOT "sampleID","\t";
+	print SOT "reference","\t";
+	print SOT "percentage_of_cleandata","\t";
+	print SOT "clean_data","\t";
+	print SOT "mean_covreage","\t";
+	print SOT "mapping_rate","\n";
+
+	foreach my $sample (keys %samplelist){
+		my $sample_report_outpath="$var{outpath}/Report/Samples/$sample";
+		if ( !-d $sample_report_outpath ) {make_path $sample_report_outpath or die "Failed to create path: $sample_report_outpath";}
+		`cp $var{outpath}/$sample/$sample.bam.stats.txt $sample_report_outpath`;
+		open IN "$sample_report_outpath/$sample.bam.stats.txt";
+		while (<IN>){
+			if (/SN\s+bases\s+mapped\s+\(cigar\)\:\s+(\d+)/){
+				$sample_summary{$sample}{"mapped_bases"}=$1;
+				$sample_summary{$sample}{"mean_covreage"}=$sample_summary{$sample}{"mapped_bases"}/$var{temp_ref}{length};
+				$sample_summary{$sample}{"mapping_rate"}=$sample_summary{$sample}{"mapped_bases"}/$sample_summary{$sample}{"clean_data"};
+				last;
+			}
+		}
+		close IN;
+		print SOT "$sample\t";
+		print SOT "$var{temp_ref}{name}\t";
+		print SOT $sample_summary{$sample}{"percentage_of_cleandata"},"\t";
+		print SOT $sample_summary{$sample}{"clean_data"},"\t";
+		print SOT $sample_summary{$sample}{"mean_covreage"},"\t";
+		print SOT $sample_summary{$sample}{"mapping_rate"},"\n";
+	}
+
+	close SOT;
 }
 
 1;

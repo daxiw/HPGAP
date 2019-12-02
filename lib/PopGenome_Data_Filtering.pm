@@ -186,7 +186,7 @@ sub ReadReport{
     print SOT "before_filtering_reads","\t";
     print SOT "before_filtering_bases","\t";
     print SOT "after_filtering_reads","\t";
-    print SOT "after_filtering_bases","\t";
+    print SOT "after_filtering_bases","\n";
 
 	foreach my $sample (keys %samplelist){
 		print "$sample\n";
