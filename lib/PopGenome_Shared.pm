@@ -110,7 +110,7 @@ sub CombineCfg{
 	}
 
 	die "fill in folder" unless (defined $folder);
-	if ($folder ne NULL){
+	if ($folder ne "NULL"){
 		$var{outpath} = "$cfg{args}{outdir}/$folder/";
 		if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
 
