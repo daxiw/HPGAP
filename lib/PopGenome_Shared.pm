@@ -48,14 +48,14 @@ sub CombineCfg{
 	my %db_cfg = %{YAML::Tiny->read( $user_cfg{args}{outdir} )->[0]};
 
 	if (defined $user_cfg{'fqdata'}) {$cfg{'fqdata'}=$user_cfg{'fqdata'};}
-		foreach my $key_L1(keys %par){
-			foreach my $key_L2(keys %{$par{$key_L1}}){
-				if (defined $user_cfg{$key_L1}{$key_L2}){
-					$cfg{$key_L1}{$key_L2} = $user_cfg{$key_L1}{$key_L2};
-				}
+	foreach my $key_L1(keys %par){
+		foreach my $key_L2(keys %{$par{$key_L1}}){
+			if (defined $user_cfg{$key_L1}{$key_L2}){
+				$cfg{$key_L1}{$key_L2} = $user_cfg{$key_L1}{$key_L2};
 			}
 		}
 	}
+	
 
 	$var{cfg} = \%cfg;
 	if (defined $opts{threads}){
