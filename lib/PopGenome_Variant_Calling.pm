@@ -22,6 +22,7 @@ sub Main{
 		'threads=i',
 		'individual_variant_calling',
 		'joint_calling',
+		'joint_bqsr',
 		'freebayes_calling',
 		'recalibration_mode',
 		'help',
