@@ -231,7 +231,7 @@ sub MappingReport {
 		my $sample_report_outpath="$var{outpath}/Report/Samples/$sample";
 		if ( !-d $sample_report_outpath ) {make_path $sample_report_outpath or die "Failed to create path: $sample_report_outpath";}
 		`cp $var{outpath}/$sample/$sample.bam.stats.txt $sample_report_outpath`;
-		open IN "$sample_report_outpath/$sample.bam.stats.txt";
+		open IN, "$sample_report_outpath/$sample.bam.stats.txt";
 		while (<IN>){
 			if (/SN\s+bases\s+mapped\s+\(cigar\)\:\s+(\d+)/){
 				$sample_summary{$sample}{"mapped_bases"}=$1;
