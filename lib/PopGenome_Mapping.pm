@@ -208,10 +208,10 @@ sub MappingReport {
 	while (<FOT>) {
 		next if (/ampleID/);
 		my @a = split /\t/;
-		$sample_summary{$a[0]}{"raw_data"} = $a[3];
-		$sample_summary{$a[0]}{"clean_data"} = $a[5];
-		if ($a[5] > 0) {
-			$sample_summary{$a[0]}{"percentage_of_cleandata"} = $a[3]/$a[5] if ($a[5] > 0)
+		$sample_summary{$a[0]}{"raw_data"} = $a[2];
+		$sample_summary{$a[0]}{"clean_data"} = $a[4];
+		if ($a[2] > 0) {
+			$sample_summary{$a[0]}{"percentage_of_cleandata"} = $a[4]/$a[2];
 		} else {
 			$sample_summary{$a[0]}{"percentage_of_cleandata"} = 0;
 		}
