@@ -24,74 +24,16 @@ sub Main{
 		'threads',
 		'homozygosity',
 		'roh',
+		'ld',
 		'help',
 		'skipsh');
-
-	die "please provide the correct configuration file" unless ((defined $opts{config}) && (-e $opts{config}));
 
 	if (defined $opts{allsteps}){
 		$opts{variant_filtering} = 1;
 		$opts{intersection} = 1;
 	}
 
-	my $yaml = YAML::Tiny->read( $opts{config} );
-	my %cfg = %{$yaml->[0]};	
-	$var{cfg}=\%cfg;
-
-	my %samplelist_ori = %{$cfg{fqdata}};
-	my %samplelist = %samplelist_ori;
-	$var{samplelist}=\%samplelist;
-
-	if (defined $opts{samplelist}){
-		my %selected_sample;
-		open IN, $opts{samplelist};
-		while (<IN>){
-			/(\S+)/;
-			$selected_sample{$1}=1;
-		}
-		close IN;
-		foreach my $id (keys %samplelist){
-			unless (exists $selected_sample{$id}){
-				delete $samplelist{$id};
-			}
-		}
-	}
-
-	#set the number of threads
-	if (defined $opts{threads}){
-		$var{threads} = $opts{threads};
-	}elsif(defined $cfg{args}{threads}){
-		$var{threads} = $cfg{args}{threads};
-	}else{
-		$var{threads} = 4;
-	}
-
-	if (defined $opts{vcf}){
-		$var{vcf} = $opts{vcf};
-	}else{
-		$var{vcf} = $cfg{variant_filtering}{high_confidence_vcf};
-	}
-
-	my %pop;
-	foreach my $sample (keys %{$cfg{population}}){
-		unless (exists $pop{$cfg{population}{$sample}{'presumed_population'}}{line}){
-			$pop{$cfg{population}{$sample}{'presumed_population'}}{count} = 0;
-			$pop{$cfg{population}{$sample}{'presumed_population'}}{line} = "";
-		}
-		$pop{$cfg{population}{$sample}{'presumed_population'}}{count}++;
-		$pop{$cfg{population}{$sample}{'presumed_population'}}{line} .= "$sample\n";
-	}
-	$var{pop}=\%pop;
-
-	$var{outpath} = "$cfg{args}{outdir}/GeneticRelationship/";
-	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
-
-	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/GeneticRelationship/";
-	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
-
-	die "please add genome path into configuration file" unless (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path});
-	$var{reference} = $cfg{ref}{db}{$cfg{ref}{choose}}{path};
-	die "$var{reference} does not exists" unless (-e $var{reference});
+	my %var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\$opts,"Homozygosity")}
 
 	$var{genome}= PopGenome_Shared::LOADREF($cfg{ref}{db}{$cfg{ref}{choose}}{path});
 
@@ -100,6 +42,9 @@ sub Main{
 	}
 	if (defined $opts{roh}){ 
 		& ROH (\%var,\%opts);
+	}
+	if (defined $opts{ld}){ 
+		& LD (\%var,\%opts);
 	}
 }
 
@@ -192,6 +137,108 @@ sub ROH{
 	close CL;
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_ROH_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_ROH.list` unless (defined $opts{skipsh});
+}
+
+sub LD{
+	my ($var,$opts) = @_;
+	my %opts = %{$opts};
+	my %var = %{$var};
+	my %cfg = %{$var{cfg}};
+	my %samplelist = %{$var{samplelist}};
+	my %pop = %{$var{pop}};
+
+	if ( !-d "$var{outpath}/LD" ) {make_path "$var{outpath}/LD" or die "Failed to create path: $var{outpath}/LD";}
+	my $sub_outpath = "$var{outpath}/LD";
+
+	if ($cfg{args}{ploidy} == 1 ){
+		$ori_gzvcf = $var{vcf};
+		$var{vcf} = "$var{outpath}/LD/diploid.high_confidence.vcf.gz";
+	}
+
+	`cp -f $Bin/lib/LD.R $var{shpath}/LD.R`;
+	
+	if ($cfg{args}{ploidy} == 1 ){
+		open CL, ">$var{shpath}/cmd_LD_s0.list";
+		open SH, ">$var{shpath}/LD_s0.sh";
+		print SH <<EOF;
+zcat $ori_gzvcf|java -jar /root/jvarkit/dist/vcffilterjdk.jar -e 'return new VariantContextBuilder(variant).genotypes(variant.getGenotypes().stream().map(G->!G.isCalled()?GenotypeBuilder.createMissing(G.getSampleName(),2):G).map(G->G.isCalled() && G.getPloidy()==1?new GenotypeBuilder(G).alleles(Arrays.asList(G.getAllele(0),G.getAllele(0))).make():G).collect(Collectors.toList())).attribute("AC",variant.getGenotypes().stream().mapToInt(G->G.isCalled() && G.getPloidy()==1 && !G.getAllele(0).isReference()?2:G.getAlleles().size()).sum()).attribute("AN",variant.getGenotypes().stream().mapToInt(G->G.isCalled() && G.getPloidy()==1 ?2:G.getAlleles().size()).sum()).make();'|bgzip -c >$var{vcf}
+EOF
+		close SH;
+		close CL;
+		print CL "sh $var{shpath}/LD_s0.sh 1>$var{shpath}/LD_s0.sh.o 2>$var{shpath}/LD_s0.sh.e \n";
+		`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_LD_s0_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_LD_s0.list` unless (defined $opts{skipsh});
+	}
+	
+	open CL, ">$var{shpath}/cmd_LD_s1.list";
+	foreach my $pop_name (keys %pop){
+		next unless ($pop{$pop_name}{count} > 6);
+		open OT, ">$sub_outpath/$pop_name.list";
+		print OT $pop{$pop_name}{line};
+		close OT;
+
+		#write a script to generate a vcf file for each population
+		open SH, ">$var{shpath}/LD.$pop_name.sh";
+		print SH "cd $sub_outpath\n";
+		print SH "vcftools --gzvcf $var{vcf} --keep $sub_outpath/$pop_name.list --recode --stdout |bgzip -c >$sub_outpath/$pop_name.snp.vcf.gz\n";
+		print SH "vcftools --gzvcf $pop_name.snp.vcf.gz --singletons --stdout >$sub_outpath/$pop_name.out.singletons\n";
+		print SH "vcftools --gzvcf $sub_outpath/$pop_name.snp.vcf.gz --exclude-positions $sub_outpath/$pop_name.out.singletons --recode --stdout |bgzip -c  >$sub_outpath/$pop_name.snp.noSingle.vcf.gz\n";
+		close SH;
+		print CL "sh $var{shpath}/LD_s1.sh 1>$var{shpath}/LD_s1.sh.o 2>$var{shpath}/LD_s1.sh.e \n";
+	}
+	close CL;
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_LD_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_LD_s1.list` unless (defined $opts{skipsh});
+
+	print CLSH ">$var{shpath}/cmd_LD_R.list";
+	foreach my $pop_name (keys %pop){
+		next unless ($pop{$pop_name}{count} > 6);
+
+		my $i=1;
+		open PCL, ">$var{shpath}/LD.$pop_name.cmd.list";
+
+#		open RIN, ">$sub_outpath/$pop_name.R.input";
+		open GRIN, ">$sub_outpath/$pop_name.GLD.R.input";
+		foreach my $id(sort { $var{genome}->{len}{$b} <=> $var{genome}->{len}{$a} } keys %{$var{genome}->{len}}){
+			next unless (($var{genome}->{len}{$id}>=$cfg{ld}{scaffold_length_cutoff})&&($i<=$cfg{ld}{$scaffold_number_limit}));
+			open IDSH, ">$var{shpath}/$pop_name.$id.LD.sh";
+			print IDSH "cd $sub_outpath\n";
+			print IDSH "vcftools --gzvcf $pop_name.snp.noSingle.vcf.gz --chr $id --recode --stdout |bgzip -c  >$pop_name.$id.snp.noSingle.vcf.gz\n";
+			print IDSH "rm -rf $pop_name.$id.snp.noSingle.beagl*\n";
+			print IDSH "beagle gt=$pop_name.$id.snp.noSingle.vcf.gz out=$pop_name.$id.snp.noSingle.beagle\n";
+#				print IDSH "vcftools --gzvcf $pop_name.$id.snp.noSingle.beagle.vcf.gz --hap-r2 --ld-window-bp 1000000 --stdout |grep -v nan > $pop_name.$id.LD_window_1M.list\n";
+			print IDSH "vcftools --gzvcf $pop_name.$id.snp.noSingle.beagle.vcf.gz --geno-r2 --ld-window-bp 1000000 --stdout |grep -v nan | perl -ne '\@a=split /\\t+/;if (/CHR/){print;}elsif(((\$a[2]-\$a[1])>5000)&&(\$i!= 100)){\$i++;}elsif((\$a[2]-\$a[1])<=5000){print;}elsif(((\$a[2]-\$a[1])>5000 )&& (\$i ==100)){print;\$i=0;}'> $pop_name.$id.GLD_window_1M.list\n";
+			print IDSH "window_LD.pl $pop_name.$id.GLD_window_1M.list $cfg{step4}{slidingwindow}{windowsize} ",$var{genome}->{len}{$id}," > $pop_name.$id.GLD_window.stats\n";
+#				print IDSH "cat $pop_name.$id.LD_window_1M.list",'|sed 1,1d | awk -F " " \'function abs(v) {return v < 0 ? -v : v}BEGIN{OFS="\t"}{print abs($3-$2),$5}\''," >$pop_name.$id.LD_window_1M.summary\n";
+			print IDSH "cat $pop_name.$id.GLD_window_1M.list",'|sed 1,1d | awk -F " " \'function abs(v) {return v < 0 ? -v : v}BEGIN{OFS="\t"}{print abs($3-$2),$5}\''," >$pop_name.$id.GLD_window_1M.summary\n";
+			close IDSH;
+
+			print PCL "sh $var{shpath}/$pop_name.$id.LD.sh 1>$var{shpath}/$pop_name.$id.LD.sh.o 2>$var{shpath}/$pop_name.$id.LD.sh.e\n";
+	
+#				print RIN "$pop_name.$id.LD_window_1M.summary\n";
+			print GRIN "$pop_name.$id.GLD_window_1M.summary\n";
+			$i++;
+		}
+
+		close PCL;
+		`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd.LD.$pop_name.qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/LD.$pop_name.cmd.list` unless (defined $opts{skipsh});
+#		close RIN;
+		close GRIN;
+
+#		my @p;
+#		push @p, $sub_outpath; 
+#		push @p, "$pop_name.R.input";
+#		push @p, "$pop_name.LD.png";
+#		my $p = join (' ',@p);
+#		print CLSH "Rscript --vanilla $var{shpath}/LD.R $p\n";
+
+		my @gp;
+		push @gp, $sub_outpath; 
+		push @gp, "$pop_name.GLD.R.input";
+		push @gp, "$pop_name.GLD.png";
+		my $gp = join (' ',@gp);
+		print CLSH "Rscript --vanilla $var{shpath}/LD.R $gp\n";
+	}
+	close CLSH;
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_LD_R.qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_LD_R.list` unless (defined $opts{skipsh});
 }
 
 1;
