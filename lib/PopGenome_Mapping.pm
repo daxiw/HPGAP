@@ -254,12 +254,12 @@ sub MappingReport {
 
 	open SOT, ">$var{outpath}/Report/sample_mapping_summary_formatted.xls";
 
-	print SOT "sampleID","\t";
-	print SOT "reference","\t";
-	print SOT "percentage_of_cleandata (%)","\t";
-	print SOT "clean_data ","\t";
-	print SOT "mean_covreage","\t";
-	print SOT "mapping_rate (%)","\n";
+	print SOT "Sample ID","\t";
+	print SOT "Reference","\t";
+	print SOT "Percentage of Cleandata (%)","\t";
+	print SOT "Clean_data (Gb)","\t";
+	print SOT "Mean Covreage","\t";
+	print SOT "Mapping Rate (%)","\n";
 
 	foreach my $sample (keys %samplelist){
 		print SOT "$sample\t";

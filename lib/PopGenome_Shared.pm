@@ -34,7 +34,6 @@ sub LOADREF{
 	return \%genome;
 }
 
-=cut
 sub CombineCfg{
 	my ($par,$opts,$folder) = @_;
 	my %par = %{YAML::Tiny->read( $ARGV[0] )->[0]};
@@ -128,5 +127,5 @@ sub CombineCfg{
 
 	return \%var;	
 }
-=cut
+
 1;
