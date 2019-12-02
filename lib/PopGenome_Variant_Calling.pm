@@ -110,12 +110,14 @@ sub JointBQSR {
 	  	print SH "rm -f $sample.sorted.markdup.BQSR2nd.bam && echo \"** variant calling done **\" > $var{shpath}/$sample.variant_calling.finished.txt\n";
 	  	
 	  	close SH;
+
 	  	print CL "sh $var{shpath}/joint_bqsr_s1_$sample.sh 1>$var{shpath}/joint_bqsr_s1_$sample.sh.o 2>$var{shpath}/joint_bqsr_s1_$sample.sh.e\n";
-		close CL;
 
 	  	$sample_gvcfs .= "	-V $var{outpath}/$sample/$sample.HC.1st.gvcf.gz \\\n";
 
 	}
+	close CL;
+
 	`perl $Bin/lib/qsub.pl -r -d $var{shpath}/joint_bqsr_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=5G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/joint_bqsr_s1.list` unless (defined $opts{skipsh});
 
 	#### First round of joint calling START #####
@@ -216,10 +218,10 @@ sub JointBQSR {
 		
 		close SH;
 		print CL "sh $var{shpath}/joint_bqsr_s3.sh 1>$var{shpath}/joint_bqsr_s3.sh.o 2>$var{shpath}/joint_bqsr_s3.sh.e\n";
-		close CL;
 
 		$sample_gvcfs .= "	-V $var{outpath}/$sample/$sample.HC.2nd.gvcf.gz \\\n";
 	}
+	close CL;
 	`perl $Bin/lib/qsub.pl -r -d $var{shpath}/joint_bqsr_s3_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=10G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/joint_bqsr_s3.list` unless (defined $opts{skipsh});
 	#### First round of recalibration END ####
 
@@ -328,9 +330,10 @@ sub JointBQSR {
 		close SH;
 
 		print CL "sh $var{shpath}/joint_bqsr_s5.sh 1>$var{shpath}/joint_bqsr_s5.sh.o 2>$var{shpath}/joint_bqsr_s5.sh.e\n";
-		close CL;
 		$sample_gvcfs .= "	-V $var{outpath}/$sample/$sample.HC.3rd.gvcf.gz \\\n";
 	}
+	close CL;
+
 	`perl $Bin/lib/qsub.pl -r -d $var{shpath}/joint_bqsr_s5_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=5G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/joint_bqsr_s5.list` unless (defined $opts{skipsh});
 	#### Second round of recalibration END ####
 
