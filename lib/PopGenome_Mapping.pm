@@ -205,7 +205,7 @@ sub MappingReport {
 
 	open FOT, "$var{outpath}/../read_filtering/Report/read_group_quality_summary.xls";
 	my %sample_summary;
-	while <FOT> {
+	while (<FOT>) {
 		next if (/ampleID/);
 		my @a = split /\t/;
 		$sample_summary{$a[0]}{"raw_data"} = $a[3];
