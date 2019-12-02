@@ -34,11 +34,12 @@ sub LOADREF{
 	return \%genome;
 }
 
+=cut
 sub CombineCfg{
 	my ($par,$opts,$folder) = @_;
 	my %par = %{YAML::Tiny->read( $ARGV[0] )->[0]};
 	my %opts = %{$opts};
-	my %cfg ;
+	my %cfg;
 	my %var;
 
 	die "please provide the correct configuration file" unless ((defined $opts{config}) && (-e $opts{config}));
@@ -57,7 +58,7 @@ sub CombineCfg{
 		}
 	}
 
-	$var{cfg}=\%cfg;
+	$var{cfg} = \%cfg;
 	if (defined $opts{threads}){
 		$var{threads} = $opts{threads};
 	}elsif(defined $cfg{args}{threads}){
@@ -127,4 +128,5 @@ sub CombineCfg{
 
 	return \%var;	
 }
+=cut
 1;
