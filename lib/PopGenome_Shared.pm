@@ -39,6 +39,7 @@ sub CombineCfg{
 	my %par = %{YAML::Tiny->read( $ARGV[0] )->[0]};
 	my %opts = %{$opts};
 	my %cfg = %par;
+	my %var;
 
 	die "please provide the correct configuration file" unless ((defined $opts{config}) && (-e $opts{config}));
 
