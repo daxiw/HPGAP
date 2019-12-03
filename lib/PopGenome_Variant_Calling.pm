@@ -216,7 +216,7 @@ sub JointBQSR {
 		print SH "rm -f $sample.sorted.markdup.BQSR.bam\n";
 		
 		close SH;
-		print CL "sh $var{shpath}/joint_bqsr_s3_$sample.sh 1>$var{shpath}/joint_bqsr_s3_$sample..sh.o 2>$var{shpath}/joint_bqsr_s3_$sample..sh.e\n";
+		print CL "sh $var{shpath}/joint_bqsr_s3_$sample.sh 1>$var{shpath}/joint_bqsr_s3_$sample.sh.o 2>$var{shpath}/joint_bqsr_s3_$sample..sh.e\n";
 
 		$sample_gvcfs .= "	-V $var{outpath}/$sample/$sample.HC.2nd.gvcf.gz \\\n";
 	}
