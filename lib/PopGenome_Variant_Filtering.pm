@@ -72,6 +72,17 @@ sub Main{
 #    Step 1g Variant filtering  #
 #			   #
 #################################
+sub SampleFiltering {
+	my ($var,$opts) = @_;
+	my %opts = %{$opts};
+	my %var = %{$var};
+	my %cfg = %{$var{cfg}};
+	my %samplelist = %{$var{samplelist}};
+
+
+	
+}
+
 sub GATKBasicFiltering {
 	my ($var,$opts) = @_;
 	my %opts = %{$opts};

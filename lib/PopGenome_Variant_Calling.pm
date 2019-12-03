@@ -156,7 +156,6 @@ sub JointBQSR {
 	print SH "	-R $var{reference} \\\n";
 	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC1st.vcf.gz \\\n";
 	print SH "	--select-type-to-include INDEL \\\n";
-	print SH "	--maxIndelSize 60 \\\n";
 	print SH "	-O $var{outpath}/JointBQSR/JointCalling_raw_indels1st.vcf && echo \"** GVCF JointBQSR/JointCalling_raw_snps1st done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
@@ -217,7 +216,7 @@ sub JointBQSR {
 		print SH "rm -f $sample.sorted.markdup.BQSR.bam\n";
 		
 		close SH;
-		print CL "sh $var{shpath}/joint_bqsr_s3.sh 1>$var{shpath}/joint_bqsr_s3.sh.o 2>$var{shpath}/joint_bqsr_s3.sh.e\n";
+		print CL "sh $var{shpath}/joint_bqsr_s3_$sample.sh 1>$var{shpath}/joint_bqsr_s3.sh.o 2>$var{shpath}/joint_bqsr_s3.sh.e\n";
 
 		$sample_gvcfs .= "	-V $var{outpath}/$sample/$sample.HC.2nd.gvcf.gz \\\n";
 	}
@@ -329,7 +328,7 @@ sub JointBQSR {
 
 		close SH;
 
-		print CL "sh $var{shpath}/joint_bqsr_s5.sh 1>$var{shpath}/joint_bqsr_s5.sh.o 2>$var{shpath}/joint_bqsr_s5.sh.e\n";
+		print CL "sh $var{shpath}/joint_bqsr_s5_$sample.sh 1>$var{shpath}/joint_bqsr_s5.sh.o 2>$var{shpath}/joint_bqsr_s5.sh.e\n";
 		$sample_gvcfs .= "	-V $var{outpath}/$sample/$sample.HC.3rd.gvcf.gz \\\n";
 	}
 	close CL;

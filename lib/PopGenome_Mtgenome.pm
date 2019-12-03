@@ -270,6 +270,11 @@ sub MtGenomeVariantCalling{
 
 	print SH "#!/bin/sh\ncd $var{outpath}/FreebayesCalling\n";
 	print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -p $var{ploidy} --standard-filters | vcfsnps >$var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf";
+	
+	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --missing-indv\n";
+	print SH "awk \'\$5 > 0.1\' out.imiss | cut -f1 > lowDP.indv\n";
+	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout  > $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf\n";
+
 	close SH;
 	
 	print CL "sh $var{shpath}/mt_genome_freebayes.sh 1>$var{shpath}/mt_genome_freebayes.sh.o 2>$var{shpath}/mt_genome_freebayes.sh.e \n";
