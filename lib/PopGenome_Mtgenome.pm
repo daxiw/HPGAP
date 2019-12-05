@@ -313,10 +313,10 @@ sub MtGenomeVariantCalling{
 
 	open CL, ">$var{shpath}/cmd_mt_genome_freebayes_s2.list";
 	open SH, ">$var{shpath}/mt_genome_freebayes_s2.sh";
-	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --missing-indv\n";
+	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling_pooled.vcf --missing-indv\n";
 	print SH "awk \'\$5 > 0.1\' out.imiss | cut -f1 > lowDP.indv\n";
 
-	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --min-meanDP 10 --max-meanDP $maxdp --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout  > $var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf\n";
+	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling_pooled.vcf --min-meanDP 10 --max-meanDP $maxdp --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout  > $var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf\n";
 	close SH;
 	
 	print CL "sh $var{shpath}/mt_genome_freebayes_s2.sh 1>$var{shpath}/mt_genome_freebayes_s2.sh.o 2>$var{shpath}/mt_genome_freebayes_s2.sh.e \n";
