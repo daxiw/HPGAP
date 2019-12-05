@@ -313,7 +313,7 @@ sub MtGenomeVariantCalling{
 				my %v;
 				if ($a[$i] =~ /(\d\/\d)\:\d+\:(\d+)\,(\d+)/){
 					$v{gp}=$1;
-					if ($1>$2){ $v{max} = $2; $v{min} = $3; }
+					if ($2>$3){ $v{max} = $2; $v{min} = $3; }
 					else { $v{max} = $3; $v{min} = $2; }
 
 					if (($v{min}+$v{max}) >= 10){
