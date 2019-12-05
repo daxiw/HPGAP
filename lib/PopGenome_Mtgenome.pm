@@ -198,6 +198,8 @@ sub MtGenomeVariantCalling{
 	my %cfg = %{$var{cfg}};
 	my %samplelist = %{$var{samplelist}};
 
+	my $valid_proportion = 0;
+	my $ref_length = 0;
 	## check whether the fai and dict files of reference exist 
 	my $ref_name=$var{reference};
 	if ($ref_name =~ /\.fasta$/){
@@ -220,8 +222,7 @@ sub MtGenomeVariantCalling{
 	open BAMLIST, ">$var{outpath}/FreebayesCalling/bam.list";
 	open SL, ">$var{outpath}/FreebayesCalling/sample_with_sufficient_coverage.list";
 	if ( !-d "$var{outpath}/FreebayesCalling") {make_path "$var{outpath}/FreebayesCalling" or die "Failed to create path: $var{outpath}/FreebayesCalling";}
-	my $valid_proportion = 0;
-	my $ref_length = 0;
+
 	foreach my $sample (keys %samplelist){
 		if ( !-d "$var{outpath}/$sample") {make_path "$var{outpath}/$sample" or die "Failed to create path: $var{outpath}/$sample";}
 		if ( -e "$var{outpath}/$sample/$sample.genomecov"){
@@ -251,6 +252,7 @@ sub MtGenomeVariantCalling{
 
 			next if ($n_base == 0);
 			$ref_length = $n_base;
+
 			open OT, ">$var{outpath}/$sample/$sample.genomecov.summary.txt";
 			print OT "SampleID\t0\t1-9\t10-49\t50-99\t100-999\t>1000\tn_bases\tn_sum\n";
 			print OT $sample, "\t";
@@ -296,6 +298,7 @@ sub MtGenomeVariantCalling{
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_freebayes_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_freebayes.list` unless (defined $opts{skipsh});
 
 	open IN, "$var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf";
+	print "ref_length\n";
 	my %h;
 	while (<IN>){
 		chomp;
@@ -316,7 +319,9 @@ sub MtGenomeVariantCalling{
 					$v{gp}=$1;
 					$v{ref}=$2;
 					$v{alt}=$3;
+					
 					next if (($a[1]> ($ref_length - 100)) || ($a[1]<100));
+
 					if ($2>$3){ $v{max} = $2; $v{min} = $3; }
 					else { $v{max} = $3; $v{min} = $2; }
 
