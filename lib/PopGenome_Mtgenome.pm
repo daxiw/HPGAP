@@ -278,12 +278,17 @@ sub MtGenomeVariantCalling{
 	###############
 
 	#### freebayes variant calling on mt genomes ###
-	open CL, ">$var{shpath}/cmd_mt_genome_freebayes.list";
-	open SH, ">$var{shpath}/mt_genome_freebayes.sh";
+	open CL, ">$var{shpath}/cmd_mt_genome_freebayes_s1.list";
+	open SH, ">$var{shpath}/mt_genome_freebayes_s1.sh";
 
 	print SH "#!/bin/sh\ncd $var{outpath}/FreebayesCalling\n";
-	print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -F 0.05 -C 2 --pooled-continuous --standard-filters | vcfsnps >$var{outpath}/FreebayesCalling/freebayes_joint_calling_pooled.vcf";
+	print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -F 0.05 -C 2 --pooled-continuous --standard-filters | vcfsnps >$var{outpath}/FreebayesCalling/freebayes_joint_calling_pooled.vcf\n";
 	
+	print CL "sh $var{shpath}/mt_genome_freebayes_s1.sh 1>$var{shpath}/mt_genome_freebayes_s1.sh.o 2>$var{shpath}/mt_genome_freebayes_s1.sh.e \n";
+	close CL;
+
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_freebayes_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_freebayes_s1.list` unless (defined $opts{skipsh});
+
 	###filter SNP by depth if needed
 	open (IN, "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling_pooled.vcf|") or die $!;
 	my @dp;my $dp_sum;my $dp_n=0;
@@ -295,20 +300,21 @@ sub MtGenomeVariantCalling{
     		$dp_n++;
     	}
 	}
+	print "avgdp ",$dp_sum/$dp_n, "\n"
 	my $maxdp = $dp_sum/$dp_n + 4*sqrt($dp_sum/$dp_n);
 	close IN; 
 
+	open CL, ">$var{shpath}/cmd_mt_genome_freebayes_s2.list";
+	open SH, ">$var{shpath}/mt_genome_freebayes_s2.sh";
 	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --missing-indv\n";
 	print SH "awk \'\$5 > 0.1\' out.imiss | cut -f1 > lowDP.indv\n";
 
 	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --min-meanDP 10 --max-meanDP $maxdp --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout  > $var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf\n";
-
 	close SH;
 	
-	print CL "sh $var{shpath}/mt_genome_freebayes.sh 1>$var{shpath}/mt_genome_freebayes.sh.o 2>$var{shpath}/mt_genome_freebayes.sh.e \n";
+	print CL "sh $var{shpath}/mt_genome_freebayes_s2.sh 1>$var{shpath}/mt_genome_freebayes_s2.sh.o 2>$var{shpath}/mt_genome_freebayes_s2.sh.e \n";
 	close CL;
-
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_freebayes_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_freebayes.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_freebayes_s2_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_freebayes_s2.list` unless (defined $opts{skipsh});
 
 	open IN, "$var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf";
 	my %h;
