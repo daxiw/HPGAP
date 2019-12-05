@@ -310,17 +310,21 @@ sub MtGenomeVariantCalling{
 		elsif (@a > 10){
 	        next unless ($a[7] =~ /snp/);
 	        for (my $i=9; $i < @a; $i++){
-				my $max; my $min; my $min_frac;
+				my %v;
+				if ($a[$i] =~ /(\d\/\d)\:\d+\:(\d+)\,(\d+)/){
+					$v{gp}=$1;
+					if ($1>$2){ $v{max} = $2; $v{min} = $3; }
+					else { $v{max} = $3; $v{min} = $2; }
 
-				if ($a[$i] =~ /(\d+)\,(\d+)/){
-					if ($1>$2){ $max = $1; $min = $2; }
-					else { $max = $2; $min = $1; }
-					if (($min+$max) >= 10){
-						$min_frac = $min/($max+$min);
-						if (( $min_frac >= 0.05) && ( $min >= 2)){
+					if (($v{min}+$v{max}) >= 10){
+						$v{min_frac} = $v{min}/($v{max}+$v{min});
+						if (( $v{min_frac} >= 0.05) && ( $v{min} >= 2)){
 							$h{$i}{het} ++;
 						}
 						else {$h{$i}{hom} ++;}
+						if($v{gp) ne '0/0'){
+							$h{$i}{snp} ++;
+						}
 					}
 				}
 			}
@@ -330,7 +334,7 @@ sub MtGenomeVariantCalling{
 
 	open SL, ">$var{outpath}/FreebayesCalling/sample_heterozygote.list";
 	foreach my $i (keys %h){
-		print SL "$h{$i}{name}\t$h{$i}{het}\t$h{$i}{hom}\t";
+		print SL "$h{$i}{name}\t$h{$i}{snp}\t$h{$i}{het}\t$h{$i}{hom}\t";
 		print SL $h{$i}{het}+$h{$i}{hom},"\t";
 		print SL $h{$i}{het}/($h{$i}{het}+$h{$i}{hom}),"\n";
 	}
