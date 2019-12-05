@@ -300,7 +300,7 @@ sub MtGenomeVariantCalling{
     		$dp_n++;
     	}
 	}
-	print "avgdp ",$dp_sum/$dp_n, "\n"
+	print "avgdp ",$dp_sum/$dp_n, "\n";
 	my $maxdp = $dp_sum/$dp_n + 4*sqrt($dp_sum/$dp_n);
 	close IN; 
 
