@@ -319,7 +319,7 @@ sub MtGenomeVariantCalling{
 					$v{ref}=$2;
 					$v{alt}=$3;
 					
-					next if (($a[1]> ($ref_length - 100)) || ($a[1]<100));
+					next if (($a[1]> ($ref_length - 400)) || ($a[1]<100));
 
 					if ($2>$3){ $v{max} = $2; $v{min} = $3; }
 					else { $v{max} = $3; $v{min} = $2; }
