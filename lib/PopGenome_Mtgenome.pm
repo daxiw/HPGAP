@@ -332,7 +332,7 @@ sub MtGenomeVariantCalling{
 						$v{min_frac} = $v{min}/($v{max}+$v{min});
 						if (( $v{min_frac} >= 0.05) && ( $v{min} >= 2)){
 							$h{$i}{het} ++;
-							$h{$i}{note} .= "$a[1]\[$v{ref},$v{alt}\];";
+							$h{$i}{note} .= "$a[1]\[$v{gp}:$v{ref},$v{alt}\];";
 						}
 						else {$h{$i}{hom} ++;}
 
