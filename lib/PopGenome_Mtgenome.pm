@@ -277,18 +277,30 @@ sub MtGenomeVariantCalling{
 	close SL;
 	###############
 
-	###############
-
 	#### freebayes variant calling on mt genomes ###
 	open CL, ">$var{shpath}/cmd_mt_genome_freebayes.list";
 	open SH, ">$var{shpath}/mt_genome_freebayes.sh";
 
 	print SH "#!/bin/sh\ncd $var{outpath}/FreebayesCalling\n";
-	print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -p $var{ploidy} --standard-filters | vcfsnps >$var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf";
+	print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -p $var{ploidy} --standard-filters | vcfsnps >$var{outpath}/FreebayesCalling/freebayes.vcf";
 	
+	###filter SNP by depth if needed
+	open (IN, "cat $var{outpath}/freebayes.vcf|") or die $!;
+	my @dp;my $dp_sum;my $dp_n;
+	while (<IN>){
+    	next if (/#/);
+    	if (/DP=([\d\.]+)/){push @dp, $1;
+    		$dp_sum+=$1;
+    		$dp_n++;
+    	}
+	}
+	my $maxdp = $dp_sum/$dp_n + 4*sqrt($dp_sum/$dp_n);
+	close IN; 
+
 	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --missing-indv\n";
 	print SH "awk \'\$5 > 0.1\' out.imiss | cut -f1 > lowDP.indv\n";
-	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout  > $var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf\n";
+
+	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --min-meanDP 10 --max-meanDP $maxdp --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout  > $var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf\n";
 
 	close SH;
 	

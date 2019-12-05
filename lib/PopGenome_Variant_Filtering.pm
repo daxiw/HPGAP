@@ -109,7 +109,6 @@ sub GATKBasicFiltering {
 	print SH "	-R $var{reference} \\\n";
 	print SH "	-V $var{outpath}/../JointCalling/JointCalling.HC.vcf.gz \\\n";
 	print SH "	--select-type-to-include INDEL \\\n";
-	print SH "	--maxIndelSize 60 \\\n";
 	print SH "	-O $var{outpath}/../JointCalling/JointCalling_raw_indels1st.vcf && echo \"** GVCF JointCalling/JointCalling_raw_snps1st done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
