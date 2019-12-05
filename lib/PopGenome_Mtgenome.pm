@@ -220,6 +220,7 @@ sub MtGenomeVariantCalling{
 	open BAMLIST, ">$var{outpath}/FreebayesCalling/bam.list";
 	open SL, ">$var{outpath}/FreebayesCalling/sample_with_sufficient_coverage.list";
 	if ( !-d "$var{outpath}/FreebayesCalling") {make_path "$var{outpath}/FreebayesCalling" or die "Failed to create path: $var{outpath}/FreebayesCalling";}
+	my $valid_proportion = 0;
 	foreach my $sample (keys %samplelist){
 		if ( !-d "$var{outpath}/$sample") {make_path "$var{outpath}/$sample" or die "Failed to create path: $var{outpath}/$sample";}
 		if ( -e "$var{outpath}/$sample/$sample.genomecov"){
@@ -262,7 +263,7 @@ sub MtGenomeVariantCalling{
 			print OT $n_sum/$n_base, "\n";
 			close OT;
 
-			my $valid_proportion = ($depth{1000} + $depth{100} + $depth{50} + $depth{10})/$n_base;
+			$valid_proportion = ($depth{1000} + $depth{100} + $depth{50} + $depth{10})/$n_base;
 
 			print SL "$sample\n" if ($valid_proportion > 0.95);
 
