@@ -171,8 +171,6 @@ sub MtGenomeMapping {
 			print SH "fi\n";
 		}
 
-		print SH "bedtools genomecov -d -ibam $sample.sorted.bam > $sample.genomecov\n";
-
 		print SH "gatk MarkDuplicates \\\n";
 	  	print SH "	--INPUT $sample.sorted.bam \\\n";
 	  	print SH "	--OUTPUT $sample.sorted.markdup.bam \\\n";
@@ -183,6 +181,7 @@ sub MtGenomeMapping {
 	  	print SH "echo \"** $sample.sorted.markdup.bam index done **\" \n";
 
 	  	print SH "samtools stats -@ $var{threads} $sample.sorted.markdup.bam 1>$sample.bam.stats.txt 2>$sample.bam.stats.error && echo \"** bam.stats.txt done **\" > $var{shpath}/$sample.readmapping.finished.txt\n";
+	  	print SH "bedtools genomecov -d -ibam $sample.sorted.markdup.bam > $sample.genomecov\n";
 
 		close SH;
 		print CL "sh $var{shpath}/$sample.mt_genome_mapping.sh 1>$var{shpath}/$sample.mt_genome_mapping.sh.o 2>$var{shpath}/$sample.mt_genome_mapping.sh.e \n";
@@ -219,6 +218,7 @@ sub MtGenomeVariantCalling{
 	###############
 
 	open BAMLIST, ">$var{outpath}/FreebayesCalling/bam.list";
+	open SL, ">$var{outpath}/FreebayesCalling/sample_with_sufficient_coverage.list";
 	if ( !-d "$var{outpath}/FreebayesCalling") {make_path "$var{outpath}/FreebayesCalling" or die "Failed to create path: $var{outpath}/FreebayesCalling";}
 	foreach my $sample (keys %samplelist){
 		if ( !-d "$var{outpath}/$sample") {make_path "$var{outpath}/$sample" or die "Failed to create path: $var{outpath}/$sample";}
@@ -247,6 +247,8 @@ sub MtGenomeVariantCalling{
 			}
 			close IN;
 
+			next if ($n_base == 0);
+
 			open OT, ">$var{outpath}/$sample/$sample.genomecov.summary.txt";
 			print OT "SampleID\t0\t1-9\t10-49\t50-99\t100-999\t>1000\tn_bases\tn_sum\n";
 			print OT $sample, "\t";
@@ -259,10 +261,19 @@ sub MtGenomeVariantCalling{
 			print OT $n_base, "\t";
 			print OT $n_sum/$n_base, "\n";
 			close OT;
+
+			my $valid_proportion = ($depth{1000} + $depth{100} + $depth{50} + $depth{10})/$n_base;
+
+			print SL "$sample\n" if ($valid_proportion > 0.95);
+
 		}
-		print BAMLIST "$var{outpath}/$sample/$sample.sorted.markdup.bam\n";
+		print BAMLIST "$var{outpath}/$sample/$sample.sorted.markdup.bam\n" if ($valid_proportion > 0.95);
 	}
 	close BAMLIST;
+	close SL;
+	###############
+
+	###############
 
 	#### freebayes variant calling on mt genomes ###
 	open CL, ">$var{shpath}/cmd_mt_genome_freebayes.list";
@@ -273,7 +284,7 @@ sub MtGenomeVariantCalling{
 	
 	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --missing-indv\n";
 	print SH "awk \'\$5 > 0.1\' out.imiss | cut -f1 > lowDP.indv\n";
-	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout  > $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf\n";
+	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout  > $var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf\n";
 
 	close SH;
 	
@@ -282,6 +293,47 @@ sub MtGenomeVariantCalling{
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_freebayes_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_freebayes.list` unless (defined $opts{skipsh});
 
+	open IN, "$var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf";
+	my %h;
+	while (<IN>){
+		chomp;
+		my @a = split /\t/;
+		if (/CHROM/){
+			for (my $i=9; $i < @a; $i++){
+				$h{$i}{name} = "$a[$i]";
+				$h{$i}{het} = 0;
+				$h{$i}{hom} = 0;
+			}
+			next;
+		}
+		elsif (@a > 10){
+	        next unless ($a[7] =~ /snp/);
+	        for (my $i=9; $i < @a; $i++){
+				my $max; my $min; my $min_frac;
+
+				if ($a[$i] =~ /(\d+)\,(\d+)/){
+					if ($1>$2){ $max = $1; $min = $2; }
+					else { $max = $2; $min = $1; }
+					if (($min+$max) >= 10){
+						$min_frac = $min/($max+$min);
+						if (( $min_frac >= 0.05) && ( $min >= 2)){
+							$h{$i}{het} ++;
+						}
+						else {$h{$i}{hom} ++;}
+					}
+				}
+			}
+		}
+	}
+	close IN;
+
+	print SL, ">$var{outpath}/FreebayesCalling/sample_heterozygote.list";
+	foreach my $i (keys %h){
+		print SL "$h{$i}{name}\t$h{$i}{het}\t$h{$i}{hom}\t";
+		print SL $h{$i}{het}+$h{$i}{hom},"\t";
+		print SL $h{$i}{het}/($h{$i}{het}+$h{$i}{hom}),"\n";
+	}
+	close SL;
 }
 
 sub MtGenomePhylogeny{

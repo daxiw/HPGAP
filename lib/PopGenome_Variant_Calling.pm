@@ -256,7 +256,6 @@ sub JointBQSR {
 	print SH "	-R $var{reference} \\\n";
 	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC.g2nd.vcf.gz \\\n";
 	print SH "	--select-type-to-include INDEL \\\n";
-	print SH "	--maxIndelSize 60 \\\n";
 	print SH "	-O $var{outpath}/JointBQSR/JointCalling_raw_indels2nd.vcf && echo \"** GVCF JointBQSR/JointCalling_raw_indels2nd done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
@@ -368,7 +367,6 @@ sub JointBQSR {
 	print SH "	-R $var{reference} \\\n";
 	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC3rd.vcf.gz \\\n";
 	print SH "	--select-type-to-include INDEL \\\n";
-	print SH "	--maxIndelSize 60 \\\n";
 	print SH "	-O $var{outpath}/JointBQSR/JointCalling_raw_indels3rd.vcf && echo \"** GVCF JointBQSR/JointCalling_raw_indels3rd done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
