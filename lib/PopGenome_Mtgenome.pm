@@ -199,7 +199,7 @@ sub MtGenomeVariantCalling{
 	my %samplelist = %{$var{samplelist}};
 
 	my $valid_proportion = 0;
-	my $ref_length = 0;
+	my $ref_length ;
 	## check whether the fai and dict files of reference exist 
 	my $ref_name=$var{reference};
 	if ($ref_name =~ /\.fasta$/){
@@ -251,7 +251,7 @@ sub MtGenomeVariantCalling{
 			close IN;
 
 			next if ($n_base == 0);
-			$ref_length = $n_base;
+			$ref_length = $n_base unless (defined $ref_length);
 
 			open OT, ">$var{outpath}/$sample/$sample.genomecov.summary.txt";
 			print OT "SampleID\t0\t1-9\t10-49\t50-99\t100-999\t>1000\tn_bases\tn_sum\n";
@@ -298,7 +298,6 @@ sub MtGenomeVariantCalling{
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_freebayes_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_freebayes.list` unless (defined $opts{skipsh});
 
 	open IN, "$var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf";
-	print "ref_length\n";
 	my %h;
 	while (<IN>){
 		chomp;
