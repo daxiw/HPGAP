@@ -285,8 +285,8 @@ sub MtGenomeVariantCalling{
 	print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -p $var{ploidy} --standard-filters | vcfsnps >$var{outpath}/FreebayesCalling/freebayes.vcf";
 	
 	###filter SNP by depth if needed
-	open (IN, "cat $var{outpath}/freebayes.vcf|") or die $!;
-	my @dp;my $dp_sum;my $dp_n;
+	open (IN, "cat $var{outpath}/freebayes_joint_calling.vcf|") or die $!;
+	my @dp;my $dp_sum;my $dp_n=0;
 	while (<IN>){
     	next if (/#/);
     	if (/DP=([\d\.]+)/){push @dp, $1;
