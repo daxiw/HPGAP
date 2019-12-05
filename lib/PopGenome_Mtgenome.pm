@@ -291,17 +291,24 @@ sub MtGenomeVariantCalling{
 
 	###filter SNP by depth if needed
 	open (IN, "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling_pooled.vcf|") or die $!;
-	my @dp;my $dp_sum;my $dp_n=0;
+	my @dp;my $dp_sum;my $dp_n=0; my $sample_n;
 	while (<IN>){
-    	next if (/#/);
+    	if (/#/){
+    		if (/#CHROM/){
+    			my @a = split /\t/;
+    			$sample_n = @a - 9;
+    		}else {
+    			next;
+    		}
+    	}
     	if (/DP=([\d\.]+)/){
     		push @dp, $1;
     		$dp_sum+=$1;
     		$dp_n++;
     	}
 	}
-	print "avgdp ",$dp_sum/$dp_n, "\n";
-	my $maxdp = $dp_sum/$dp_n + 4*sqrt($dp_sum/$dp_n);
+	print "avgdp ",$dp_sum/($dp_n*$sample_n), "\n";
+	my $maxdp = $dp_sum/($dp_n*$sample_n) + 4*sqrt($dp_sum/($dp_n*$sample_n));
 	close IN; 
 
 	open CL, ">$var{shpath}/cmd_mt_genome_freebayes_s2.list";
