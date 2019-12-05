@@ -322,7 +322,7 @@ sub MtGenomeVariantCalling{
 							$h{$i}{het} ++;
 						}
 						else {$h{$i}{hom} ++;}
-						if($v{gp) ne '0/0'){
+						if($v{gp} ne '0/0'){
 							$h{$i}{snp} ++;
 						}
 					}
