@@ -408,17 +408,19 @@ sub MtGenomePhylogeny{
 	open SH, ">$var{shpath}/mt_genome_phylogeny.sh";
 	print SH "#!/bin/sh\ncd $var{outpath}/Mt_genome_phylogeny\n";
 
-	print SH "bcftools reheader --samples $var{outpath}/Mt_genome_phylogeny/name_map.list -o $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf $var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf\n";
-	print SH "rm -rf $var{outpath}/Mt_genome_phylogeny/RAxML_*\n";
+	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf --remove-filtered-all --remove $var{outpath}/FreebayesCalling/sample_heterozygote_clean.list --recode --recode-INFO-all --stdout  > $var{outpath}/Mt_genome_phylogeny/freebayes_filtered_homosnps.vcf\n";
+
+	print SH "bcftools reheader --samples $var{outpath}/Mt_genome_phylogeny/name_map.list -o $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf $var{outpath}/Mt_genome_phylogeny/freebayes_filtered_homosnps.vcf\n";
 
 	print SH "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf|$Bin/Tools/vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
 	print SH "$Bin/Tools/vcf_tab_to_fasta_alignment.pl -i $var{outpath}/Mt_genome_phylogeny/mt_genome.tab > $var{outpath}/Mt_genome_phylogeny/mt_genome.fasta\n";
-
 	print SH "$Bin/Tools/fasta-to-phylip --input-fasta $var{outpath}/Mt_genome_phylogeny/mt_genome.fasta --output-phy $var{outpath}/Mt_genome_phylogeny/mt_genome.phy\n";
-	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/mt_genome.phy -n trees -T $var{threads} -# 20 -p 12345\n";
-	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/mt_genome.phy -n boots -T $var{threads} -# 100 -p 23456 -b 23456\n";
-	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -p 12345 -f b -t RAxML_bestTree.trees -T $var{threads} -z RAxML_bootstrap.boots -n consensus\n";
-	print SH "sumtrees.py --percentages --min-clade-freq=0.50 --target=RAxML_bestTree.trees --output=result2.tre RAxML_bootstrap.boots";
+
+	print SH "#rm -rf $var{outpath}/Mt_genome_phylogeny/RAxML_*\n";
+	print SH "#raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/mt_genome.phy -n trees -T $var{threads} -# 20 -p 12345\n";
+	print SH "#raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/mt_genome.phy -n boots -T $var{threads} -# 100 -p 23456 -b 23456\n";
+	print SH "#raxmlHPC-PTHREADS -m GTRGAMMA -p 12345 -f b -t RAxML_bestTree.trees -T $var{threads} -z RAxML_bootstrap.boots -n consensus\n";
+	print SH "#sumtrees.py --percentages --min-clade-freq=0.50 --target=RAxML_bestTree.trees --output=result2.tre RAxML_bootstrap.boots";
 
 	close SH;
 	print CL "sh $var{shpath}/mt_genome_phylogeny.sh 1>$var{shpath}/mt_genome_phylogeny.sh.o 2>$var{shpath}/mt_genome_phylogeny.sh.e \n";
