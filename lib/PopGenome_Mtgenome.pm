@@ -282,10 +282,10 @@ sub MtGenomeVariantCalling{
 	open SH, ">$var{shpath}/mt_genome_freebayes.sh";
 
 	print SH "#!/bin/sh\ncd $var{outpath}/FreebayesCalling\n";
-	print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -p $var{ploidy} --standard-filters | vcfsnps >$var{outpath}/FreebayesCalling/freebayes.vcf";
+	print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -F 0.05 -C 2 --pooled-continuous --standard-filters | vcfsnps >$var{outpath}/FreebayesCalling/freebayes_joint_calling_pooled.vcf";
 	
 	###filter SNP by depth if needed
-	open (IN, "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf|") or die $!;
+	open (IN, "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling_pooled.vcf|") or die $!;
 	my @dp;my $dp_sum;my $dp_n=0;
 	while (<IN>){
     	next if (/#/);
