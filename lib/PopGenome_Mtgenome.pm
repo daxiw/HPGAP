@@ -317,14 +317,17 @@ sub MtGenomeVariantCalling{
 					else { $v{max} = $3; $v{min} = $2; }
 
 					if (($v{min}+$v{max}) >= 10){
-						$v{min_frac} = $v{min}/($v{max}+$v{min});
-						if (( $v{min_frac} >= 0.05) && ( $v{min} >= 2)){
-							$h{$i}{het} ++;
-						}
-						else {$h{$i}{hom} ++;}
 						if($v{gp} ne '0/0'){
 							$h{$i}{snp} ++;
 						}
+
+						$v{min_frac} = $v{min}/($v{max}+$v{min});
+						if (( $v{min_frac} >= 0.05) && ( $v{min} >= 2)){
+							$h{$i}{het} ++;
+							$h{$i}{note} .= "$a[1][$v{max},$v{min}];";
+						}
+						else {$h{$i}{hom} ++;}
+
 					}
 				}
 			}
@@ -334,7 +337,7 @@ sub MtGenomeVariantCalling{
 
 	open SL, ">$var{outpath}/FreebayesCalling/sample_heterozygote.list";
 	foreach my $i (keys %h){
-		print SL "$h{$i}{name}\t$h{$i}{snp}\t$h{$i}{het}\t$h{$i}{hom}\t";
+		print SL "$h{$i}{name}\t$h{$i}{snp}\t$h{$i}{het}\t$h{$i}{note}\t";
 		print SL $h{$i}{het}+$h{$i}{hom},"\t";
 		print SL $h{$i}{het}/($h{$i}{het}+$h{$i}{hom}),"\n";
 	}
