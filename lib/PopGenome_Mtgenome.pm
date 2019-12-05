@@ -372,12 +372,16 @@ sub MtGenomeVariantCalling{
 	close IN;
 
 	open SL, ">$var{outpath}/FreebayesCalling/sample_heterozygote.list";
+	open CSL, ">$var{outpath}/FreebayesCalling/sample_heterozygote_clean.list";
 	foreach my $i (keys %h){
 		print SL "$h{$i}{name}\t$h{$i}{snp}\t$h{$i}{het}\t$h{$i}{note}\t";
 		print SL $h{$i}{het}+$h{$i}{hom},"\t";
 		print SL $h{$i}{het}/($h{$i}{het}+$h{$i}{hom}),"\n";
+		print CSL "$h{$i}{name}\n" if ($h{$i}{het}>1);
 	}
+	close CSL;
 	close SL;
+
 }
 
 sub MtGenomePhylogeny{
@@ -404,7 +408,7 @@ sub MtGenomePhylogeny{
 	open SH, ">$var{shpath}/mt_genome_phylogeny.sh";
 	print SH "#!/bin/sh\ncd $var{outpath}/Mt_genome_phylogeny\n";
 
-	print SH "bcftools reheader --samples $var{outpath}/Mt_genome_phylogeny/name_map.list -o $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf $var{outpath}/FreebayesCalling/freebayes_joint_calling.vcf\n";
+	print SH "bcftools reheader --samples $var{outpath}/Mt_genome_phylogeny/name_map.list -o $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf $var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf\n";
 	print SH "rm -rf $var{outpath}/Mt_genome_phylogeny/RAxML_*\n";
 
 	print SH "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf|$Bin/Tools/vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
