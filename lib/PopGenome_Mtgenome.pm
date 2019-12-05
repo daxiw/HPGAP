@@ -358,7 +358,7 @@ sub MtGenomeVariantCalling{
 
 	open SL, ">$var{outpath}/FreebayesCalling/sample_heterozygote.list";
 	foreach my $i (keys %h){
-		print SL "$h{$i}{name}\t$h{$i}{snp}\t$h{$i}{het}\t$h{$i}{note}\t";
+#		print SL "$h{$i}{name}\t$h{$i}{snp}\t$h{$i}{het}\t$h{$i}{note}\t";
 		print SL $h{$i}{het}+$h{$i}{hom},"\t";
 		print SL $h{$i}{het}/($h{$i}{het}+$h{$i}{hom}),"\n";
 	}
