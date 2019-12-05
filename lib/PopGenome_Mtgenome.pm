@@ -313,6 +313,8 @@ sub MtGenomeVariantCalling{
 				my %v;
 				if ($a[$i] =~ /(\d\/\d)\:\d+\:(\d+)\,(\d+)/){
 					$v{gp}=$1;
+					$v{ref}=$2;
+					$v{alt}=$3;
 					if ($2>$3){ $v{max} = $2; $v{min} = $3; }
 					else { $v{max} = $3; $v{min} = $2; }
 
@@ -324,7 +326,7 @@ sub MtGenomeVariantCalling{
 						$v{min_frac} = $v{min}/($v{max}+$v{min});
 						if (( $v{min_frac} >= 0.05) && ( $v{min} >= 2)){
 							$h{$i}{het} ++;
-							$h{$i}{note} .= "$a[1]\[$v{max},$v{min}\];";
+							$h{$i}{note} .= "$a[1]\[$v{ref},$v{alt}\];";
 						}
 						else {$h{$i}{hom} ++;}
 
