@@ -45,9 +45,12 @@ sub CombineCfg{
 
 	my %user_cfg = %{YAML::Tiny->read( $opts{config} )->[0]};
 	
-	my %db_cfg = %{YAML::Tiny->read( $user_cfg{args}{outdir} )->[0]};
+	my %db_cfg = %{YAML::Tiny->read( "$user_cfg{args}{outdir}/.db.yml" )->[0]} if (-e "$user_cfg{args}{outdir}/.db.yml");
 
 	if (defined $user_cfg{'fqdata'}) {$cfg{'fqdata'}=$user_cfg{'fqdata'};}
+	if (defined $db_cfg{'fqdata'}) {$cfg{'fqdata'}=$db_cfg{'fqdata'};}
+	if (defined $db_cfg{'ref'}{'choose'}) {$cfg{'ref'}{'choose'}=$db_cfg{'ref'}{'choose'};}
+
 	foreach my $key_L1(keys %par){
 		foreach my $key_L2(keys %{$par{$key_L1}}){
 			if (defined $user_cfg{$key_L1}{$key_L2}){

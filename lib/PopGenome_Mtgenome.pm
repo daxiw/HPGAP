@@ -410,17 +410,23 @@ sub MtGenomePhylogeny{
 
 	print SH "vcftools --vcf $var{outpath}/FreebayesCalling/freebayes_filtered_snps.vcf --remove-filtered-all --remove $var{outpath}/FreebayesCalling/sample_heterozygote_clean.list --recode --recode-INFO-all --stdout  > $var{outpath}/Mt_genome_phylogeny/freebayes_filtered_homosnps.vcf\n";
 
-	print SH "bcftools reheader --samples $var{outpath}/Mt_genome_phylogeny/name_map.list -o $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf $var{outpath}/Mt_genome_phylogeny/freebayes_filtered_homosnps.vcf\n";
+	print SH "bcftools reheader --samples $var{outpath}/Mt_genome_phylogeny/name_map.list -o $var{outpath}/Mt_genome_phylogeny/freebayes_joint_calling_rename.vcf $var{outpath}/Mt_genome_phylogeny/freebayes_filtered_homosnps.vcf\n";
 
-	print SH "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling_rename.vcf|$Bin/Tools/vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
+	print SH "cat $var{outpath}/Mt_genome_phylogeny/freebayes_joint_calling_rename.vcf|$Bin/Tools/vcf-to-tab >$var{outpath}/Mt_genome_phylogeny/mt_genome.tab\n";
 	print SH "$Bin/Tools/vcf_tab_to_fasta_alignment.pl -i $var{outpath}/Mt_genome_phylogeny/mt_genome.tab > $var{outpath}/Mt_genome_phylogeny/mt_genome.fasta\n";
 	print SH "$Bin/Tools/fasta-to-phylip --input-fasta $var{outpath}/Mt_genome_phylogeny/mt_genome.fasta --output-phy $var{outpath}/Mt_genome_phylogeny/mt_genome.phy\n";
 
-	print SH "#rm -rf $var{outpath}/Mt_genome_phylogeny/RAxML_*\n";
-	print SH "#raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/mt_genome.phy -n trees -T $var{threads} -# 20 -p 12345\n";
-	print SH "#raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/mt_genome.phy -n boots -T $var{threads} -# 100 -p 23456 -b 23456\n";
-	print SH "#raxmlHPC-PTHREADS -m GTRGAMMA -p 12345 -f b -t RAxML_bestTree.trees -T $var{threads} -z RAxML_bootstrap.boots -n consensus\n";
-	print SH "#sumtrees.py --percentages --min-clade-freq=0.50 --target=RAxML_bestTree.trees --output=result2.tre RAxML_bootstrap.boots";
+	if ( !-d "$var{outpath}/Mt_genome_phylogeny/fasttree" ) {make_path "$var{outpath}/Mt_genome_phylogeny/fasttree" or die "Failed to create path: $var{outpath}/Mt_genome_phylogeny/fasttree";}
+	print SH "cd $var{outpath}/Mt_genome_phylogeny/fasttree/\n";
+	print SH "fasttree -nt -gtr < $var{outpath}/Mt_genome_phylogeny/mt_genome.fasta > $var{outpath}/Mt_genome_phylogeny/fasttree/mt_genome_fasttree.tree\n";
+
+	if ( !-d "$var{outpath}/Mt_genome_phylogeny/raxml" ) {make_path "$var{outpath}/Mt_genome_phylogeny/raxml" or die "Failed to create path: $var{outpath}/Mt_genome_phylogeny/raxml";}
+	print SH "cd $var{outpath}/Mt_genome_phylogeny/raxml/ && rm -rf $var{outpath}/Mt_genome_phylogeny/raxml/RAxML_*\n";
+	print SH "cp -f $var{outpath}/Mt_genome_phylogeny/mt_genome.phy $var{outpath}/Mt_genome_phylogeny/raxml/\n";
+	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/raxml/mt_genome.phy -n trees -T $var{threads} -# 20 -p 12345\n";
+	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -s $var{outpath}/Mt_genome_phylogeny/raxml/mt_genome.phy -n boots -T $var{threads} -# 100 -p 23456 -b 23456\n";
+	print SH "raxmlHPC-PTHREADS -m GTRGAMMA -p 12345 -f b -t RAxML_bestTree.trees -T $var{threads} -z RAxML_bootstrap.boots -n consensus\n";
+	print SH "sumtrees.py --percentages --min-clade-freq=0.50 --target=RAxML_bestTree.trees --output=mt_genome_raxml.tree RAxML_bootstrap.boots";
 
 	close SH;
 	print CL "sh $var{shpath}/mt_genome_phylogeny.sh 1>$var{shpath}/mt_genome_phylogeny.sh.o 2>$var{shpath}/mt_genome_phylogeny.sh.e \n";
@@ -428,17 +434,25 @@ sub MtGenomePhylogeny{
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_mt_genome_phylogeny_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_mt_genome_phylogeny.list` unless (defined $opts{skipsh});
 
-	open my $fh, '<', "$var{outpath}/Mt_genome_phylogeny/result2.tre" or die "error opening $var{outpath}/Mt_genome_phylogeny/result2.tre: $!";
-	my $data = do { local $/; <$fh> };
-
-	foreach my $newid (keys %name){
-		$data =~ s/($newid)/($name{$newid})/g;
+	if (-e "$var{outpath}/Mt_genome_phylogeny/fasttree/mt_genome_fasttree.tree"){
+		open my $fh, '<', "$var{outpath}/Mt_genome_phylogeny/fasttree/mt_genome_fasttree.tree" or die "error opening $var{outpath}/Mt_genome_phylogeny/fasttree/mt_genome_fasttree.tree: $!";
+		my $data = do { local $/; <$fh> };
+		foreach my $newid (keys %name){
+			$data =~ s/($newid)/($name{$newid})/g;
+		}
+		close $fh;
+		open OT, ">$var{outpath}/Mt_genome_phylogeny/fasttree/mt_genome_fasttree.final.tree"; print OT $data; close OT;
 	}
-	close $fh;
 
-	open OT, ">$var{outpath}/Mt_genome_phylogeny/result2.final.tre";
-	print OT $data;
-	close OT;
+	if (-e "$var{outpath}/Mt_genome_phylogeny/raxml/mt_genome_raxml.tree"){
+		open my $fh, '<', "$var{outpath}/Mt_genome_phylogeny/raxml/result2.tre" or die "error opening $var{outpath}/Mt_genome_phylogeny/raxml/result2.tre: $!";
+		my $data = do { local $/; <$fh> };
+		foreach my $newid (keys %name){
+			$data =~ s/($newid)/($name{$newid})/g;
+		}
+		close $fh;
+		open OT, ">$var{outpath}/Mt_genome_phylogeny/raxml/mt_genome_raxml.final.tree"; print OT $data; close OT;
+	}
 	
 }
 
