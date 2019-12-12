@@ -29,6 +29,7 @@ sub Main{
 		'skipsh');
 
 	die "please provide the correct configuration file" unless ((defined $opts{config}) && (-e $opts{config}));
+	my %cfg = %{YAML::Tiny->read( $opts{config} )->[0]};
 
 	if (defined $opts{allsteps}){
 		$opts{read_mapping} = 1;
@@ -36,34 +37,12 @@ sub Main{
 		$opts{reference_selection} = 1;
 	}
 
-	my $yaml = YAML::Tiny->read( $opts{config} );
-	my %cfg = %{$yaml->[0]};
-	my %samplelist_ori = %{$cfg{fqdata}};
-	my %samplelist = %samplelist_ori;
-	
-	$var{samplelist}=\%samplelist;
-	$var{cfg}=\%cfg;
-
-	#set the number of threads
-	if (defined $opts{threads}){
-		$var{threads} = $opts{threads};
-	}elsif(defined $cfg{args}{threads}){
-		$var{threads} = $cfg{args}{threads};
-	}else{
-		$var{threads} = 4;
-	}
-
-	$var{mem} = $var{threads}."G";
-	if (defined $opts{reference_selection}){ & SelectReference (\%var,\%opts); last;}
-
 	my %mapping;
 	foreach my $temp_ref(keys %{$cfg{ref}{db}}){
-		$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$temp_ref"; 
-		if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
-		$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$temp_ref";
-		if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 
-		die "please add mt genome path into configuration file" unless (defined $cfg{ref}{db}{$temp_ref}{path});
+		my %var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts, "01.QualityControl/read_mapping.$temp_ref")};
+		
+		die "please add genome path into configuration file" unless (defined $cfg{ref}{db}{$temp_ref}{path});
 		$var{reference} = $cfg{ref}{db}{$temp_ref}{path};
 		die "$var{reference} does not exists" unless (-e $var{reference});
 
@@ -78,20 +57,13 @@ sub Main{
 		}
 		close IN;
 
-		if (defined $opts{read_mapping}){ $mapping{$temp_ref} = & ReadMapping (\%var,\%opts);}
+		$var{mem} = $var{threads}."G";
 
+		if (defined $opts{read_mapping}){ $mapping{$temp_ref} = & ReadMapping (\%var,\%opts);}
 		if (defined $opts{mapping_report}){ & MappingReport (\%var,\%opts);}
-		#### estimate phylogeny of mt genomes ###		
 	}
 
-	#$var{outfig} = $opts{config};
-	#$var{outfig} =~ s/\.yml|\.yaml/_mapping_done\.yml/g;
-	#$opts{outcfg} ||= $var{outfig};
-	# create this yaml object
-    #$yaml = YAML::Tiny->new( $var{newcfg} );
-    # Save both documents to a file
-    #$yaml->write( $opts{outcfg} );
-#    print "$opts{outpath}\n";
+	if (defined $opts{reference_selection}){ & SelectReference (\%var,\%opts);}
 }
 
 ############################

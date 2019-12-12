@@ -4,6 +4,9 @@ args:
   ploidy: '2' # set 1 for haploid; set 2 for diploid
   mem: '2G'
   threads: '4'
+ref:
+  choose: 'undefined'
+  db: 'undefined'
 variant_filtering:
   ldcutoff: '0.3' # cut off for filtering SNVs with high LD
   ldwindowsize: '50' # window size for for filtering SNVs with high LD

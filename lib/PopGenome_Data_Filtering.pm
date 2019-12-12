@@ -20,7 +20,6 @@ sub Main{
 	my $args = shift; 
 	my @args = @{$args};
 	my %opts;
-	my %var;
 
 	GetOptionsFromArray (\@args, \%opts, 
 		'config=s',
@@ -40,25 +39,7 @@ sub Main{
 		$opts{report} = 1;
 	}
 
-	my $yaml = YAML::Tiny->read( $opts{config} );
-	my %cfg = %{$yaml->[0]};
-	my %samplelist = %{$cfg{fqdata}};
-
-	#set the number of threads
-	if (defined $opts{threads}){
-		$var{threads} = $opts{threads};
-	}elsif(defined $cfg{args}{threads}){
-		$var{threads} = $cfg{args}{threads};
-	}else{
-		$var{threads} = 4;
-	}
-
-	$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_filtering/"; 
-	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
-	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_filtering/";
-	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
-	$var{samplelist}=\%samplelist;
-	$var{cfg}=\%cfg;
+	my %var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts, "01.QualityControl/read_filtering")};
 
 	if (defined $opts{filter}){ 
 		&DataFiltering (\%var,\%opts);
@@ -66,7 +47,6 @@ sub Main{
 	}
 
 	if (defined $opts{report}){ &ReadReport (\%var,\%opts);}
-
 	if (defined $opts{updateconfig}){ &WriteCfg (\%var,\%opts);}
 }
 
@@ -129,27 +109,6 @@ sub DataFiltering{
 	close CL;
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_read_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_read_filtering.list` unless (defined $opts{skipsh});
-
-	while(1){
-		sleep(10);
-		my $flag_finish = 1; 
-		foreach my $sample (keys %samplelist){
-			next if ($samplelist{$sample}{finish_flag} eq "finished");
-			foreach my $readgroup (keys %{$samplelist{$sample}{rawdata}}){
-				next if ($samplelist{$sample}{rawdata}{$readgroup}{finish_flag} eq "finished");
-
-				if(-e "$var{shpath}/$sample.$readgroup.read_filtering.finished.txt"){
-					next;
-				}else{
-					$flag_finish = 0;
-				}
-
-			}
-		}
-		my $datestring = localtime();
-		print "waiting for sample.read_filtering to be done at $datestring\n";
-		last if($flag_finish == 1);
-	}
 }
 
 sub ReadReport{
@@ -278,13 +237,9 @@ sub WriteCfg{
 		}
 	}
 
-	$var{outfig} = $opts{config};
-	$var{outfig} =~ s/\.yml|\.yaml/_data_filtering\.yml/g;
-	$opts{outcfg} ||= $var{outfig};
-	# create this yaml object
     my $yaml = YAML::Tiny->new( \%cfg );
     # Save both documents to a file
-    $yaml->write( $opts{outcfg} );
+    $yaml->write( "$cfg{args}{outdir}/.db.yml" );
 	# print "$opts{outpath}\n";
 }
 

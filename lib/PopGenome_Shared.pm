@@ -36,20 +36,38 @@ sub LOADREF{
 
 sub CombineCfg{
 	my ($par,$opts,$folder) = @_;
-	my %par = %{YAML::Tiny->read( $ARGV[0] )->[0]};
+	my %par = %{YAML::Tiny->read( $par )->[0]};
 	my %opts = %{$opts};
-	my %cfg;
+	my %cfg = %par;
 	my %var;
 
 	die "please provide the correct configuration file" unless ((defined $opts{config}) && (-e $opts{config}));
-
 	my %user_cfg = %{YAML::Tiny->read( $opts{config} )->[0]};
-	
 	my %db_cfg = %{YAML::Tiny->read( "$user_cfg{args}{outdir}/.db.yml" )->[0]} if (-e "$user_cfg{args}{outdir}/.db.yml");
 
-	if (defined $user_cfg{'fqdata'}) {$cfg{'fqdata'}=$user_cfg{'fqdata'};}
-	if (defined $db_cfg{'fqdata'}) {$cfg{'fqdata'}=$db_cfg{'fqdata'};}
-	if (defined $db_cfg{'ref'}{'choose'}) {$cfg{'ref'}{'choose'}=$db_cfg{'ref'}{'choose'};}
+	if (defined $user_cfg{'fqdata'}){
+		foreach my $sample(keys $user_cfg{'fqdata'}){
+			if (defined $user_cfg{'fqdata'}{$sample}{rawdata}){
+				$cfg{'fqdata'}{$sample}{rawdata} = $user_cfg{'fqdata'}{$sample}{rawdata};
+			}if (defined $user_cfg{'fqdata'}{$sample}{cleandata}){
+				$cfg{'fqdata'}{$sample}{cleandata} = $user_cfg{'fqdata'}{$sample}{cleandata};
+			}elsif (defined $db_cfg{'fqdata'}{$sample}{cleandata}){
+				$cfg{'fqdata'}{$sample}{cleandata} = $db_cfg{'fqdata'}{$sample}{cleandata};
+			}
+		}
+	}
+
+	if (defined $user_cfg{'population'}){
+		$cfg{'population'} = $user_cfg{'population'};
+	}elsif(defined $db_cfg{'population'}){
+		$cfg{'population'} = $db_cfg{'population'};
+	}
+
+	if (defined $user_cfg{'ref'}{'choose'}){
+		$cfg{'ref'}{'choose'} = $user_cfg{'ref'}{'choose'};
+	}elsif(defined $db_cfg{'ref'}{'choose'}){
+		$cfg{'ref'}{'choose'} = $db_cfg{'ref'}{'choose'};
+	}
 
 	foreach my $key_L1(keys %par){
 		foreach my $key_L2(keys %{$par{$key_L1}}){
@@ -58,9 +76,9 @@ sub CombineCfg{
 			}
 		}
 	}
-	
 
 	$var{cfg} = \%cfg;
+
 	if (defined $opts{threads}){
 		$var{threads} = $opts{threads};
 	}elsif(defined $cfg{args}{threads}){
@@ -69,6 +87,7 @@ sub CombineCfg{
 		$var{threads} = 1;
 	}
 
+	# select samples if sample list is provided
 	my %samplelist_ori = %{$cfg{fqdata}};
 	my %samplelist = %samplelist_ori;
 	if (defined $opts{samplelist}){
@@ -87,6 +106,7 @@ sub CombineCfg{
 	}
 	$var{samplelist}=\%samplelist;
 
+	# use defined vcf if provided
 	if (defined $opts{vcf}){
 		$var{vcf} = $opts{vcf};
 	}elsif (defined $cfg{variant_filtering}{high_confidence_vcf}){
@@ -115,6 +135,7 @@ sub CombineCfg{
 	die "fill in folder" unless (defined $folder);
 	if ($folder ne "NULL"){
 		$var{outpath} = "$cfg{args}{outdir}/$folder/";
+		print '$var{outpath}',"\t",$var{outpath},"\n"; #test_flag
 		if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
 
 		$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/$folder/";
@@ -124,9 +145,15 @@ sub CombineCfg{
 	}
 
 	if (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path}){
-		die "$var{reference} does not exists" unless (-e $var{reference});
 		$var{reference} = $cfg{ref}{db}{$cfg{ref}{choose}}{path};
+		die "$var{reference} does not exists" unless (-e $var{reference});
 	}
+
+	# create this yaml object
+    my $yaml = YAML::Tiny->new( \%cfg );
+    # Save both documents to a file
+    $yaml->write( "$cfg{args}{outdir}/combined.yml" );
+	# print "$opts{outpath}\n";
 
 	return \%var;	
 }
