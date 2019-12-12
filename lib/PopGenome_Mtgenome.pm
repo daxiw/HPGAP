@@ -34,59 +34,20 @@ sub Main{
 		'skipsh');
 
 	die "please provide the correct configuration file" unless ((defined $opts{config}) && (-e $opts{config}));
+	my %cfg = %{YAML::Tiny->read( $opts{config} )->[0]};
 
 	if (defined $opts{allsteps}){
 		$opts{mt_genome_mapping} = 1;
 		$opts{mt_genome_variant_calling} = 1;
 		$opts{mt_genome_phylogeny} = 1;
 	}
-
-	my $yaml = YAML::Tiny->read( $opts{config} );
-	my %cfg = %{$yaml->[0]};
-	my %samplelist_ori = %{$cfg{fqdata}};
-	my %samplelist = %samplelist_ori;
-
-	if (defined $opts{samplelist}){
-		my %selected_sample;
-		open IN, $opts{samplelist};
-		while (<IN>){
-			/(\S+)/;
-			$selected_sample{$1}=1;
-		}
-		close IN;
-		foreach my $id (keys %samplelist){
-			unless (exists $selected_sample{$id}){
-				delete $samplelist{$id};
-			}
-		}
-	}
-
-	$var{samplelist}=\%samplelist;
-	$var{cfg}=\%cfg;
-
-	#set ploidy
-	$var{ploidy} = 2;
-
-	#set the number of threads
-	if (defined $opts{threads}){
-		$var{threads} = $opts{threads};
-	}elsif(defined $cfg{args}{threads}){
-		$var{threads} = $cfg{args}{threads};
-	}else{
-		$var{threads} = 4;
-	}
-
-	die "please add mt genome information into the configuration file" unless (defined $cfg{mtref}{db});
 	
 	foreach my $temp_ref(keys %{$cfg{mtref}{db}}){
-		$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/mt_phylogeny.$temp_ref"; 
-		if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
-		$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/mt_phylogeny.$temp_ref";
-		if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
+		
+		my %var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts, "01.QualityControl/mt_phylogeny.$temp_ref")};
 
 		die "please add mt genome path into configuration file" unless (defined $cfg{mtref}{db}{$temp_ref}{path});
 		$var{reference} = $cfg{mtref}{db}{$temp_ref}{path};
-
 		die "$var{reference} does not exists" unless (-e $var{reference});
 
 		open IN, $var{reference};
