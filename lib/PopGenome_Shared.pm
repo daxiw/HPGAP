@@ -46,7 +46,7 @@ sub CombineCfg{
 	my %db_cfg = %{YAML::Tiny->read( "$user_cfg{args}{outdir}/.db.yml" )->[0]} if (-e "$user_cfg{args}{outdir}/.db.yml");
 
 	if (defined $user_cfg{'fqdata'}){
-		foreach my $sample(keys $user_cfg{'fqdata'}){
+		foreach my $sample(keys %{$user_cfg{'fqdata'}}){
 			if (defined $user_cfg{'fqdata'}{$sample}{rawdata}){
 				$cfg{'fqdata'}{$sample}{rawdata} = $user_cfg{'fqdata'}{$sample}{rawdata};
 			}if (defined $user_cfg{'fqdata'}{$sample}{cleandata}){
