@@ -3,7 +3,8 @@ args:
   outdir: 'undefined' # This directory should be located within the working directory.
   ploidy: '2' # set 1 for haploid; set 2 for diploid
   mem: '2G'
-  threads: '4'
+  prj: P18Z10200N0119
+  queue: st.q
 ref:
   choose: 'undefined'
   db: 'undefined'
