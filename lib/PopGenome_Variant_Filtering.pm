@@ -34,22 +34,7 @@ sub Main{
 		$opts{intersection} = 1;
 	}
 
-	my $yaml = YAML::Tiny->read( $opts{config} );
-	my %cfg = %{$yaml->[0]};
-	my %samplelist = %{$cfg{fqdata}};
-	
-	$var{samplelist}=\%samplelist;
-	$var{cfg}=\%cfg;
-
-	#set the number of threads
-	if (defined $opts{threads}){
-		$var{threads} = $opts{threads};
-	}elsif(defined $cfg{args}{threads}){
-		$var{threads} = $cfg{args}{threads};
-	}else{
-		$var{threads} = 4;
-	}
-
+	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\$opts,"JointCalling")}
 
 	$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$cfg{ref}{choose}/Filtered_variants";
 	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 

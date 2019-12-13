@@ -31,7 +31,7 @@ sub Main{
 		$opts{intersection} = 1;
 	}
 
-	my %var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\$opts,"SFS")}
+	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\$opts,"SFS")}
 
 	$var{genome}= PopGenome_Shared::LOADREF($cfg{ref}{db}{$cfg{ref}{choose}}{path});
 

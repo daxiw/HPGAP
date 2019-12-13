@@ -34,47 +34,7 @@ sub Main{
 		$opts{intersection} = 1;
 	}
 
-	my $yaml = YAML::Tiny->read( $opts{config} );
-	my %cfg = %{$yaml->[0]};	
-	$var{cfg}=\%cfg;
-
-	my %samplelist_ori = %{$cfg{fqdata}};
-	my %samplelist = %samplelist_ori;
-	$var{samplelist}=\%samplelist;
-
-	if (defined $opts{samplelist}){
-		my %selected_sample;
-		open IN, $opts{samplelist};
-		while (<IN>){
-			/(\S+)/;
-			$selected_sample{$1}=1;
-		}
-		close IN;
-		foreach my $id (keys %samplelist){
-			unless (exists $selected_sample{$id}){
-				delete $samplelist{$id};
-			}
-		}
-	}
-
-	#set the number of threads
-	if (defined $opts{threads}){
-		$var{threads} = $opts{threads};
-	}elsif(defined $cfg{args}{threads}){
-		$var{threads} = $cfg{args}{threads};
-	}else{
-		$var{threads} = 4;
-	}
-
-	$var{outpath} = "$cfg{args}{outdir}/GeneticRelationship/";
-	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
-
-	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/GeneticRelationship/";
-	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
-
-	die "please add genome path into configuration file" unless (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path});
-	$var{reference} = $cfg{ref}{db}{$cfg{ref}{choose}}{path};
-	die "$var{reference} does not exists" unless (-e $var{reference});
+	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\$opts,"GeneticRelationship")}
 
 	if (defined $opts{admixture}){ &ADMIXTURE (\%var,\%opts);}
 	if (defined $opts{phylogeny}){ &PHYLOGENY (\%var,\%opts);}
