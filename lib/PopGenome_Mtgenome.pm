@@ -96,7 +96,7 @@ sub MtGenomeMapping {
 		print SH "#!/bin/sh\ncd $sample_outpath\n";
 		foreach my $readgroup (keys %{$samplelist{$sample}{cleandata}}){
 			if($samplelist{$sample}{cleandata}{$readgroup}{Flag} eq "PE"){
-				print SH "bwa mem $var{reference} $samplelist{$sample}{cleandata}{$readgroup}{fq1} $samplelist{$sample}{cleandata}{$readgroup}{fq2} -t $var{threads} -R \"\@RG\\tID:$readgroup\\tSM:$sample\\tLB:$readgroup\\tPL:$samplelist{$sample}{cleandata}{$readgroup}{PL}\"\| samtools view -bS -@ $cfg{args}{threads} -F 4 - -o $readgroup\_filt.bam && \\\n";
+				print SH "bwa mem $var{reference} $samplelist{$sample}{cleandata}{$readgroup}{fq1} $samplelist{$sample}{cleandata}{$readgroup}{fq2} -t $var{threads} -R \"\@RG\\tID:$readgroup\\tSM:$sample\\tLB:$readgroup\\tPL:$samplelist{$sample}{cleandata}{$readgroup}{PL}\"\| samtools view -bS -@ $var{threads} -F 4 - -o $readgroup\_filt.bam && \\\n";
 			}
 			elsif($samplelist{$sample}{cleandata}{$readgroup}{Flag} eq "SE"){
 				print SH "bwa mem $var{reference} $samplelist{$sample}{cleandata}{$readgroup}{fq1} -t $var{threads} -R \"\@RG\\tID:$readgroup\\tSM:$sample\\tLB:$readgroup\\tPL:$samplelist{$sample}{cleandata}{$readgroup}{PL}\"\| samtools view -bS -@ 10 -F 4 - -o $readgroup\_filt.bam && \\\n";
