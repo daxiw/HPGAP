@@ -141,7 +141,7 @@ sub CombineCfg{
 		$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/$folder/";
 		if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 
-		die "please add genome path into configuration file" unless (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path});
+#		die "please add genome path into configuration file" unless (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path});
 	}
 
 	if (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path}){
@@ -152,7 +152,7 @@ sub CombineCfg{
 	# create this yaml object
     my $yaml = YAML::Tiny->new( \%cfg );
     # Save both documents to a file
-    $yaml->write( "$cfg{args}{outdir}/combined.yml" );
+    $yaml->write( "$cfg{args}{outdir}/.combined.yml" );
 	# print "$opts{outpath}\n";
 
 	return \%var;	

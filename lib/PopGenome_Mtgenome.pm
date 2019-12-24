@@ -171,6 +171,8 @@ sub MtGenomeVariantCalling{
 		$ref_name =~ s/\.fas$//;
 	}
 
+	if ( !-d "$var{outpath}/FreebayesCalling" ) {make_path "$var{outpath}/FreebayesCalling" or die "Failed to create path: $var{outpath}/FreebayesCalling";}
+
 	if ( !-e "$var{reference}.fai" ) {
 	  		`samtools faidx $var{reference}`;
 	}
