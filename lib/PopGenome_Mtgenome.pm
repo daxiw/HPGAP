@@ -254,7 +254,7 @@ sub MtGenomeVariantCalling{
 
 	###filter SNP by depth if needed
 	open (IN, "cat $var{outpath}/FreebayesCalling/freebayes_joint_calling_pooled.vcf|") or die $!;
-	my @dp;my $dp_sum;my $dp_n=0; my $sample_n;
+	my @dp;my $dp_sum = 0;my $dp_n=0; my $sample_n = 0;
 	while (<IN>){
     	if (/#/){
     		if (/#CHROM/){
@@ -316,12 +316,13 @@ sub MtGenomeVariantCalling{
 					else { $v{max} = $3; $v{min} = $2; }
 
 					if (($v{min}+$v{max}) >= 10){
+						$v{min_frac} = $v{min}/($v{max}+$v{min});
+
 						if($v{gp} ne '0/0'){
 							$h{$i}{snp} ++;
 						}
 
-						$v{min_frac} = $v{min}/($v{max}+$v{min});
-						if (( $v{min_frac} >= 0.05) && ( $v{min} >= 2)){
+						if (( $v{min_frac} >= 0.05) && ( $v{min} > 2) && ($v{gp} eq '0/1') ){
 							$h{$i}{het} ++;
 							$h{$i}{note} .= "$a[1]\[$v{gp}:$v{ref},$v{alt}\];";
 						}
