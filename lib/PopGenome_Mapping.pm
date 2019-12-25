@@ -200,7 +200,8 @@ sub MappingReport {
 	print SOT "clean_data","\t";
 	print SOT "mean_covreage","\t";
 	print SOT "mapping_rate","\t";
-	print SOT "covered_regions","\n";
+	print SOT "covered_regions","\t";
+	print SOT "insert_size","\n";
 
 	foreach my $sample (keys %samplelist){
 		my $sample_report_outpath="$var{outpath}/Report/Samples/$sample";
@@ -221,6 +222,10 @@ sub MappingReport {
 				$sample_summary{$sample}{"insert_size"} = $1;
 			}
 
+			if (/SN\s+insert\s+size\s+standard\s+deviation\:\s+(\d+)/){
+				$sample_summary{$sample}{"insert_size_std"} = $1;
+			}
+
 			if(/COV\s+\S+\]\s+(\d+)\s+(\d+)/){
 				if($1>10){
 					$sample_summary{$sample}{"covered_regions"} += $2;
@@ -235,8 +240,8 @@ sub MappingReport {
 		print SOT $sample_summary{$sample}{"clean_data"},"\t";
 		print SOT $sample_summary{$sample}{"mean_covreage"},"\t";
 		print SOT $sample_summary{$sample}{"mapping_rate"},"\t";
-		print SOT $sample_summary{$sample}{"covered_regions"}, "\n";
-		
+		print SOT $sample_summary{$sample}{"covered_regions"}, "\t";
+		print SOT $sample_summary{$sample}{"insert_size"}, "\n";
 		#SN      insert size average:    486.4
 		#SN      insert size standard deviation: 1454.8
 
@@ -250,7 +255,9 @@ sub MappingReport {
 	print SOT "Percentage of Cleandata (%)","\t";
 	print SOT "Clean_data (Gb)","\t";
 	print SOT "Mean Covreage","\t";
-	print SOT "Mapping Rate (%)","\n";
+	print SOT "Mapping Rate (%)","\t";
+	print SOT "Covered Regions","\t";
+	print SOT "Insert Size","\n";
 
 	foreach my $sample (keys %samplelist){
 		print SOT "$sample\t";
@@ -259,7 +266,9 @@ sub MappingReport {
 		print SOT sprintf("%.2f",100*$sample_summary{$sample}{"percentage_of_cleandata"}),"\t";
 		print SOT sprintf("%.2f",$sample_summary{$sample}{"clean_data"}/1000000000),"\t";
 		print SOT sprintf("%.2f",$sample_summary{$sample}{"mean_covreage"}),"\t";
-		print SOT sprintf("%.2f",100*$sample_summary{$sample}{"mapping_rate"}),"\n";
+		print SOT sprintf("%.2f",100*$sample_summary{$sample}{"mapping_rate"}),"\t";
+		print SOT $sample_summary{$sample}{"covered_regions"}, "\t";
+		print SOT $sample_summary{$sample}{"insert_size"}, "\n";
 	}
 	close SOT;
 }
