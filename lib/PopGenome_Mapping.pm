@@ -218,9 +218,9 @@ sub MappingReport {
 				last;
 			}
 
-			if (/SN\s+insert\s+size\s+average\:\s+(\d+)/{
-				$sample_summary{$sample}{"insert_size"}=$1;
-			}
+			#if (/SN\s+insert\s+size\s+average\:\s+(\d+)/{
+			#	$sample_summary{$sample}{"insert_size"} = $1;
+			#}
 
 			if(/COV\s+\S+\]\s+(\d+)\s+(\d+)/){
 				if($1>10){
@@ -228,6 +228,7 @@ sub MappingReport {
 				}
 			}
 		}
+
 		close IN;
 		print SOT "$sample\t";
 		print SOT "$var{temp_ref}{name}\t";
