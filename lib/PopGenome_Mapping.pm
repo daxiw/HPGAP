@@ -241,7 +241,7 @@ sub MappingReport {
 		print SOT $sample_summary{$sample}{"mean_covreage"},"\t";
 		print SOT $sample_summary{$sample}{"mapping_rate"},"\t";
 		print SOT $sample_summary{$sample}{"covered_regions"}, "\t";
-		print SOT $sample_summary{$sample}{"insert_size"}, "\n";
+		print SOT $sample_summary{$sample}{"insert_size"},"(",$sample_summary{$sample}{"insert_size_std"},")","\n";
 		#SN      insert size average:    486.4
 		#SN      insert size standard deviation: 1454.8
 
@@ -268,7 +268,7 @@ sub MappingReport {
 		print SOT sprintf("%.2f",$sample_summary{$sample}{"mean_covreage"}),"\t";
 		print SOT sprintf("%.2f",100*$sample_summary{$sample}{"mapping_rate"}),"\t";
 		print SOT $sample_summary{$sample}{"covered_regions"}, "\t";
-		print SOT $sample_summary{$sample}{"insert_size"}, "\n";
+		print SOT $sample_summary{$sample}{"insert_size"},"(",$sample_summary{$sample}{"insert_size_std"},")","\n";
 	}
 	close SOT;
 }
