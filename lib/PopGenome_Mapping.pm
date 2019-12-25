@@ -207,12 +207,19 @@ sub MappingReport {
 		if ( !-d $sample_report_outpath ) {make_path $sample_report_outpath or die "Failed to create path: $sample_report_outpath";}
 		`cp $var{outpath}/$sample/$sample.bam.stats.txt $sample_report_outpath`;
 		open IN, "$sample_report_outpath/$sample.bam.stats.txt";
+
+		$sample_summary{$sample}{"covered_regions"} = 0;
+
 		while (<IN>){
 			if (/SN\s+bases\s+mapped\s+\(cigar\)\:\s+(\d+)/){
 				$sample_summary{$sample}{"mapped_bases"}=$1;
 				$sample_summary{$sample}{"mean_covreage"}=$sample_summary{$sample}{"mapped_bases"}/$var{temp_ref}{length};
 				$sample_summary{$sample}{"mapping_rate"}=$sample_summary{$sample}{"mapped_bases"}/$sample_summary{$sample}{"clean_data"};
 				last;
+			}
+
+			if (/SN\s+insert\s+size\s+average\:\s+(\d+)/{
+				$sample_summary{$sample}{"insert_size"}=$1;
 			}
 
 			if(/COV\s+\S+\]\s+(\d+)\s+(\d+)/){
@@ -229,6 +236,10 @@ sub MappingReport {
 		print SOT $sample_summary{$sample}{"mean_covreage"},"\t";
 		print SOT $sample_summary{$sample}{"mapping_rate"},"\t";
 		print SOT $sample_summary{$sample}{"covered_regions"}, "\n";
+		
+		#SN      insert size average:    486.4
+		#SN      insert size standard deviation: 1454.8
+
 	}
 	close SOT;
 
