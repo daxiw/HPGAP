@@ -217,9 +217,9 @@ sub MappingReport {
 				$sample_summary{$sample}{"mapping_rate"}=$sample_summary{$sample}{"mapped_bases"}/$sample_summary{$sample}{"clean_data"};
 			}
 
-			#if (/SN\s+insert\s+size\s+average\:\s+(\d+)/{
-			#	$sample_summary{$sample}{"insert_size"} = $1;
-			#}
+			if (/SN\s+insert\s+size\s+average\:\s+(\d+)/){
+				$sample_summary{$sample}{"insert_size"} = $1;
+			}
 
 			if(/COV\s+\S+\]\s+(\d+)\s+(\d+)/){
 				if($1>10){
