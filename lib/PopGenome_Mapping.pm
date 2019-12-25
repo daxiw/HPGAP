@@ -199,7 +199,8 @@ sub MappingReport {
 	print SOT "percentage_of_cleandata","\t";
 	print SOT "clean_data","\t";
 	print SOT "mean_covreage","\t";
-	print SOT "mapping_rate","\n";
+	print SOT "mapping_rate","\t";
+	print SOT "covered_regions","\n";
 
 	foreach my $sample (keys %samplelist){
 		my $sample_report_outpath="$var{outpath}/Report/Samples/$sample";
@@ -213,6 +214,12 @@ sub MappingReport {
 				$sample_summary{$sample}{"mapping_rate"}=$sample_summary{$sample}{"mapped_bases"}/$sample_summary{$sample}{"clean_data"};
 				last;
 			}
+
+			if(/COV\s+\S+\]\s+(\d+)\s+(\d+)/){
+				if($1>10){
+					$sample_summary{$sample}{"covered_regions"} += $2;
+				}
+			}
 		}
 		close IN;
 		print SOT "$sample\t";
@@ -220,7 +227,8 @@ sub MappingReport {
 		print SOT $sample_summary{$sample}{"percentage_of_cleandata"},"\t";
 		print SOT $sample_summary{$sample}{"clean_data"},"\t";
 		print SOT $sample_summary{$sample}{"mean_covreage"},"\t";
-		print SOT $sample_summary{$sample}{"mapping_rate"},"\n";
+		print SOT $sample_summary{$sample}{"mapping_rate"},"\t";
+		print SOT $sample_summary{$sample}{"covered_regions"}, "\n";
 	}
 	close SOT;
 
