@@ -215,12 +215,11 @@ sub MappingReport {
 				$sample_summary{$sample}{"mapped_bases"}=$1;
 				$sample_summary{$sample}{"mean_covreage"}=$sample_summary{$sample}{"mapped_bases"}/$var{temp_ref}{length};
 				$sample_summary{$sample}{"mapping_rate"}=$sample_summary{$sample}{"mapped_bases"}/$sample_summary{$sample}{"clean_data"};
-				last;
 			}
 
-			#if (/SN\s+insert\s+size\s+average\:\s+(\d+)/{
-			#	$sample_summary{$sample}{"insert_size"} = $1;
-			#}
+			if (/SN\s+insert\s+size\s+average\:\s+(\d+)/{
+				$sample_summary{$sample}{"insert_size"} = $1;
+			}
 
 			if(/COV\s+\S+\]\s+(\d+)\s+(\d+)/){
 				if($1>10){
