@@ -152,6 +152,8 @@ sub ReadMapping {
 
 	  	print SH "samtools stats -@ $var{threads} $sample.sorted.markdup.bam 1>$sample.bam.stats.txt 2>$sample.bam.stats.error && echo \"** bam.stats.txt done **\" > $var{shpath}/$sample.readmapping.finished.txt\n";
 
+	  	print SH "gatk CollectInsertSizeMetrics -I=$sample.sorted.markdup.bam -O=$sample.insert_size_metrics.txt -H=$sample.insert_size_histogram.pdf\n";
+
 		close SH;
 		print CL "sh $var{shpath}/$sample.readmapping.sh 1>$var{shpath}/$sample.readmapping.sh.o 2>$var{shpath}/$sample.readmapping.sh.e \n";
 	}
@@ -218,14 +220,6 @@ sub MappingReport {
 				$sample_summary{$sample}{"mapping_rate"}=$sample_summary{$sample}{"mapped_bases"}/$sample_summary{$sample}{"clean_data"};
 			}
 
-			if (/SN\s+insert\s+size\s+average\:\s+(\d+)/){
-				$sample_summary{$sample}{"insert_size"} = $1;
-			}
-
-			if (/SN\s+insert\s+size\s+standard\s+deviation\:\s+(\d+)/){
-				$sample_summary{$sample}{"insert_size_std"} = $1;
-			}
-
 			if(/COV\s+\S+\]\s+(\d+)\s+(\d+)/){
 				if($1>10){
 					$sample_summary{$sample}{"covered_regions"} += $2;
@@ -234,6 +228,18 @@ sub MappingReport {
 		}
 
 		close IN;
+
+		open IN, "$sample_report_outpath/$sample.insert_size_metrics.txt";
+		while (<IN>){
+			if (/MEDIAN_INSERT_SIZE/){
+				my $line = <IN>;
+				my @a = split /\t/ $line;
+				$sample_summary{$sample}{"insert_size"} = $a[0];
+				$sample_summary{$sample}{"insert_size_std"} = $a[2];
+			}
+		}
+		close IN;
+
 		print SOT "$sample\t";
 		print SOT "$var{temp_ref}{name}\t";
 		print SOT $sample_summary{$sample}{"percentage_of_cleandata"},"\t";
@@ -242,8 +248,6 @@ sub MappingReport {
 		print SOT $sample_summary{$sample}{"mapping_rate"},"\t";
 		print SOT $sample_summary{$sample}{"covered_regions"}, "\t";
 		print SOT $sample_summary{$sample}{"insert_size"},"(",$sample_summary{$sample}{"insert_size_std"},")","\n";
-		#SN      insert size average:    486.4
-		#SN      insert size standard deviation: 1454.8
 
 	}
 	close SOT;
