@@ -52,22 +52,6 @@ sub Main{
 #	if (defined $opts{intersection}){ &ReadReport (\%var,\%opts);}
 }
 
-#################################
-#			   #
-#    Step 1g Variant filtering  #
-#			   #
-#################################
-sub SampleFiltering {
-	my ($var,$opts) = @_;
-	my %opts = %{$opts};
-	my %var = %{$var};
-	my %cfg = %{$var{cfg}};
-	my %samplelist = %{$var{samplelist}};
-
-
-	
-}
-
 sub GATKBasicFiltering {
 	my ($var,$opts) = @_;
 	my %opts = %{$opts};
@@ -103,13 +87,16 @@ sub GATKBasicFiltering {
 	print SH "	--filter-name \"my_indel_filter\" \\\n";
 	print SH "	-O $var{outpath}/../JointCalling/JointCalling_filtered_indels1st.vcf && echo \"** JointCalling/JointCalling_raw_snps1st done\" \n";
 	
+	print SH "vcftools --vcf $var{outpath}/../JointCalling/JointCalling_filtered_snps1st.vcf --max-alleles 2 --remove-filtered-all --recode --recode-INFO-all --stdout \| vcfsnps\|bgzip -c > $var{outpath}/gatk_basic_snp.vcf.gz \n";
+
 	close SH;
 
-	#switch on the bash running
 	open CL, ">$var{shpath}/cmd_gatk_basic_filtering.list";
 	print CL "sh $var{shpath}/gatk_basic_filtering.sh 1>$var{shpath}/gatk_basic_filtering.sh.o 2>$var{shpath}/gatk_basic_filtering.sh.e\n";
 	close CL;
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/gatk_basic_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_gatk_basic_filtering.list` unless (defined $opts{skipsh});
+
+	`cp -f $var{outpath}/gatk_basic_snp.vcf.gz $var{outpath}/basic_snp.vcf.gz`;
 }
 
 sub FreebayesBasicFiltering {
@@ -120,12 +107,10 @@ sub FreebayesBasicFiltering {
 	my %samplelist = %{$var{samplelist}};
 
 	open SH, ">$var{shpath}/freebayes_basic_filtering.sh";
-
 	print SH "#!/bin/sh\ncd $var{outpath}/\n";
 	print SH "vcftools --gzvcf $var{outpath}/../FreebayesCalling/freebayes_joint_calling.vcf.gz --missing-indv\n";
 	print SH "awk \'\$5 > 0.2\' out.imiss | cut -f1 > lowDP.indv\n";
-	print SH "vcftools --gzvcf $var{outpath}/../FreebayesCalling/freebayes_joint_calling.vcf.gz --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout | bgzip -c > freebayes_joint_calling_filtered1.vcf.gz";
-
+	print SH "vcftools --gzvcf $var{outpath}/../FreebayesCalling/freebayes_joint_calling.vcf.gz --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout | vcfsnps | bgzip -c > $var{outpath}/freebayes_basic_snp.vcf.gz";
 	close SH;
 
 	open CL, ">$var{shpath}/cmd_freebayes_basic_filtering.list";
@@ -133,6 +118,8 @@ sub FreebayesBasicFiltering {
 	close CL;
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/freebayes_basic_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_basic_filtering.list` unless (defined $opts{skipsh});
+
+	`cp -f $var{outpath}/freebayes_basic_snp.vcf.gz $var{outpath}/basic_snp.vcf.gz`;
 }
 
 sub AdvancedFiltering {
@@ -142,20 +129,31 @@ sub AdvancedFiltering {
 	my %cfg = %{$var{cfg}};
 	my %samplelist = %{$var{samplelist}};
 
-	#print SH "vcftools --gzvcf freebayes_joint_calling_filtered1.vcf.gz --max-alleles 2 --remove-filtered-all --recode --recode-INFO-all --stdout \| vcfsnps\|bgzip -c > $var{outpath}/basic_snp.vcf.gz \n";
-	`cp -f $var{outpath}/freebayes_joint_calling_filtered1.vcf.gz $var{outpath}/basic_snp.vcf.gz`;
 	my $genome=PopGenome_Shared::LOADREF($var{reference});
 
 	###filter SNP by depth if needed
 	my $sample_size = keys %{$cfg{fqdata}};
 	open (IN, "zcat $var{outpath}/basic_snp.vcf.gz|") or die $!;
-	my @dp;
+
+	my @dp;my $dp_sum = 0;my $dp_n=0; my $sample_n = 0;
 	while (<IN>){
-    	next if (/#/);
-    	if (/DP=([\d\.]+)/){push @dp, $1;}
+    	if (/#/){
+    		if (/#CHROM/){
+    			my @a = split /\t/;
+    			$sample_n = @a - 9;
+    		}else {
+    			next;
+    		}
+    	}
+    	if (/DP=([\d\.]+)/){
+    		push @dp, $1;
+    		$dp_sum+=$1;
+    		$dp_n++;
+    	}
 	}
-	my $p50 = int(@dp * .5);
-	my $avgdp50 = 3*$dp[$p50]/$sample_size;
+	print "avgdp ",$dp_sum/($dp_n*$sample_n), "\n";
+	my $maxdp = $dp_sum/($dp_n*$sample_n) + 4*sqrt($dp_sum/($dp_n*$sample_n));
+
 	close IN; 
 	
 	my $chrcmd="";
@@ -169,8 +167,9 @@ sub AdvancedFiltering {
 
 	open CL, ">$var{shpath}/cmd_variant_filtering_s1.list";
 	open SH, ">$var{shpath}/variant_filtering_s1.sh";
+	
 	#default SNV sites 1: PASS + max-meanDP: 3*$avgdp50 + max-missing: 0.8 + biallelic + selected chr (optional)
-	print SH "vcftools --gzvcf $var{outpath}/basic_snp.vcf.gz $chrcmd --min-meanDP 5 --max-meanDP $avgdp50 --max-missing 0.8 --max-alleles 2 --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/basic_snp_dp.vcf.gz \n";
+	print SH "vcftools --gzvcf $var{outpath}/basic_snp.vcf.gz $chrcmd --min-meanDP 5 --max-meanDP $maxdp --max-missing 0.8 --max-alleles 2 --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/basic_snp_dp.vcf.gz \n";
 	#switch on the bash running
 	print CL "sh $var{shpath}/variant_filtering_s1.sh 1>$var{shpath}/variant_filtering_s1.sh.o 2>$var{shpath}/variant_filtering_s1.sh.e\n";
 	close CL;

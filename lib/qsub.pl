@@ -7,11 +7,8 @@ my $pwd = getcwd();
 
 my($qsub_opt,@allJobs,$qsubDir,$shell);
 
-use vars qw($opt_d $opt_l $opt_q $opt_N $opt_P $opt_n $opt_b $opt_m $opt_s $opt_r $opt_h);
-getopts("d:l:q:N:P:n:b:m:s:rh");
-
-#print "d:l:q:N:n:m:s:S:h\n";
-#print "$opt_d\t$opt_l\t$opt_q\t$opt_N\t$opt_n\t$opt_m\t$opt_s\t$opt_S\t$opt_h\n";
+use vars qw($opt_d $opt_l $opt_q $opt_N $opt_P $opt_n $opt_b $opt_m $opt_s $opt_r $opt_p $opt_h);
+getopts("d:l:q:N:P:n:b:m:s:rph");
 
 if($opt_h or @ARGV == 0){
     &usage();
@@ -19,6 +16,12 @@ if($opt_h or @ARGV == 0){
 }
 
 $shell = shift;
+
+if (defined $opt_p){
+   `parallel -j $opt_n < $shell`;
+   exit;
+}
+
 my $shell_name = (split /\//,$shell)[-1];
 $qsubDir = $opt_d || (split /\//,$shell)[-1]."_qsub";
 `rm -rf $qsubDir` if(-e $qsubDir);
@@ -39,7 +42,6 @@ my $maxJob = $opt_m || 30;
 my $sleepTime = $opt_s || 120;
 my $max_try = 3;
 $max_try = 1 if(!$opt_r);
-
 
 my $split_number;
 open IS,$shell or die "can\'t open shell.sh: $shell\n";
@@ -204,6 +206,7 @@ usage: perl $0 [options] shell.sh
         -m  set the maximum number of jobs to throw out, default 30
         -s  set interval time of checking by qstat, default 120 seconds
         -r  mark to reqsub the job which was finished error, max reqsub 10 times, default not
+        -p  
         -h  show this help
 EOD
 }

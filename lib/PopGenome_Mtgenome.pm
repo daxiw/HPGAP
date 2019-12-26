@@ -303,6 +303,7 @@ sub MtGenomeVariantCalling{
 		}
 		elsif (@a > 10){
 	        next unless ($a[7] =~ /snp/);
+	        
 	        my $flag = 0;
 	        my $cut = 0;
 	        for (my $i=9; $i < @a; $i++){
