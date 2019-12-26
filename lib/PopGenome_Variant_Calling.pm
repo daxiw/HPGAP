@@ -654,7 +654,7 @@ sub FreebayesCalling {
 
 	foreach my $id (keys %genome){
 		open SH, ">$var{shpath}/FreebayesCalling_SplitScaffolds/freebayes_calling_$id.sh";
-		print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -p $var{ploidy} -r $id >$var{outpath}/FreebayesCalling/SplitScaffolds/freebayes_joint_calling_$id.vcf";
+		print SH "freebayes -f $var{reference} -L $var{outpath}/FreebayesCalling/bam.list -p $var{ploidy} --standard-filters -r $id >$var{outpath}/FreebayesCalling/SplitScaffolds/freebayes_joint_calling_$id.vcf";
 		close SH;
 		print CL "sh $var{shpath}/FreebayesCalling_SplitScaffolds/freebayes_calling_$id.sh 1>$var{shpath}/FreebayesCalling_SplitScaffolds/freebayes_calling_$id.sh.o 2>$var{shpath}/FreebayesCalling_SplitScaffolds/freebayes_calling_$id.sh.e\n";
 	}

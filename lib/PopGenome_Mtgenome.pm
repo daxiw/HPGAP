@@ -303,6 +303,20 @@ sub MtGenomeVariantCalling{
 		}
 		elsif (@a > 10){
 	        next unless ($a[7] =~ /snp/);
+	        my $flag = 0;
+	        my $cut = 0;
+	        for (my $i=9; $i < @a; $i++){
+	        	if ($a[$i] =~ /(\d+\/\d+)\:\d+\:(\d+)\,(\d+)/){
+	        		if (($2+$3) > 10){
+	        			$cut ++;
+	        			if ($1 eq "0/1"){
+	        				$flag ++;
+	        			}
+	        		}
+	        	}
+	        }
+	        next if (($flag >= ($cut*0.75)) && $cut >= 10);
+
 	        for (my $i=9; $i < @a; $i++){
 				my %v;
 				if ($a[$i] =~ /(\d\/\d)\:\d+\:(\d+)\,(\d+)/){
