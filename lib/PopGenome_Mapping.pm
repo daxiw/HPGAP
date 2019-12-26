@@ -209,6 +209,7 @@ sub MappingReport {
 		my $sample_report_outpath="$var{outpath}/Report/Samples/$sample";
 		if ( !-d $sample_report_outpath ) {make_path $sample_report_outpath or die "Failed to create path: $sample_report_outpath";}
 		`cp $var{outpath}/$sample/$sample.bam.stats.txt $sample_report_outpath`;
+		`cp $var{outpath}/$sample/$sample.insert_size_metrics.txt $sample_report_outpath`;
 		open IN, "$sample_report_outpath/$sample.bam.stats.txt";
 
 		$sample_summary{$sample}{"covered_regions"} = 0;
