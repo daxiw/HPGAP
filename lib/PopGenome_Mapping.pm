@@ -233,7 +233,7 @@ sub MappingReport {
 		while (<IN>){
 			if (/MEDIAN_INSERT_SIZE/){
 				my $line = <IN>;
-				my @a = split /\t/ $line;
+				my @a = split /\t/, $line;
 				$sample_summary{$sample}{"insert_size"} = $a[0];
 				$sample_summary{$sample}{"insert_size_std"} = $a[2];
 			}
