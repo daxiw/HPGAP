@@ -151,18 +151,18 @@ sub LD{
 	if ( !-d "$var{outpath}/LD" ) {make_path "$var{outpath}/LD" or die "Failed to create path: $var{outpath}/LD";}
 	my $sub_outpath = "$var{outpath}/LD";
 
-	if ($cfg{args}{ploidy} == 1 ){
-		$ori_gzvcf = $var{vcf};
+	if ($var{ploidy} == 1 ){
+		my $ori_gzvcf = $var{vcf};
 		$var{vcf} = "$var{outpath}/LD/diploid.high_confidence.vcf.gz";
 	}
 
 	`cp -f $Bin/lib/LD.R $var{shpath}/LD.R`;
 	
-	if ($cfg{args}{ploidy} == 1 ){
+	if ($var{ploidy} == 1 ){
 		open CL, ">$var{shpath}/cmd_LD_s0.list";
 		open SH, ">$var{shpath}/LD_s0.sh";
 		print SH <<EOF;
-zcat $ori_gzvcf|java -jar /root/jvarkit/dist/vcffilterjdk.jar -e 'return new VariantContextBuilder(variant).genotypes(variant.getGenotypes().stream().map(G->!G.isCalled()?GenotypeBuilder.createMissing(G.getSampleName(),2):G).map(G->G.isCalled() && G.getPloidy()==1?new GenotypeBuilder(G).alleles(Arrays.asList(G.getAllele(0),G.getAllele(0))).make():G).collect(Collectors.toList())).attribute("AC",variant.getGenotypes().stream().mapToInt(G->G.isCalled() && G.getPloidy()==1 && !G.getAllele(0).isReference()?2:G.getAlleles().size()).sum()).attribute("AN",variant.getGenotypes().stream().mapToInt(G->G.isCalled() && G.getPloidy()==1 ?2:G.getAlleles().size()).sum()).make();'|bgzip -c >$var{vcf}
+zcat $var{vcf}|java -jar /root/jvarkit/dist/vcffilterjdk.jar -e 'return new VariantContextBuilder(variant).genotypes(variant.getGenotypes().stream().map(G->!G.isCalled()?GenotypeBuilder.createMissing(G.getSampleName(),2):G).map(G->G.isCalled() && G.getPloidy()==1?new GenotypeBuilder(G).alleles(Arrays.asList(G.getAllele(0),G.getAllele(0))).make():G).collect(Collectors.toList())).attribute("AC",variant.getGenotypes().stream().mapToInt(G->G.isCalled() && G.getPloidy()==1 && !G.getAllele(0).isReference()?2:G.getAlleles().size()).sum()).attribute("AN",variant.getGenotypes().stream().mapToInt(G->G.isCalled() && G.getPloidy()==1 ?2:G.getAlleles().size()).sum()).make();'|bgzip -c >$var{vcf}
 EOF
 		close SH;
 		close CL;
