@@ -151,8 +151,9 @@ sub LD{
 	if ( !-d "$var{outpath}/LD" ) {make_path "$var{outpath}/LD" or die "Failed to create path: $var{outpath}/LD";}
 	my $sub_outpath = "$var{outpath}/LD";
 
+	my $ori_gzvcf;
 	if ($var{ploidy} == 1 ){
-		my $ori_gzvcf = $var{vcf};
+		$ori_gzvcf = $var{vcf};
 		$var{vcf} = "$var{outpath}/LD/diploid.high_confidence.vcf.gz";
 	}
 
