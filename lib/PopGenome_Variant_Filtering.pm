@@ -167,13 +167,6 @@ sub AdvancedFiltering {
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s1.list` unless (defined $opts{skipsh});
 
 	$cfg{variant_filtering}{basic_vcf}="$var{outpath}/basic_snp_dp.vcf.gz";
-	### prepare the setting for low LD prunning
-	$cfg{variant_filtering}{scaffold_number_limit} = 95 unless (defined $cfg{variant_filtering}{scaffold_number_limit});
-	$cfg{variant_filtering}{scaffold_length_cutoff} = 0 unless (defined $cfg{variant_filtering}{scaffold_length_cutoff});
-	#set ld prunning cut off
-	$cfg{variant_filtering}{ldwindowsize} = 10 unless (defined $cfg{variant_filtering}{ldwindowsize});
-	$cfg{variant_filtering}{ldwindowstep} = 5 unless (defined $cfg{variant_filtering}{ldwindowstep});
-	$cfg{variant_filtering}{ldcutoff} = 0.3 unless (defined $cfg{variant_filtering}{ldcutoff});
 
 	### load reference and map scaffold to number list 
 	my $i=1;my $j=0;
@@ -268,8 +261,12 @@ sub AdvancedFiltering {
 	print OT "PASS.SNP.DP.vcf.gz\t$report{snv1}{number}\t$report{snv1}{singletons}\n";
 	print OT "high_confidence.vcf.gz\t$report{snv2}{number}\t0\n";
 	print OT "high_confidence_prunned.vcf.gz\t$report{snv3}{number}\t0\n";
-	close OT; 
+	close OT;
 
+	my $yaml = YAML::Tiny->new( \%cfg );
+    # Save both documents to a file
+    $yaml->write( "$cfg{args}{outdir}/.db.yml" );
+	# print "$opts{outpath}\n";
 }
 
 1;
