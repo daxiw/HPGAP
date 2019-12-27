@@ -29,6 +29,10 @@ slidingwindow:
   scaffold_number_limit: '10000' # the maximum number of scaffolds
   snpeff_species: 'undefined' # the species name in the snpeff database 
   windowsize: '5000' # window size for scanning the whole genome in a sliding window manner
+sfs:
+  windowsize: '5000' # window size for scanning the whole genome in a sliding window manner
+  scaffold_number_limit: '10000' # the maximum number of scaffolds
+  scaffold_length_cutoff: '5000' # only analyse the scaffolds with length larger than the cutoff
 discoal: 
   hard_simulation_times: '100' # the number of simulation for generating simulated hard sweep data
   neut_simulation_times: '100' # the number of simulation for generating simulated neutral data

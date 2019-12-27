@@ -34,7 +34,7 @@ sub Main{
 		$opts{intersection} = 1;
 	}
 
-	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\$opts,"GeneticRelationship")}
+	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts,"GeneticRelationship")}
 
 	if (defined $opts{admixture}){ &ADMIXTURE (\%var,\%opts);}
 	if (defined $opts{phylogeny}){ &PHYLOGENY (\%var,\%opts);}

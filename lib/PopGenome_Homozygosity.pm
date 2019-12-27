@@ -190,7 +190,7 @@ EOF
 	close CL;
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_LD_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_LD_s1.list` unless (defined $opts{skipsh});
 
-	print CLSH ">$var{shpath}/cmd_LD_R.list";
+	open CLSH, ">$var{shpath}/cmd_LD_R.list";
 	foreach my $pop_name (keys %pop){
 		next unless ($pop{$pop_name}{count} > 6);
 
