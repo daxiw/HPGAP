@@ -22,6 +22,7 @@ sub Main{
 		'threads',
 		'vcf=s',
 		'nonsyn',
+		'genome=s',
 		'slidingwindow',
 		'help',
 		'skipsh');
@@ -29,11 +30,10 @@ sub Main{
 	die "please provide the correct configuration file" unless ((defined $opts{config}) && (-e $opts{config}));
 
 	if (defined $opts{allsteps}){
-		$opts{variant_filtering} = 1;
-		$opts{intersection} = 1;
+		$opts{slidingwindow} = 1;
 	}
 
-	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\$opts,"Slidingwindow")}
+	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts,"Slidingwindow")};
 
 	if (defined $opts{slidingwindow}){ &SLIDINGWINDOW (\%var,\%opts);}
 
@@ -50,10 +50,13 @@ sub SLIDINGWINDOW{
 	my %opts = %{$opts};
 	my %var = %{$var};
 	my %cfg = %{$var{cfg}};
-	my %samplelist_ori = %{$var{samplelist}};
-	my %samplelist = %samplelist_ori;
 	my %pop = %{$var{pop}};
-
+	
+	if (defined $opts{genome}){
+		$var{genome} = PopGenome_Shared::LOADREF($opts{genome});
+	}else {
+		$var{genome} = PopGenome_Shared::LOADREF($cfg{ref}{db}{$cfg{ref}{choose}}{path});
+	}
 	#my $path = /root/diploSHIC
 	my $path = "/ldfssz1/ST_INFECTION/P17Z10200N0536_Echinococcus/USER/wangdaxi/Github/diploSHIC";
 
@@ -63,26 +66,26 @@ sub SLIDINGWINDOW{
 
 	`cp -f $Bin/lib/Diversity.R $var{shpath}/Diversity.R`;
 	
-	my $localgzvcf = $var{vcf};
+	my $gzvcf = $var{vcf};
 
 	#generate a scaffold size list
 	open SL, ">$var{outpath}/chr.size.list";
-	foreach my $id(sort { $genome->{len}{$b} <=> $genome->{len}{$a} } keys %{$genome->{len}}){
-		print SL "$id\t$genome->{len}{$id}\n";
+	foreach my $id(sort { $var{genome}->{len}{$b} <=> $var{genome}->{len}{$a} } keys %{$var{genome}->{len}}){
+		print SL "$id\t$var{genome}->{len}{$id}\n";
 	}close SL;
 
-	`grep CDS $cfg{slidingwindow}{gff} >$var{outpath}/CDS.gff`;
+	#`grep CDS $cfg{slidingwindow}{gff} >$var{outpath}/CDS.gff`;
 	#generate Bed files
 	my $i = 1;
-	foreach my $id(sort { $genome->{len}{$b} <=> $genome->{len}{$a} } keys %{$genome->{len}}){
-		if (($genome->{len}{$id}>=$scaffold_length_cutoff)&&($i<=$scaffold_number_limit)){
+	foreach my $id(sort { $var{genome}->{len}{$b} <=> $var{genome}->{len}{$a} } keys %{$var{genome}->{len}}){
+		if (($var{genome}->{len}{$id}>=$scaffold_length_cutoff)&&($i<=$scaffold_number_limit)){
 			open BED, ">$var{outpath}/$id.bed";
-			for (my $j = 0;($j + $window_size) <= $genome->{len}{$id};$j+=$window_size ){
+			for (my $j = 0;($j + $window_size) <= $var{genome}->{len}{$id};$j+=$window_size ){
 				my $start = $j; my $end = $j + $window_size; 
 				print BED "$id\t$start\t$end\n";
 			}
 			close BED;
-			`bedtools intersect -a $var{outpath}/$id.bed -b $var{outpath}/CDS.gff -wo >$var{outpath}/$id.intersected.bed`;
+		#	`bedtools intersect -a $var{outpath}/$id.bed -b $var{outpath}/CDS.gff -wo >$var{outpath}/$id.intersected.bed`;
 		}
 	}
 
@@ -99,7 +102,7 @@ sub SLIDINGWINDOW{
 		print OT $pop{$pop_name}{line};
 		close OT;
 		# generate a vcf file for each population
-		print CL1 "vcftools --gzvcf $localgzvcf --keep $var{outpath}/$pop_name.list --recode --stdout |bgzip -c >$var{outpath}/$pop_name.SNP.vcf.gz\n";
+		print CL1 "vcftools --gzvcf $gzvcf --keep $var{outpath}/$pop_name.list --recode --stdout |bgzip -c >$var{outpath}/$pop_name.SNP.vcf.gz\n";
 		
 		
 		# calculate syn and nonsyn diversity values in each sliding window
@@ -113,10 +116,10 @@ sub SLIDINGWINDOW{
 
 		# plot diversity
 		my $i = 1;
-		foreach my $id(sort { $genome->{len}{$b} <=> $genome->{len}{$a} } keys %{$genome->{len}}){
-			if (($genome->{len}{$id}>=$scaffold_length_cutoff)&&($i<=$scaffold_number_limit)){
+		foreach my $id(sort { $var{genome}->{len}{$b} <=> $var{genome}->{len}{$a} } keys %{$var{genome}->{len}}){
+			if (($var{genome}->{len}{$id}>=$scaffold_length_cutoff)&&($i<=$scaffold_number_limit)){
 				
-				my $len=$genome->{len}{$id};
+				my $len=$var{genome}->{len}{$id};
 				my $bigwin=11*$window_size;
 				# get the diploid slidingwindow stats
 				print CL4 "python $path/diploSHIC.py fvecVcf diploid $var{outpath}/$pop_name.SNP.vcf.gz $id $len $var{outpath}/$id.$pop_name.SNP.fvec --winSize $bigwin --statFileName $var{outpath}/$id.$pop_name.stat.result 1>$var{shpath}/$id.$pop_name.stat.result.o 2>$var{shpath}/$id.$pop_name.stat.result.e\n" if ($var{ploidy} == 2);
@@ -125,8 +128,8 @@ sub SLIDINGWINDOW{
 
 				# calculate GC content, generate the table
 				open GC, ">$var{outpath}/$id.$pop_name.GCstat.result";
-				for (my $j = 0;($j + $window_size) <= $genome->{len}{$id};$j+=$window_size ){
-					my $GCcount = uc(substr($genome->{seq}{$id},$j,$window_size)) =~ tr/GC//;
+				for (my $j = 0;($j + $window_size) <= $var{genome}->{len}{$id};$j+=$window_size ){
+					my $GCcount = uc(substr($var{genome}->{seq}{$id},$j,$window_size)) =~ tr/GC//;
 					my $start = $j + 1; my $end = $j + $window_size; my $GCcontent = $GCcount/$window_size;
 					print GC "$id\t$start\t$end\t$GCcontent\n";
 				}
@@ -168,7 +171,7 @@ sub SLIDINGWINDOW{
 		open SH, ">$var{shpath}/Slidingwindow.sh";
 		print SH "cd $var{outpath}\n";
 		### annotate  vcf file
-		print SH "snpEff $cfg{slidingwindow}{snpeff_species} $localgzvcf |bgzip -c >$var{outpath}/snpEff.vcf.gz\n";
+		print SH "snpEff $cfg{slidingwindow}{snpeff_species} $gzvcf |bgzip -c >$var{outpath}/snpEff.vcf.gz\n";
 		### extract nonsyn snvs
 		print SH "zcat $var{outpath}/snpEff.vcf.gz |SnpSift filter \"(ANN[*].BIOTYPE has 'protein_coding') & ((ANN[*].EFFECT has 'missense_variant') | (ANN[*].EFFECT = 'start_lost')| (ANN[*].EFFECT = 'stop_gained')| (ANN[*].EFFECT = 'stop_lost'))\" |perl -ne 'if(/#/){print;}elsif(/ANN/){s/ANN\\S+/./g;print;}else{print;}'|bgzip -c >$var{outpath}/snpEff.nonsyn.vcf.gz\n";
 		### extract syn snvs
@@ -200,8 +203,8 @@ sub SLIDINGWINDOW{
 		open ALLSTAT, ">$var{outpath}/$pop_name.allstat.txt";
 		next unless ($pop{$pop_name}{count} > 6);
 		my $i = 1;
-		foreach my $id(sort { $genome->{len}{$b} <=> $genome->{len}{$a} } keys %{$genome->{len}}){
-			if (($genome->{len}{$id}>=$scaffold_length_cutoff)&&($i<=$scaffold_number_limit)){
+		foreach my $id(sort { $var{genome}->{len}{$b} <=> $var{genome}->{len}{$a} } keys %{$var{genome}->{len}}){
+			if (($var{genome}->{len}{$id}>=$scaffold_length_cutoff)&&($i<=$scaffold_number_limit)){
 
 				open IDALLSTAT, ">$var{outpath}/$id.$pop_name.allstat.txt";
 				my %stats;
