@@ -33,19 +33,11 @@ sub Main{
 		$opts{intersection} = 1;
 	}
 
-	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\$opts,"Homozygosity")}
+	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts,"Homozygosity")};
 
-	$var{genome}= PopGenome_Shared::LOADREF($cfg{ref}{db}{$cfg{ref}{choose}}{path});
-
-	if (defined $opts{homozygosity}){ 
-		& HOMOZYGOSITY (\%var,\%opts);
-	}
-	if (defined $opts{roh}){ 
-		& ROH (\%var,\%opts);
-	}
-	if (defined $opts{ld}){ 
-		& LD (\%var,\%opts);
-	}
+	if (defined $opts{homozygosity}){ & HOMOZYGOSITY (\%var,\%opts);}
+	if (defined $opts{roh}){ & ROH (\%var,\%opts);}
+	if (defined $opts{ld}){ & LD (\%var,\%opts);}
 }
 
 #################################
@@ -93,11 +85,14 @@ sub ROH{
 	my %samplelist = %{$var{samplelist}};
 	my %pop = %{$var{pop}};
 	
+	if (defined $opts{genome}){
+		$var{genome} = PopGenome_Shared::LOADREF($opts{genome});
+	}else {
+		$var{genome} = PopGenome_Shared::LOADREF($cfg{ref}{db}{$cfg{ref}{choose}}{path});
+	}
+
 	if ( !-d "$var{outpath}/ROH" ) {make_path "$var{outpath}/ROH" or die "Failed to create path: $var{outpath}/ROH";}
 
-	$cfg{ROH}{windowsize} = 100 unless (defined $cfg{ROH}{windowsize});
-	$cfg{ROH}{scaffold_number_limit} = 95 unless (defined $cfg{ROH}{scaffold_number_limit});
-	$cfg{ROH}{scaffold_length_cutoff} = 1000000 unless (defined $cfg{ROH}{scaffold_length_cutoff});
 	my $window_size = $cfg{ROH}{windowsize};
 	my $scaffold_number_limit = $cfg{ROH}{scaffold_number_limit};
 	my $scaffold_length_cutoff = $cfg{ROH}{scaffold_length_cutoff};
@@ -146,6 +141,12 @@ sub LD{
 	my %cfg = %{$var{cfg}};
 	my %samplelist = %{$var{samplelist}};
 	my %pop = %{$var{pop}};
+
+	if (defined $opts{genome}){
+		$var{genome} = PopGenome_Shared::LOADREF($opts{genome});
+	}else {
+		$var{genome} = PopGenome_Shared::LOADREF($cfg{ref}{db}{$cfg{ref}{choose}}{path});
+	}
 
 	if ( !-d "$var{outpath}/LD" ) {make_path "$var{outpath}/LD" or die "Failed to create path: $var{outpath}/LD";}
 	my $sub_outpath = "$var{outpath}/LD";
@@ -198,7 +199,7 @@ EOF
 #		open RIN, ">$sub_outpath/$pop_name.R.input";
 		open GRIN, ">$sub_outpath/$pop_name.GLD.R.input";
 		foreach my $id(sort { $var{genome}->{len}{$b} <=> $var{genome}->{len}{$a} } keys %{$var{genome}->{len}}){
-			next unless (($var{genome}->{len}{$id}>=$cfg{ld}{scaffold_length_cutoff})&&($i<=$cfg{ld}{$scaffold_number_limit}));
+			next unless (($var{genome}->{len}{$id}>=$cfg{ld}{scaffold_length_cutoff})&&($i<=$cfg{ld}{scaffold_number_limit}));
 			open IDSH, ">$var{shpath}/$pop_name.$id.LD.sh";
 			print IDSH "cd $sub_outpath\n";
 			print IDSH "vcftools --gzvcf $pop_name.snp.noSingle.vcf.gz --chr $id --recode --stdout |bgzip -c  >$pop_name.$id.snp.noSingle.vcf.gz\n";

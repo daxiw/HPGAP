@@ -57,6 +57,7 @@ sub SLIDINGWINDOW{
 	}else {
 		$var{genome} = PopGenome_Shared::LOADREF($cfg{ref}{db}{$cfg{ref}{choose}}{path});
 	}
+
 	#my $path = /root/diploSHIC
 	my $path = "/ldfssz1/ST_INFECTION/P17Z10200N0536_Echinococcus/USER/wangdaxi/Github/diploSHIC";
 
@@ -187,7 +188,7 @@ sub SLIDINGWINDOW{
 	}
 
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/Slidingwindow.cmd4.list.qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/Slidingwindow.cmd4.list` unless (defined $opts{skipsh});
-	#`perl $Bin/lib/qsub.pl -d $var{shpath}/Slidingwindow.cmd5.list.qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/Slidingwindow.cmd5.list` unless (defined $opts{skipsh});
+	`perl $Bin/lib/qsub.pl -d $var{shpath}/Slidingwindow.cmd5.list.qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/Slidingwindow.cmd5.list` unless (defined $opts{skipsh});
 
 	close SH;
 =head
