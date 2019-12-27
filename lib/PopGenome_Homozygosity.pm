@@ -205,10 +205,11 @@ EOF
 			print IDSH "cd $ld_outpath\n";
 			print IDSH "vcftools --gzvcf $pop_name.snp.noSingle.vcf.gz --chr $id --recode --stdout |bgzip -c  >$pop_name.$id.snp.noSingle.vcf.gz\n";
 			print IDSH "rm -rf $pop_name.$id.snp.noSingle.beagl*\n";
-			print IDSH "beagle gt=$pop_name.$id.snp.noSingle.vcf.gz out=$pop_name.$id.snp.noSingle.beagle\n";
+			#print IDSH "beagle gt=$pop_name.$id.snp.noSingle.vcf.gz out=$pop_name.$id.snp.noSingle.beagle\n";
 #				print IDSH "vcftools --gzvcf $pop_name.$id.snp.noSingle.beagle.vcf.gz --hap-r2 --ld-window-bp 1000000 --stdout |grep -v nan > $pop_name.$id.LD_window_1M.list\n";
-			print IDSH "vcftools --gzvcf $pop_name.$id.snp.noSingle.beagle.vcf.gz --geno-r2 --ld-window-bp 1000000 --stdout |grep -v nan | perl -ne '\@a=split /\\t+/;if (/CHR/){print;}elsif(((\$a[2]-\$a[1])>5000)&&(\$i!= 100)){\$i++;}elsif((\$a[2]-\$a[1])<=5000){print;}elsif(((\$a[2]-\$a[1])>5000 )&& (\$i ==100)){print;\$i=0;}'> $pop_name.$id.GLD_window_1M.list\n";
-			print IDSH "window_LD.pl $pop_name.$id.GLD_window_1M.list $cfg{step4}{slidingwindow}{windowsize} ",$var{genome}->{len}{$id}," > $pop_name.$id.GLD_window.stats\n";
+			print IDSH "vcftools --gzvcf $pop_name.$id.snp.noSingle.vcf.gz --geno-r2 --ld-window-bp 1000000 --stdout |grep -v nan | perl -ne '\@a=split /\\t+/;if (/CHR/){print;}elsif(((\$a[2]-\$a[1])>5000)&&(\$i!= 100)){\$i++;}elsif((\$a[2]-\$a[1])<=5000){print;}elsif(((\$a[2]-\$a[1])>5000 )&& (\$i ==100)){print;\$i=0;}'> $pop_name.$id.GLD_window_1M.list\n";
+		#	print IDSH "vcftools --gzvcf $pop_name.$id.snp.noSingle.beagle.vcf.gz --geno-r2 --ld-window-bp 1000000 --stdout |grep -v nan | perl -ne '\@a=split /\\t+/;if (/CHR/){print;}elsif(((\$a[2]-\$a[1])>5000)&&(\$i!= 100)){\$i++;}elsif((\$a[2]-\$a[1])<=5000){print;}elsif(((\$a[2]-\$a[1])>5000 )&& (\$i ==100)){print;\$i=0;}'> $pop_name.$id.GLD_window_1M.list\n";
+			print IDSH "perl $Bin/lib/window_LD.pl $pop_name.$id.GLD_window_1M.list $cfg{step4}{slidingwindow}{windowsize} ",$var{genome}->{len}{$id}," > $pop_name.$id.GLD_window.stats\n";
 #				print IDSH "cat $pop_name.$id.LD_window_1M.list",'|sed 1,1d | awk -F " " \'function abs(v) {return v < 0 ? -v : v}BEGIN{OFS="\t"}{print abs($3-$2),$5}\''," >$pop_name.$id.LD_window_1M.summary\n";
 			print IDSH "cat $pop_name.$id.GLD_window_1M.list",'|sed 1,1d | awk -F " " \'function abs(v) {return v < 0 ? -v : v}BEGIN{OFS="\t"}{print abs($3-$2),$5}\''," >$pop_name.$id.GLD_window_1M.summary\n";
 			close IDSH;
