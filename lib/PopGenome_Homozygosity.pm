@@ -149,7 +149,7 @@ sub LD{
 	}
 
 	if ( !-d "$var{outpath}/LD" ) {make_path "$var{outpath}/LD" or die "Failed to create path: $var{outpath}/LD";}
-	my $sub_outpath = "$var{outpath}/LD";
+	my $ld_outpath = "$var{outpath}/LD";
 
 	my $ori_gzvcf;
 	if ($var{ploidy} == 1 ){
@@ -174,18 +174,18 @@ EOF
 	open CL, ">$var{shpath}/cmd_LD_s1.list";
 	foreach my $pop_name (keys %pop){
 		next unless ($pop{$pop_name}{count} > 6);
-		open OT, ">$sub_outpath/$pop_name.list";
+		open OT, ">$ld_outpath/$pop_name.list";
 		print OT $pop{$pop_name}{line};
 		close OT;
 
 		#write a script to generate a vcf file for each population
-		open SH, ">$var{shpath}/LD.$pop_name.sh";
-		print SH "cd $sub_outpath\n";
-		print SH "vcftools --gzvcf $var{vcf} --keep $sub_outpath/$pop_name.list --recode --stdout |bgzip -c >$sub_outpath/$pop_name.snp.vcf.gz\n";
-		print SH "vcftools --gzvcf $pop_name.snp.vcf.gz --singletons --stdout >$sub_outpath/$pop_name.out.singletons\n";
-		print SH "vcftools --gzvcf $sub_outpath/$pop_name.snp.vcf.gz --exclude-positions $sub_outpath/$pop_name.out.singletons --recode --stdout |bgzip -c  >$sub_outpath/$pop_name.snp.noSingle.vcf.gz\n";
+		open SH, ">$var{shpath}/LD_s1_$pop_name.sh";
+		print SH "cd $ld_outpath\n";
+		print SH "vcftools --gzvcf $var{vcf} --keep $ld_outpath/$pop_name.list --recode --stdout |bgzip -c >$ld_outpath/$pop_name.snp.vcf.gz\n";
+		print SH "vcftools --gzvcf $pop_name.snp.vcf.gz --singletons --stdout >$ld_outpath/$pop_name.out.singletons\n";
+		print SH "vcftools --gzvcf $ld_outpath/$pop_name.snp.vcf.gz --exclude-positions $ld_outpath/$pop_name.out.singletons --recode --stdout |bgzip -c  >$ld_outpath/$pop_name.snp.noSingle.vcf.gz\n";
 		close SH;
-		print CL "sh $var{shpath}/LD_s1.sh 1>$var{shpath}/LD_s1.sh.o 2>$var{shpath}/LD_s1.sh.e \n";
+		print CL "sh $var{shpath}/LD_s1_$pop_name.sh 1>$var{shpath}/LD_s1_$pop_name.sh.o 2>$var{shpath}/LD_s1_$pop_name.sh.e \n";
 	}
 	close CL;
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_LD_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_LD_s1.list` unless (defined $opts{skipsh});
@@ -197,12 +197,12 @@ EOF
 		my $i=1;
 		open PCL, ">$var{shpath}/LD.$pop_name.cmd.list";
 
-#		open RIN, ">$sub_outpath/$pop_name.R.input";
-		open GRIN, ">$sub_outpath/$pop_name.GLD.R.input";
+#		open RIN, ">$ld_outpath/$pop_name.R.input";
+		open GRIN, ">$ld_outpath/$pop_name.GLD.R.input";
 		foreach my $id(sort { $var{genome}->{len}{$b} <=> $var{genome}->{len}{$a} } keys %{$var{genome}->{len}}){
 			next unless (($var{genome}->{len}{$id}>=$cfg{ld}{scaffold_length_cutoff})&&($i<=$cfg{ld}{scaffold_number_limit}));
 			open IDSH, ">$var{shpath}/$pop_name.$id.LD.sh";
-			print IDSH "cd $sub_outpath\n";
+			print IDSH "cd $ld_outpath\n";
 			print IDSH "vcftools --gzvcf $pop_name.snp.noSingle.vcf.gz --chr $id --recode --stdout |bgzip -c  >$pop_name.$id.snp.noSingle.vcf.gz\n";
 			print IDSH "rm -rf $pop_name.$id.snp.noSingle.beagl*\n";
 			print IDSH "beagle gt=$pop_name.$id.snp.noSingle.vcf.gz out=$pop_name.$id.snp.noSingle.beagle\n";
@@ -226,14 +226,14 @@ EOF
 		close GRIN;
 
 #		my @p;
-#		push @p, $sub_outpath; 
+#		push @p, $ld_outpath; 
 #		push @p, "$pop_name.R.input";
 #		push @p, "$pop_name.LD.png";
 #		my $p = join (' ',@p);
 #		print CLSH "Rscript --vanilla $var{shpath}/LD.R $p\n";
 
 		my @gp;
-		push @gp, $sub_outpath; 
+		push @gp, $ld_outpath; 
 		push @gp, "$pop_name.GLD.R.input";
 		push @gp, "$pop_name.GLD.png";
 		my $gp = join (' ',@gp);
