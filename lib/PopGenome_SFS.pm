@@ -32,7 +32,7 @@ sub Main{
 		$opts{intersection} = 1;
 	}
 
-	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts,"SFS")};
+	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts,"DemographicHistory")};
 
 	if (defined $opts{SFS}){ 
 		& SFS (\%var,\%opts);
@@ -49,7 +49,7 @@ sub SFS{
 	my %pop = %{$var{pop}};
 	
 	my $sfs_outpath = "$var{outpath}/SFS/";if ( !-d "$var{outpath}/SFS" ) {make_path "$var{outpath}/SFS" or die "Failed to create path: $var{outpath}/SFS";}
-	my $slidingwindow_outpath = "$var{outpath}/Slidingwindow/";
+	my $slidingwindow_outpath = "$var{outpath}/../Slidingwindow/";
 
 	if (defined $opts{genome}){
 		$var{genome} = PopGenome_Shared::LOADREF($opts{genome});
