@@ -34,7 +34,7 @@ sub Main{
 		$opts{intersection} = 1;
 	}
 
-	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts,"GeneticRelationship")}
+	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts,"GeneticRelationship")};
 
 	if (defined $opts{admixture}){ &ADMIXTURE (\%var,\%opts);}
 	if (defined $opts{phylogeny}){ &PHYLOGENY (\%var,\%opts);}
@@ -49,11 +49,11 @@ sub ADMIXTURE{
 	my %cfg = %{$var{cfg}};
 	my %samplelist = %{$var{samplelist}};
 
-	my $outpath = "$var{outpath}/Admixture/";
+	my $admixture_outpath = "$var{outpath}/Admixture/";
 	if ( !-d "$var{outpath}/Admixture" ) {make_path "$var{outpath}/Admixture" or die "Failed to create path: $var{outpath}/Admixture";}
 	
 	my $plink_data;
-	if ( !-d $outpath ) {make_path $outpath or die "Failed to create path: $outpath";}
+	if ( !-d $admixture_outpath ) {make_path $admixture_outpath or die "Failed to create path: $admixture_outpath";}
 	if (defined $cfg{variant_filtering}{plink_data}){
 		$plink_data = $cfg{variant_filtering}{plink_data};
 	}else {
@@ -74,7 +74,7 @@ sub ADMIXTURE{
 	# generate the sample list file (for the sample order in the graph)
 	`cp -f $Bin/lib/admixture.R $var{shpath}/admixture.R`;
 	
-	open SL, ">$outpath/sample.list";
+	open SL, ">$admixture_outpath/sample.list";
 	foreach (keys %samplelist){
 		print SL "$_\n";
 	}
@@ -83,12 +83,12 @@ sub ADMIXTURE{
 	# generate the arguments for Rscript
 	#undef @pp if (defined @pp);
 	my @pp = ();
-	push @pp, $outpath; 
-	push @pp, "$outpath/sample.list";
+	push @pp, $admixture_outpath; 
+	push @pp, "$admixture_outpath/sample.list";
 	push @pp, "K";
 	my $p = join (' ',@pp);
 
-	`cat $var{shpath}/*admixture.o|grep \"CV error\" >$outpath/CV.error.txt`;
+	`cat $var{shpath}/*admixture.o|grep \"CV error\" >$admixture_outpath/CV.error.txt`;
 
 	open CL, ">$var{shpath}/cmd_admixture_s2.list";
 	open SH, ">$var{shpath}/admixture_s2.sh";
