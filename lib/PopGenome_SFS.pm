@@ -21,6 +21,7 @@ sub Main{
 		'allsteps',
 		'samplelist=s',
 		'vcf=s',
+		'genome=s',
 		'threads',
 		'SFS',
 		'help',
@@ -31,9 +32,7 @@ sub Main{
 		$opts{intersection} = 1;
 	}
 
-	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts,"SFS")}
-
-	$var{genome}= PopGenome_Shared::LOADREF($cfg{ref}{db}{$cfg{ref}{choose}}{path});
+	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts,"SFS")};
 
 	if (defined $opts{SFS}){ 
 		& SFS (\%var,\%opts);
