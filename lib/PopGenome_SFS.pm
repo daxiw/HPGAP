@@ -92,7 +92,7 @@ sub SFS{
 		for (my $i = 0; $i <10; $i++){
 			print IDSH "fsc26 -t 1PopBot20Mb.tpl -e 1PopBot20Mb.est -n 10000 -d -M -L 40 -q -0 -c 40 -B 40 --foldedSFS\ncp -r 1PopBot20Mb 1PopBot20Mb.b$i\n";
 		}
-		
+
 		print IDSH "cat $sfs_outpath/$pop_name/1PopBot20Mb.b*/1PopBot20Mb.bestlhoods | grep -v NCUR |sort -k1,1n > $sfs_outpath/$pop_name/EstimatedNe.list\n";
 		close IDSH;
 		print CL1 "sh $var{shpath}/SFS.$pop_name.sh 1>$var{shpath}/SFS.$pop_name.sh.o 2>$var{shpath}/SFS.$pop_name.sh.e\n";
@@ -100,7 +100,7 @@ sub SFS{
 	close CL1;
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_SFS_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/SFS_s1.list` unless (defined $opts{skipsh});
 	
-
+=head
 	foreach my $pop_name (keys %pop){
 		open SH, ">$var{shpath}/Simulation.$pop_name.sh";
 		next unless ($pop{$pop_name}{count} > 6);
@@ -197,6 +197,8 @@ sub SFS{
 		close SH;
 		`sh $var{shpath}/Simulation.$pop_name.sh 1>$var{shpath}/Simulation.$pop_name.sh.o 2>$var{shpath}/Simulation.$pop_name.sh.e` unless ($skipsh ==1);
 	}
+
+=cut
 }
 
 1;
