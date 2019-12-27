@@ -61,7 +61,7 @@ sub GATKBasicFiltering {
 	print SH "gatk VariantFiltration \\\n";
 	print SH "	-R $var{reference} \\\n";
 	print SH "	-V $var{outpath}/../JointCalling/JointCalling_raw_snps1st.vcf \\\n";
-	print SH "	--filter-expression \"$cfg{step1}{variant_filtering}{snp}\" \\\n";
+	print SH "	--filter-expression \"$cfg{variant_filtering}{snp}\" \\\n";
 	print SH "	--filter-name \"my_snp_filter\" \\\n";
 	print SH "	-O $var{outpath}/../JointCalling/JointCalling_filtered_snps1st.vcf && echo \"** GVCF JointCalling/JointCalling_raw_snps1st done\" \n";
 
@@ -74,7 +74,7 @@ sub GATKBasicFiltering {
 	print SH "gatk VariantFiltration \\\n";
 	print SH "	-R $var{reference} \\\n";
 	print SH "	-V $var{outpath}/../JointCalling/JointCalling_raw_indels1st.vcf \\\n";
-	print SH "	--filter-expression \"$cfg{step1}{variant_filtering}{indel}\" \\\n";
+	print SH "	--filter-expression \"$cfg{variant_filtering}{indel}\" \\\n";
 	print SH "	--filter-name \"my_indel_filter\" \\\n";
 	print SH "	-O $var{outpath}/../JointCalling/JointCalling_filtered_indels1st.vcf && echo \"** JointCalling/JointCalling_raw_snps1st done\" \n";
 	
@@ -149,8 +149,8 @@ sub AdvancedFiltering {
 	
 	my $chrcmd="";
 	###select SNPs by chromosomes if needed
-	if (defined $cfg{step1}{variant_filtering}{chr}){
-		my @a = split /,/, $cfg{step1}{variant_filtering}{chr};
+	if (defined $cfg{variant_filtering}{chr}){
+		my @a = split /,/, $cfg{variant_filtering}{chr};
 		foreach (@a){
 			$chrcmd .= " --chr $_";
 		}
@@ -228,11 +228,11 @@ sub AdvancedFiltering {
 	$report{snv1}{singletons} = `wc -l $var{outpath}/singletons.list | cut -d" " -f1`;
 	$report{snv1}{singletons} = $report{snv1}{singletons} - 1;
 
-	if ($cfg{step1}{variant_filtering}{high_confidence_vcf} =~ /.gz$/) {
-		open(IN, "gunzip -c $cfg{step1}{variant_filtering}{high_confidence_vcf} |") || die "can’t open pipe to $cfg{step1}{high_confidence_vcf}{vcf}";
+	if ($cfg{variant_filtering}{high_confidence_vcf} =~ /.gz$/) {
+		open(IN, "gunzip -c $cfg{variant_filtering}{high_confidence_vcf} |") || die "can’t open pipe to $cfg{high_confidence_vcf}{vcf}";
 	}
 	else {
-		open(IN, $cfg{step1}{variant_filtering}{high_confidence_vcf}) || die "can’t open $cfg{step1}{variant_filtering}{high_confidence_vcf}";
+		open(IN, $cfg{variant_filtering}{high_confidence_vcf}) || die "can’t open $cfg{variant_filtering}{high_confidence_vcf}";
 	}
 	$report{snv2}{number}=0;
 	while (<IN>){
@@ -242,10 +242,10 @@ sub AdvancedFiltering {
 	close IN;
 
 	if ($cfg{variant_filtering}{lowld_high_confidence_vcf} =~ /.gz$/) {
-		open(IN, "gunzip -c $cfg{step1}{variant_filtering}{lowld_high_confidence_vcf} |") || die "can’t open pipe to $cfg{step1}{variant_filtering}{lowld_high_confidence_vcf}";
+		open(IN, "gunzip -c $cfg{variant_filtering}{lowld_high_confidence_vcf} |") || die "can’t open pipe to $cfg{variant_filtering}{lowld_high_confidence_vcf}";
 	}
 	else {
-		open(IN, $cfg{variant_filtering}{lowld_high_confidence_vcf}) || die "can’t open $cfg{step1}{variant_filtering}{lowld_high_confidence_vcf}";
+		open(IN, $cfg{variant_filtering}{lowld_high_confidence_vcf}) || die "can’t open $cfg{variant_filtering}{lowld_high_confidence_vcf}";
 	}
 
 	$report{snv3}{number}=0;
