@@ -35,51 +35,17 @@ sub Main{
 		$opts{joint_calling} = 1;
 	}
 
-	my $yaml = YAML::Tiny->read( $opts{config} );
-	my %cfg = %{$yaml->[0]};
-	my %samplelist = %{$cfg{fqdata}};
-	
-	$var{samplelist}=\%samplelist;
-	$var{cfg}=\%cfg;
+	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts,"VariantCalling")};
 
-	#set ploidy
-	if (defined $cfg{args}{ploidy}){
-		$var{ploidy} = $cfg{args}{ploidy};
-	}else{
-		$var{ploidy} = 2;
-	}
-
-	#set the number of threads
-	if (defined $opts{threads}){
-		$var{threads} = $opts{threads};
-	}elsif(defined $cfg{args}{threads}){
-		$var{threads} = $cfg{args}{threads};
-	}else{
-		$var{threads} = 4;
-	}
-
-	#set running mode
 	if (defined $opts{recalibration_mode}){
 		$var{variant_calling_mode} = "slow";
 	} else {
 		$var{variant_calling_mode} = "fast";
 	}
 
-	die "please add reference genome path into configuration file" unless (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path});
-	$var{reference} = $cfg{ref}{db}{$cfg{ref}{choose}}{path};
-	die "$var{reference} does not exists" unless (-e $var{reference});
-
-	$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$cfg{ref}{choose}"; 
-	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
-	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$cfg{ref}{choose}";
-	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
-
 	if (defined $opts{freebayes_calling}){ &FreebayesCalling (\%var,\%opts);}
-
 	if (defined $opts{individual_variant_calling}){ &IndividualVariantCalling (\%var,\%opts);}
-
 	if (defined $opts{joint_calling}){ &JointCalling (\%var,\%opts);}
-
 	if (defined $opts{joint_bqsr}){ &JointBQSR (\%var,\%opts);}
 	#### estimate phylogeny of mt genomes ###
 
