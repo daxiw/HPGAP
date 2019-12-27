@@ -137,9 +137,7 @@ sub SLIDINGWINDOW{
 
 				my @p;
 				push @p, $var{outpath}; 
-				push @p, "$id.$pop_name.Pi.list";
-				push @p, "$id.$pop_name.SNPdensity.list";
-				push @p, "$id.$pop_name.TajimaD.list";
+				push @p, "$id.$pop_name.stat.result";
 				push @p, "$id.$pop_name.diversity.png";
 				push @p, "$id.$pop_name.TajimaD.png";
 				push @p, $pop{$pop_name}{count};
@@ -148,9 +146,6 @@ sub SLIDINGWINDOW{
 				my $p = join (' ',@p);
 				
 				open IDSH, ">$var{shpath}/$id.$pop_name.Slidingwindow.sh";
-				print IDSH "grep -w \"$id\" $var{outpath}/$pop_name.Pi.list >$var{outpath}/$id.$pop_name.Pi.list\n";
-				print IDSH "grep -w \"$id\" $var{outpath}/$pop_name.SNPdensity.list >$var{outpath}/$id.$pop_name.SNPdensity.list\n";
-				print IDSH "grep -w \"$id\" $var{outpath}/$pop_name.TajimaD.list >$var{outpath}/$id.$pop_name.TajimaD.list\n";
 				print IDSH "Rscript --vanilla $var{shpath}/Diversity.R $p\n";
 				close IDSH;
 				print CL5 "sh $var{shpath}/$id.$pop_name.Slidingwindow.sh 1>$var{shpath}/$id.$pop_name.Slidingwindow.sh.o 2>$var{shpath}/$id.$pop_name.Slidingwindow.sh.e\n";
