@@ -133,7 +133,15 @@ sub CombineCfg{
 	}
 
 	die "fill in folder" unless (defined $folder);
-	if ($folder ne "NULL"){
+	if  ($folder eq "Filtered_variants"){
+		$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$cfg{ref}{choose}/$folder/";
+		if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
+
+		$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$cfg{ref}{choose}/$folder/";
+		if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
+
+	}elsif ($folder ne "NULL"){
+
 		$var{outpath} = "$cfg{args}{outdir}/$folder/";
 		print '$var{outpath}',"\t",$var{outpath},"\n"; #test_flag
 		if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 

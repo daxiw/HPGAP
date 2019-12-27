@@ -23,6 +23,7 @@ sub Main{
 		'gatk_filtering',
 		'freebayes_filtering',
 		'intersection',
+		'vcf=s',
 		'advanced_filtering',
 		'help',
 		'skipsh');
@@ -34,17 +35,7 @@ sub Main{
 		$opts{intersection} = 1;
 	}
 
-	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\$opts,"JointCalling")}
-
-	$var{outpath} = "$cfg{args}{outdir}/01.QualityControl/read_mapping.$cfg{ref}{choose}/Filtered_variants";
-	if ( !-d $var{outpath} ) {make_path $var{outpath} or die "Failed to create path: $var{outpath}";} 
-
-	$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/01.QualityControl/read_mapping.$cfg{ref}{choose}/Filtered_variants";
-	if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
-
-	die "please add genome path into configuration file" unless (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path});
-	$var{reference} = $cfg{ref}{db}{$cfg{ref}{choose}}{path};
-	die "$var{reference} does not exists" unless (-e $var{reference});
+	%var = %{PopGenome_Shared::CombineCfg("$Bin/lib/parameter.yml",\%opts,"Filtered_variants")};
 
 	if (defined $opts{variant_filtering}){ &VariantFiltering (\%var,\%opts);}
 	if (defined $opts{freebayes_filtering}){ &FreebayesBasicFiltering (\%var,\%opts);}
