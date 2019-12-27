@@ -29,7 +29,6 @@ def dadi_preview_projections(dd, pops, ploidy, fold):
     for multiple values of projecting down for each population. The dadi
     manual recommends maximizing the # of seg sites for projections, but also
     a balance must be struck between # of seg sites and sample size.
-
     For each population you should choose the value of the projection that looks
     best and then rerun easySFS with the `--proj` flag.
     """
@@ -73,7 +72,7 @@ def dadi_oneD_sfs_per_pop(dd, pops, proj, unfold, outdir, prefix, dtype):
         fsc_oneD_filename = os.path.join(fsc_dir, pop+"_{}AFpop0.obs".format(M_or_D))
         with open(fsc_oneD_filename, 'w') as outfile:
             outfile.write("1 observation\n")
-            outfile.write("\t".join(["d0_"+str(x) for x in xrange(proj[i]+1)]) + "\n")
+            outfile.write("\t".join(["d0_"+str(x) for x in range(proj[i]+1)]) + "\n")
             ## Grab the fs data from the dadi sfs
             with open(dadi_sfs_file) as infile:
                 outfile.write(infile.readlines()[1])
@@ -113,24 +112,24 @@ def dadi_twoD_sfs_combinations(dd, pops, proj, unfold, outdir, prefix, dtype, ve
         ## NB: FSC joint format file names look like this: <prefix>_jointMAFpop1_0.obs
         ## Where the first pop specified is listed in the rows and the second pop
         ## specified is listed in the columns.
-        fsc_twoD_filename = os.path.join(fsc_dir, prefix+"_joint{}AFpop{}_{}.obs".format(M_or_D, popidx[pair[0]], popidx[pair[1]]))
+        fsc_twoD_filename = os.path.join(fsc_dir, prefix+"_joint{}AFpop{}_{}.obs".format(M_or_D, popidx[pair[1]], popidx[pair[0]]))
         with open(fsc_twoD_filename, 'w') as outfile:
             outfile.write("1 observation\n")
             ## Format column headers (i.e. d0_0 d0_1 d0_2 .. d0_n for deme 0 up to sample size of n)
-            outfile.write("\t" + "\t".join(["d{}_".format(popidx[pair[0]]) + str(x) for x in xrange(projPairs[i][1]+1)]) + "\n") 
+            outfile.write("\t" + "\t".join(["d{}_".format(popidx[pair[0]]) + str(x) for x in range(projPairs[i][0]+1)]) + "\n") 
 
             ## Format row headers
-            row_headers = ["d{}_".format(popidx[pair[1]]) + str(x) for x in xrange(projPairs[i][0]+1)]
+            row_headers = ["d{}_".format(popidx[pair[1]]) + str(x) for x in range(projPairs[i][1]+1)]
             ## Read in the joint fs from dadi and format it nice for fsc
             with open(dadi_joint_filename) as infile:
                 ## Get the second line of the dadi-style sfs which contains the data
                 row_data = infile.readlines()[1].split()
                 ## The length of each row is determined by the number of columns which == the size of the projection for pop2
-                ## Have to add 1 to the value of the projection because xrange stops after 'n' elements
+                ## Have to add 1 to the value of the projection because range stops after 'n' elements
                 ## but we want all n+1 elements from 0,1,2,..,n
-                row_size = projPairs[i][1] + 1
+                row_size = projPairs[i][0] + 1
                 ## Slice the row data into evenly sized chunks based on the number of columns
-                rows = [row_data[i:i + row_size] for i in xrange(0, len(row_data), row_size)]
+                rows = [row_data[i:i + row_size] for i in range(0, len(row_data), row_size)]
                 ## Sanity check. Make sure the number of rows you got is the same number you're expecting
                 ## to get (# rows should == size of pop0 projection)
                 if not len(row_headers) == len(rows):
@@ -361,7 +360,6 @@ def read_input(vcf_name, all_snps=False, verbose=False):
     VCF file uses non-standard Chrom/pos information.
     We assume that Chrom indicates RAD loci and pos indicates snps within each locus 
     The VCF file passed does not have rad locus info in the Chrom field.
-
     You can re-run the easySFS conversion with the `-a` flag to use all snps in the conversion."""
             sys.exit(msg)
 
@@ -480,7 +478,6 @@ def get_populations(pops_file, verbose=False):
     individual name and one population name per line, separated by any amount of
     white space. There should be no header line in this file. 
     An example looks like this:
-
         ind1    pop1
         ind2    pop1
         ind3    pop2
@@ -644,4 +641,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
