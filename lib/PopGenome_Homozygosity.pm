@@ -124,7 +124,7 @@ sub ROH{
 
 		print SH "vcftools --vcf $var{outpath}/ROH/$pop_name.pre.vcf --keep $var{outpath}/ROH/$pop_name.list --plink --out $pop_name.plink \n";
 		print SH "plink --file $pop_name.plink --make-bed --chr-set $scaffold_number_limit no-xy no-mt no-y --out $pop_name.plink\n";
-		print SH "plink --bfile $var{outpath}/ROH/$pop_name.plink --chr-set $scaffold_number_limit no-xy no-mt no-y --homozyg --homozyg-window-het 2 --homozyg-kb $window_size --homozyg-gap 50 --homozyg-window-snp 100 --homozyg-window-missing 5 --out $pop_name\n";
+		print SH "plink --bfile $var{outpath}/ROH/$pop_name.plink --chr-set $scaffold_number_limit no-xy no-mt no-y --homozyg --homozyg-window-het 2 --homozyg-kb $window_size --homozyg-gap 500 --homozyg-window-snp 100 --homozyg-window-missing 5 --out $pop_name\n";
 		close SH;
 
 		print CL "sh $var{shpath}/ROH.$pop_name.sh 1>$var{shpath}/ROH.$pop_name.sh.o 2>$var{shpath}/ROH.$pop_name.sh.e \n";
