@@ -152,6 +152,7 @@ sub LD{
 	my $ld_outpath = "$var{outpath}/LD";
 
 	$var{vcf} = $cfg{variant_filtering}{high_confidence_vcf};
+	print "1: $var{vcf}\n";
 	my $ori_gzvcf;
 	if ($var{ploidy} == 1 ){
 		$ori_gzvcf = $var{vcf};
@@ -172,6 +173,7 @@ EOF
 		`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_LD_s0_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=1 -binding linear:1' -m 100 -r $var{shpath}/cmd_LD_s0.list` unless (defined $opts{skipsh});
 	}
 	
+	print "2: $var{vcf}\n";
 	open CL, ">$var{shpath}/cmd_LD_s1.list";
 	foreach my $pop_name (keys %pop){
 		next unless ($pop{$pop_name}{count} > 6);
