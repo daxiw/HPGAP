@@ -73,12 +73,17 @@ sub SFS{
 	foreach my $pop_name (keys %pop){
 		next unless ($pop{$pop_name}{count} > 6);
 		if ( !-d "$sfs_outpath/$pop_name" ) {make_path "$sfs_outpath/$pop_name" or die "Failed to create path: $sfs_outpath/$pop_name";}
+		open OT, ">$sfs_outpath/$pop_name.raw.list";
+		print OT $pop{$pop_name}{line};
+		close OT;
 
+		open IN, "$sfs_outpath/$pop_name.raw.list";
 		open OT, ">$sfs_outpath/$pop_name.list";
 		while (<IN>){
 			chomp;
 			print OT "$_\t$pop_name\n";
 		}
+		close IN;
 		close OT;
 		
 		my $pop_size = $var{ploidy} * $pop{$pop_name}{count};
