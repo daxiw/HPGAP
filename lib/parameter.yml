@@ -17,7 +17,7 @@ variant_filtering:
   gatksnp: 'QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0' # The settings for snv filtering. To modify that, please check the manual of GATK4
   gatkindel: 'QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0' # The settings for indel filtering. To modify that, please check the manual of GATK4
 ROH:
-  windowsize: '100'
+  windowsize: '500'
   scaffold_number_limit: '95'
   scaffold_length_cutoff: '1000000'
 ld:
