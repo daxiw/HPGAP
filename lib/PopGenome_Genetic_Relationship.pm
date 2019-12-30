@@ -66,9 +66,11 @@ sub ADMIXTURE{
 	print SH "cp -fr $plink_data* ./\n";
 	
 	for (my $k=0; $k<9;$k++){
-		print CL "admixture --cv $plink_data.bed $k 1>$var{shpath}/$k.admixture.o 2>$var{shpath}/$k.admixture.e\n";
+		print CL "cd $var{outpath}/Admixture/ && admixture --cv $plink_data.bed $k 1>$var{shpath}/$k.admixture.o 2>$var{shpath}/$k.admixture.e\n";
 	}
 	close CL;
+
+	`cp -fr /$plink_data* $var{outpath}/Admixture/`;
 	`perl $Bin/lib/qsub.pl -d $var{shpath}/admixture_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_admixture_s1.list` unless (defined $opts{skipsh});
 
 	# generate the sample list file (for the sample order in the graph)

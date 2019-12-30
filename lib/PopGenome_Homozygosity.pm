@@ -151,6 +151,7 @@ sub LD{
 	if ( !-d "$var{outpath}/LD" ) {make_path "$var{outpath}/LD" or die "Failed to create path: $var{outpath}/LD";}
 	my $ld_outpath = "$var{outpath}/LD";
 
+	$var{vcf} = $cfg{variant_filtering}{high_confidence_vcf};
 	my $ori_gzvcf;
 	if ($var{ploidy} == 1 ){
 		$ori_gzvcf = $var{vcf};
