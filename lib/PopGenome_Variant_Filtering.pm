@@ -23,7 +23,7 @@ sub Main{
 		'gatk_filtering',
 		'freebayes_filtering',
 		'intersection',
-		'exclude_samples',
+		'exclude_samples=s',
 		'vcf=s',
 		'advanced_filtering',
 		'help',
