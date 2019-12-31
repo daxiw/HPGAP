@@ -23,6 +23,7 @@ sub Main{
 		'gatk_filtering',
 		'freebayes_filtering',
 		'intersection',
+		'exclude_samples',
 		'vcf=s',
 		'advanced_filtering',
 		'help',
@@ -99,9 +100,15 @@ sub FreebayesBasicFiltering {
 
 	open SH, ">$var{shpath}/freebayes_basic_filtering.sh";
 	print SH "#!/bin/sh\ncd $var{outpath}/\n";
-	print SH "vcftools --gzvcf $var{outpath}/../FreebayesCalling/freebayes_joint_calling.vcf.gz --missing-indv\n";
+
+	my $basic_vcf = "$var{outpath}/freebayes_joint_calling.vcf.gz";
+	if (defined $opts{exclude_samples}){
+		print SH "vcftools --gzvcf $var{outpath}/../FreebayesCalling/freebayes_joint_calling.vcf.gz --remove-filtered-all --remove $opts{exclude_samples} --recode --recode-INFO-all --stdout | vcfsnps | bgzip -c > $var{outpath}/freebayes_basic_snp_s1.vcf.gz";
+		$basic_vcf = "$var{outpath}/freebayes_basic_snp_s1.vcf.gz";
+	}
+	print SH "vcftools --gzvcf $basic_vcf --missing-indv\n";
 	print SH "awk \'\$5 > 0.2\' out.imiss | cut -f1 > lowDP.indv\n";
-	print SH "vcftools --gzvcf $var{outpath}/../FreebayesCalling/freebayes_joint_calling.vcf.gz --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout | vcfsnps | bgzip -c > $var{outpath}/freebayes_basic_snp.vcf.gz";
+	print SH "vcftools --gzvcf $basic_vcf --max-missing 0.8 --max-alleles 2 --minQ 30 --remove-filtered-all --remove lowDP.indv --recode --recode-INFO-all --stdout | vcfsnps | bgzip -c > $var{outpath}/freebayes_basic_snp.vcf.gz";
 	close SH;
 
 	open CL, ">$var{shpath}/cmd_freebayes_basic_filtering.list";
