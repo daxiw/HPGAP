@@ -214,6 +214,9 @@ EOF
 			print IDSH "perl $Bin/lib/window_LD.pl $pop_name.$id.GLD_window_1M.list $cfg{slidingwindow}{windowsize} ",$var{genome}->{len}{$id}," > $pop_name.$id.GLD_window.stats\n";
 #				print IDSH "cat $pop_name.$id.LD_window_1M.list",'|sed 1,1d | awk -F " " \'function abs(v) {return v < 0 ? -v : v}BEGIN{OFS="\t"}{print abs($3-$2),$5}\''," >$pop_name.$id.LD_window_1M.summary\n";
 			print IDSH "cat $pop_name.$id.GLD_window_1M.list",'|sed 1,1d | awk -F " " \'function abs(v) {return v < 0 ? -v : v}BEGIN{OFS="\t"}{print abs($3-$2),$5}\''," >$pop_name.$id.GLD_window_1M.summary\n";
+			print IDSH "echo $pop_name.$id.GLD_window_1M.summary >$pop_name.$id.GLD_window_1M.summary.list\n";
+			print IDSH "Rscript --vanilla $var{shpath}/LD.R $ld_outpath $pop_name.$id.GLD_window_1M.summary.list $pop_name.$id.GLD_window_1M.png\n";
+
 			close IDSH;
 
 			print PCL "sh $var{shpath}/$pop_name.$id.LD.sh 1>$var{shpath}/$pop_name.$id.LD.sh.o 2>$var{shpath}/$pop_name.$id.LD.sh.e\n";
