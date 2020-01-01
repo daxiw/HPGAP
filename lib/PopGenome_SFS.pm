@@ -90,7 +90,7 @@ sub SFS{
 		open IDSH, ">$var{shpath}/SFS.$pop_name.sh";
 		print IDSH "cd $sfs_outpath/$pop_name\n";
 		### project SFS from the file
-		print IDSH "cp -rf $slidingwindow_outpath/$pop_name.SNP.vcf.gz $sfs_outpath/$pop_name/ && gunzip $sfs_outpath/$pop_name/$pop_name.SNP.vcf.gz\n";
+		print IDSH "cp -rf $slidingwindow_outpath/$pop_name.SNP.vcf.gz $sfs_outpath/$pop_name/ && gunzip -f $sfs_outpath/$pop_name/$pop_name.SNP.vcf.gz\n";
 		print IDSH "python $Bin/Tools/easySFS.py -i $slidingwindow_outpath/$pop_name.SNP.vcf -p $sfs_outpath/$pop_name.list --ploidy $cfg{args}{ploidy} --proj $pop_size -f -a && rm -rf $sfs_outpath/$pop_name/total_sfs && mv $sfs_outpath/$pop_name/output $sfs_outpath/$pop_name/total_sfs \n";
 		if (defined $opts{nonsyn}){
 			print IDSH "cp -rf $slidingwindow_outpath/$pop_name.snpEff.nonsyn.vcf.gz $sfs_outpath/$pop_name/ && gunzip $sfs_outpath/$pop_name/$pop_name.snpEff.nonsyn.vcf.gz\n";
