@@ -90,19 +90,23 @@ sub SFS{
 		open IDSH, ">$var{shpath}/SFS.$pop_name.sh";
 		print IDSH "cd $sfs_outpath/$pop_name\n";
 		### project SFS from the file
+		print IDSH "cp -rf $slidingwindow_outpath/$pop_name.SNP.vcf.gz $sfs_outpath/$pop_name/ && gunzip $sfs_outpath/$pop_name/$pop_name.SNP.vcf.gz\n";
 		print IDSH "python $Bin/Tools/easySFS.py -i $slidingwindow_outpath/$pop_name.SNP.vcf.gz -p $sfs_outpath/$pop_name.list --ploidy $cfg{args}{ploidy} --proj $pop_size -f -a && rm -rf $sfs_outpath/$pop_name/total_sfs && mv $sfs_outpath/$pop_name/output $sfs_outpath/$pop_name/total_sfs \n";
 		if (defined $opts{nonsyn}){
+			print IDSH "cp -rf $slidingwindow_outpath/$pop_name.snpEff.nonsyn.vcf.gz $sfs_outpath/$pop_name/ && gunzip $sfs_outpath/$pop_name/$pop_name.snpEff.nonsyn.vcf.gz\n";
 			print IDSH "python $Bin/Tools/easySFS.py -i $slidingwindow_outpath/$pop_name.snpEff.nonsyn.vcf.gz -p $sfs_outpath/$pop_name.list --ploidy $cfg{args}{ploidy} --proj $pop_size -f -a && rm -rf $sfs_outpath/$pop_name/nonsyn_sfs && mv $sfs_outpath/$pop_name/output $sfs_outpath/$pop_name/nonsyn_sfs \n";
+
+			print IDSH "cp -rf $slidingwindow_outpath/$pop_name.snpEff.syn.vcf.gz $sfs_outpath/$pop_name/ && gunzip $sfs_outpath/$pop_name/$pop_name.snpEff.syn.vcf.gz\n";
 			print IDSH "python $Bin/Tools/easySFS.py -i $slidingwindow_outpath/$pop_name.snpEff.syn.vcf.gz -p $sfs_outpath/$pop_name.list --ploidy $cfg{args}{ploidy} --proj $pop_size -f -a && rm -rf $sfs_outpath/$pop_name/syn_sfs  && mv $sfs_outpath/$pop_name/output $sfs_outpath/$pop_name/syn_sfs \n";
 		}
-		print IDSH "cp -f $Bin/lib/1PopBot20Mb.est $sfs_outpath/$pop_name/ && cp -f $Bin/lib/1PopBot20Mb.tpl $sfs_outpath/$pop_name/ && cp -f $sfs_outpath/$pop_name/total_sfs/fastsimcoal2/pop1_MAFpop0.obs $sfs_outpath/$pop_name/1PopBot20Mb_MAFpop0.obs\n";
-		print IDSH "sed -i `s/18/$pop_size/g` $sfs_outpath/$pop_name/1PopBot20Mb_MAFpop0.obs\n";
+		print IDSH "cp -f $Bin/lib/1PopBot20Mb.est $sfs_outpath/$pop_name/$pop_name.est && cp -f $Bin/lib/1PopBot20Mb.tpl $sfs_outpath/$pop_name/$pop_name.tpl && cp -f $sfs_outpath/$pop_name/total_sfs/fastsimcoal2/pop1_MAFpop0.obs $sfs_outpath/$pop_name/$pop_name\_MAFpop0.obs\n";
+		print IDSH "sed -i `s/18/$pop_size/g` $sfs_outpath/$pop_name/$pop_name.tpl\n";
 		
 		for (my $i = 0; $i <10; $i++){
-			print IDSH "fsc26 -t 1PopBot20Mb.tpl -e 1PopBot20Mb.est -n 10000 -d -M -L 40 -q -0 -c 40 -B 40 --foldedSFS\ncp -r 1PopBot20Mb 1PopBot20Mb.b$i\n";
+			print IDSH "fsc26 -t $pop_name.tpl -e $pop_name.est -n 10000 -d -M -L 40 -q -0 -c 40 -B 40 --foldedSFS\ncp -r $pop_name $pop_name.b$i\n";
 		}
 
-		print IDSH "cat $sfs_outpath/$pop_name/1PopBot20Mb.b*/1PopBot20Mb.bestlhoods | grep -v NCUR |sort -k1,1n > $sfs_outpath/$pop_name/EstimatedNe.list\n";
+		print IDSH "cat $sfs_outpath/$pop_name/$pop_name.b*/$pop_name.bestlhoods | grep -v NCUR |sort -k1,1n > $sfs_outpath/$pop_name/EstimatedNe.list\n";
 		close IDSH;
 		print CL1 "sh $var{shpath}/SFS.$pop_name.sh 1>$var{shpath}/SFS.$pop_name.sh.o 2>$var{shpath}/SFS.$pop_name.sh.e\n";
 	}

@@ -12,7 +12,7 @@ variant_filtering:
   ldcutoff: '0.3' # cut off for filtering SNVs with high LD
   ldwindowsize: '10' # window size for for filtering SNVs with high LD
   ldwindowstep: '5' # window step for filtering SNVs with high LD
-  scaffold_length_cutoff: '0' # only analyse the scaffolds with length larger than the cutoff
+  scaffold_length_cutoff: '10000' # only analyse the scaffolds with length larger than the cutoff
   scaffold_number_limit: '95' # the maximum number of scaffolds
   gatksnp: 'QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0' # The settings for snv filtering. To modify that, please check the manual of GATK4
   gatkindel: 'QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0' # The settings for indel filtering. To modify that, please check the manual of GATK4
@@ -25,14 +25,14 @@ ld:
   scaffold_length_cutoff: '100000'
 slidingwindow:
   gff: 'undefined' # the gff file for the species
-  scaffold_length_cutoff: '5000' # only analyse the scaffolds with length larger than the cutoff
+  scaffold_length_cutoff: '10000' # only analyse the scaffolds with length larger than the cutoff
   scaffold_number_limit: '10000' # the maximum number of scaffolds
   snpeff_species: 'undefined' # the species name in the snpeff database 
   windowsize: '5000' # window size for scanning the whole genome in a sliding window manner
 sfs:
   windowsize: '5000' # window size for scanning the whole genome in a sliding window manner
   scaffold_number_limit: '10000' # the maximum number of scaffolds
-  scaffold_length_cutoff: '5000' # only analyse the scaffolds with length larger than the cutoff
+  scaffold_length_cutoff: '10000' # only analyse the scaffolds with length larger than the cutoff
 discoal: 
   hard_simulation_times: '100' # the number of simulation for generating simulated hard sweep data
   neut_simulation_times: '100' # the number of simulation for generating simulated neutral data
