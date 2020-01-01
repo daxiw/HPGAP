@@ -103,6 +103,7 @@ sub SFS{
 		print IDSH "sed -i `s/18/$pop_size/g` $sfs_outpath/$pop_name/$pop_name.tpl\n";
 		
 		for (my $i = 0; $i <10; $i++){
+			print IDSH "rm -rf $pop_name.b$i\n";
 			print IDSH "fsc26 -t $pop_name.tpl -e $pop_name.est -n 10000 -d -M -L 40 -q -0 -c 40 -B 40 --foldedSFS\ncp -r $pop_name $pop_name.b$i\n";
 		}
 
