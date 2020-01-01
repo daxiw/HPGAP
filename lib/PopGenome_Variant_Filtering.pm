@@ -79,7 +79,13 @@ sub GATKBasicFiltering {
 	print SH "	--filter-name \"my_indel_filter\" \\\n";
 	print SH "	-O $var{outpath}/../JointCalling/JointCalling_filtered_indels1st.vcf && echo \"** JointCalling/JointCalling_raw_snps1st done\" \n";
 	
-	print SH "vcftools --vcf $var{outpath}/../JointCalling/JointCalling_filtered_snps1st.vcf --max-alleles 2 --remove-filtered-all --recode --recode-INFO-all --stdout \| vcfsnps\|bgzip -c > $var{outpath}/gatk_basic_snp.vcf.gz \n";
+	;
+	if (defined $opts{exclude_samples}){
+		`cp -f $opts{exclude_samples} $var{outpath}`;
+		print SH "vcftools --vcf $var{outpath}/../FreebayesCalling/JointCalling_filtered_snps1st.vcf --remove $opts{exclude_samples} --max-alleles 2 --minQ 30 --remove-filtered-all --recode --recode-INFO-all --stdout | vcfsnps | bgzip -c > $var{outpath}/freebayes_basic_snp_s1.vcf.gz\n";
+	}else{
+		print SH "vcftools --vcf $var{outpath}/../JointCalling/JointCalling_filtered_snps1st.vcf --max-alleles 2 --minQ 30 --remove-filtered-all --recode --recode-INFO-all --stdout \| vcfsnps\|bgzip -c > $var{outpath}/gatk_basic_snp.vcf.gz \n"
+	}
 
 	close SH;
 
@@ -103,6 +109,7 @@ sub FreebayesBasicFiltering {
 
 	my $basic_vcf = "$var{outpath}/freebayes_joint_calling.vcf.gz";
 	if (defined $opts{exclude_samples}){
+		`cp -f $opts{exclude_samples} $var{outpath}`;
 		print SH "vcftools --gzvcf $var{outpath}/../FreebayesCalling/freebayes_joint_calling.vcf.gz --remove-filtered-all --remove $opts{exclude_samples} --recode --recode-INFO-all --stdout | vcfsnps | bgzip -c > $var{outpath}/freebayes_basic_snp_s1.vcf.gz\n";
 		$basic_vcf = "$var{outpath}/freebayes_basic_snp_s1.vcf.gz";
 	}

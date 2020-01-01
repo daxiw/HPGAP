@@ -23,6 +23,7 @@ sub Main{
 		'vcf=s',
 		'nonsyn',
 		'genome=s',
+		'samplelist=s',
 		'slidingwindow',
 		'help',
 		'skipsh');
