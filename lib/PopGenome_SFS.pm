@@ -90,11 +90,11 @@ sub SFS{
 		open IDSH, ">$var{shpath}/SFS.$pop_name.sh";
 		print IDSH "cd $sfs_outpath/$pop_name\n";
 		
-		print IDSH "vcftools --gzvcf $var{vcf} --keep $var{outpath}/$pop_name.raw.list --recode --stdout >$var{outpath}/$pop_name/$pop_name.SNP.vcf\n";
+		print IDSH "vcftools --gzvcf $var{vcf} --keep $sfs_outpath/$pop_name.raw.list --recode --stdout >$sfs_outpath/$pop_name/$pop_name.SNP.vcf\n";
 		# calculate syn and nonsyn diversity values in each sliding window
 		if (defined $opts{nonsyn}){
-			print IDSH "vcftools --gzvcf $var{outpath}/snpEff.nonsyn.vcf.gz --keep $var{outpath}/$pop_name.raw.list --recode --stdout >$var{outpath}/$pop_name/$pop_name.snpEff.nonsyn.vcf\n";
-			print IDSH "vcftools --gzvcf $var{outpath}/snpEff.syn.vcf.gz --keep $var{outpath}/$pop_name.raw.list --recode --stdout >$var{outpath}/$pop_name/$pop_name.snpEff.syn.vcf\n";
+			print IDSH "vcftools --gzvcf $var{outpath}/snpEff.nonsyn.vcf.gz --keep $sfs_outpath/$pop_name.raw.list --recode --stdout >$sfs_outpath/$pop_name/$pop_name.snpEff.nonsyn.vcf\n";
+			print IDSH "vcftools --gzvcf $var{outpath}/snpEff.syn.vcf.gz --keep $sfs_outpath/$pop_name.raw.list --recode --stdout >$sfs_outpath/$pop_name/$pop_name.snpEff.syn.vcf\n";
 		}
 
 		### project SFS from the file
