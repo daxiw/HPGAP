@@ -22,7 +22,7 @@ ROH:
   scaffold_length_cutoff: '1000000'
 ld:
   scaffold_number_limit: '5000'
-  scaffold_length_cutoff: '100000'
+  scaffold_length_cutoff: '1000000'
 slidingwindow:
   gff: 'undefined' # the gff file for the species
   scaffold_length_cutoff: '10000' # only analyse the scaffolds with length larger than the cutoff
