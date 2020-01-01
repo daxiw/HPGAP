@@ -116,7 +116,7 @@ sub CombineCfg{
 	if (defined $cfg{population}){
 		my %pop;
 		foreach my $sample (keys %{$cfg{population}}){
-			next unless (defined $var{samplelist});
+			next unless (defined $samplelist{$id});
 			unless (defined $pop{$cfg{population}{$sample}{'presumed_population'}}{line}){
 				$pop{$cfg{population}{$sample}{'presumed_population'}}{count} = 0;
 				$pop{$cfg{population}{$sample}{'presumed_population'}}{line} = "";
