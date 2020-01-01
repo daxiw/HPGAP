@@ -99,7 +99,7 @@ sub SFS{
 			print IDSH "cp -rf $slidingwindow_outpath/$pop_name.snpEff.syn.vcf.gz $sfs_outpath/$pop_name/ && gunzip $sfs_outpath/$pop_name/$pop_name.snpEff.syn.vcf.gz\n";
 			print IDSH "python $Bin/Tools/easySFS.py -i $sfs_outpath/$pop_name/$pop_name.snpEff.syn.vcf -p $sfs_outpath/$pop_name.list --ploidy $cfg{args}{ploidy} --proj $pop_size -f -a && rm -rf $sfs_outpath/$pop_name/syn_sfs  && mv $sfs_outpath/$pop_name/output $sfs_outpath/$pop_name/syn_sfs \n";
 		}
-		print IDSH "cp -f $Bin/lib/1PopBot20Mb.est $sfs_outpath/$pop_name/$pop_name.est && cp -f $Bin/lib/1PopBot20Mb.tpl $sfs_outpath/$pop_name/$pop_name.tpl && cp -f $sfs_outpath/$pop_name/total_sfs/fastsimcoal2/pop1_MAFpop0.obs $sfs_outpath/$pop_name/$pop_name\_MAFpop0.obs\n";
+		print IDSH "cp -f $Bin/lib/1PopBot20Mb.est $sfs_outpath/$pop_name/$pop_name.est && cp -f $Bin/lib/1PopBot20Mb.tpl $sfs_outpath/$pop_name/$pop_name.tpl && cp -f $sfs_outpath/$pop_name/total_sfs/fastsimcoal2/$pop_name\_MAFpop0.obs $sfs_outpath/$pop_name/$pop_name\_MAFpop0.obs\n";
 		print IDSH "sed -i `s/18/$pop_size/g` $sfs_outpath/$pop_name/$pop_name.tpl\n";
 		
 		for (my $i = 0; $i <10; $i++){
