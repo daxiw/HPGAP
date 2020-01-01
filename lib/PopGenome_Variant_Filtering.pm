@@ -24,6 +24,7 @@ sub Main{
 		'freebayes_filtering',
 		'intersection',
 		'exclude_samples=s',
+		'repeat_bed=s',
 		'vcf=s',
 		'advanced_filtering',
 		'help',
@@ -174,7 +175,11 @@ sub AdvancedFiltering {
 	open SH, ">$var{shpath}/variant_filtering_s1.sh";
 	
 	#default SNV sites 1: PASS + max-meanDP: 3*$avgdp50 + max-missing: 0.8 + biallelic + selected chr (optional)
-	print SH "vcftools --gzvcf $var{outpath}/basic_snp.vcf.gz $chrcmd --mac 1 --min-meanDP 5 --max-meanDP $maxdp --max-missing 0.8 --max-alleles 2 --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/basic_snp_dp.vcf.gz \n";
+	my $repeat_bed = "";
+	if (defined $opts{repeat_bed}){
+		$repeat_bed = "--exclude-bed $opts{repeat_bed} ";
+	}
+	print SH "vcftools --gzvcf $var{outpath}/basic_snp.vcf.gz $chrcmd --mac 1 $repeat_bed --min-meanDP 5 --max-meanDP $maxdp --max-missing 0.8 --max-alleles 2 --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/basic_snp_dp.vcf.gz \n";
 	#switch on the bash running
 	print CL "sh $var{shpath}/variant_filtering_s1.sh 1>$var{shpath}/variant_filtering_s1.sh.o 2>$var{shpath}/variant_filtering_s1.sh.e\n";
 	close CL;
