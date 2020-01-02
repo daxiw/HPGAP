@@ -61,9 +61,9 @@ elsif ($run eq 'slidingwindow') {
 		require PopGenome_Slidingwindow;
 		PopGenome_Slidingwindow::Main(\@args);
 }
-elsif ($run eq 'sfs') {
-		require PopGenome_SFS;
-		PopGenome_SFS::Main(\@args);
+elsif ($run eq 'demography') {
+		require PopGenome_Demography;
+		PopGenome_Demography::Main(\@args);
 }
 elsif ($run eq 'test') {
 		require PopGenome_test;

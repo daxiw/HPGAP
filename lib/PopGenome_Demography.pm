@@ -1,4 +1,4 @@
-package PopGenome_SFS;
+package PopGenome_Demography;
 use File::Basename;
 use File::Path qw(make_path);
 use strict;
@@ -221,6 +221,62 @@ sub SFS{
 	}
 
 =cut
+}
+
+sub SMCPP{
+	my ($var,$opts) = @_;
+	my %opts = %{$opts};
+	my %var = %{$var};
+	my %cfg = %{$var{cfg}};
+	my %samplelist = %{$var{samplelist}};
+	my %pop = %{$var{pop}};
+	
+	my $smcpp_outpath = "$var{outpath}/SMCPP/";
+	if ( !-d "$var{outpath}/SMCPP" ) {make_path "$var{outpath}/SMCPP" or die "Failed to create path: $var{outpath}/SMCPP";}
+
+	if (defined $opts{genome}){
+		$var{genome} = PopGenome_Shared::LOADREF($opts{genome});
+	}else {
+		$var{genome} = PopGenome_Shared::LOADREF($cfg{ref}{db}{$cfg{ref}{choose}}{path});
+	}
+
+	foreach my $pop_name (keys %pop){
+		next unless ($pop{$pop_name}{count} > 6);
+		if ( !-d "$smcpp_outpath/$pop_name" ) {make_path "$smcpp_outpath/$pop_name" or die "Failed to create path: $smcpp_outpath/$pop_name";}
+		open OT, ">$smcpp_outpath/$pop_name.raw.list"; print OT $pop{$pop_name}{line}; close OT;
+
+		open IN, "$smcpp_outpath/$pop_name.raw.list";
+		my $sampletext="";
+		while (<IN>){
+			chomp;
+			$sampletext .= $_;
+			$sampletext .= ",";
+		}
+		close IN;
+		$sampletext =~ s/\,$//g;
+
+		my %genome = %{$var{genome}};
+
+		open LIST1, ">$var{shpath}/smcpp.$pop_name.cmd1.list";
+		foreach my $scaffold (keys %{$genome{len}}){
+			print LIST1 "cd $smcpp_outpath/$pop_name && conda activate smcpp && smc++ vcf2smc --length $genome{len}{$scaffold} $var{vcf} out/$scaffold.smc.gz $scaffold $pop_name:$sampletext && conda deactivate\n";
+		}
+		close LIST1;
+		`perl $Bin/lib/qsub.pl -d $var{shpath}/smcpp.$pop_name.cmd1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/smcpp.$pop_name.cmd1.list` unless (defined $opts{skipsh});
+
+		open SH, ">$var{shpath}/smcpp.$pop_name.s2.sh";
+		print SH "cd $smcpp_outpath/$pop_name\n";
+		print SH "conda activate smcpp && smc++ cv -o analysis/ 1.25e-8 out/*.smc.gz\n";
+		print SH "smc++ plot plot.pdf analysis/model.final.json\n";
+		print SH "conda deactivate\n";
+		close SH;
+
+		open LIST2,">$var{shpath}/smcpp.$pop_name.cmd2.list";
+		print LIST2 "sh $var{shpath}/smcpp.$pop_name.s2.sh 1>$var{shpath}/smcpp.$pop_name.s2.sh.o 2>$var{shpath}/smcpp.$pop_name.s2.sh.e\n";
+		close LIST2;
+
+		`perl $Bin/lib/qsub.pl -d $var{shpath}/smcpp.$pop_name.cmd2_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=4G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/smcpp.$pop_name.cmd2.list` unless (defined $opts{skipsh});
+	}
 }
 
 1;
