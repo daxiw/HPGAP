@@ -24,6 +24,7 @@ sub Main{
 		'genome=s',
 		'threads',
 		'SFS',
+		'smcpp',
 		'help',
 		'skipsh');
 
