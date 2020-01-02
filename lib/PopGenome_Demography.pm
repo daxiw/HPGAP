@@ -248,6 +248,8 @@ sub SMCPP{
 	foreach my $pop_name (keys %pop){
 		next unless ($pop{$pop_name}{count} > 6);
 		if ( !-d "$smcpp_outpath/$pop_name" ) {make_path "$smcpp_outpath/$pop_name" or die "Failed to create path: $smcpp_outpath/$pop_name";}
+		if ( !-d "$smcpp_outpath/$pop_name/out" ) {make_path "$smcpp_outpath/$pop_name/out" or die "Failed to create path: $smcpp_outpath/$pop_name/out";}
+		if ( !-d "$smcpp_outpath/$pop_name/analysis" ) {make_path "$smcpp_outpath/$pop_name/analysis" or die "Failed to create path: $smcpp_outpath/$pop_name/analysis";}
 		open OT, ">$smcpp_outpath/$pop_name.raw.list"; print OT $pop{$pop_name}{line}; close OT;
 
 		open IN, "$smcpp_outpath/$pop_name.raw.list";
@@ -263,7 +265,9 @@ sub SMCPP{
 		my %genome = %{$var{genome}};
 
 		open LIST1, ">$var{shpath}/smcpp.$pop_name.cmd1.list";
+
 		foreach my $scaffold (keys %{$genome{len}}){
+			next if ($genome{len}{$scaffold} < 1000000);
 			print LIST1 "cd $smcpp_outpath/$pop_name && conda activate smcpp && smc++ vcf2smc --length $genome{len}{$scaffold} $var{vcf} out/$scaffold.smc.gz $scaffold $pop_name:$sampletext && conda deactivate\n";
 		}
 		close LIST1;
