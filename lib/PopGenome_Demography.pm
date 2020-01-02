@@ -38,6 +38,10 @@ sub Main{
 	if (defined $opts{SFS}){ 
 		& SFS (\%var,\%opts);
 	}
+
+	if (defined $opts{smcpp}){ 
+		& SMCPP (\%var,\%opts);
+	}
 }
 
 #---------------------------------------05.DemographicHistory------------------------------------------
