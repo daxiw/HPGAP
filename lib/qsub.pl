@@ -18,6 +18,7 @@ if($opt_h or @ARGV == 0){
 $shell = shift;
 
 if (defined $opt_p){
+    #udocker run -v /home/darcy/PopGen_WorkFlow/test:/home/darcy/PopGen_WorkFlow/test HPGAP_c1 /bin/bash -c 'cd /home/darcy/PopGen_WorkFlow/test;echo hi >helloworld.txt'
    `parallel -j $opt_n < $shell`;
    exit;
 }

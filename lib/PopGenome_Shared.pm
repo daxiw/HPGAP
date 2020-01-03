@@ -87,6 +87,14 @@ sub CombineCfg{
 		$var{threads} = 1;
 	}
 
+	if (defined $opts{run_mode}){
+		$var{run_mode} = $opts{run_mode};
+	}elsif(defined $cfg{args}{run_mode}){
+		$var{run_mode} = $cfg{args}{run_mode};
+	}else{
+		$var{run_mode} = "qsub";
+	}
+
 	# select samples if sample list is provided
 	my %samplelist_ori = %{$cfg{fqdata}};
 	my %samplelist = %samplelist_ori;
@@ -157,7 +165,6 @@ sub CombineCfg{
 		$var{shpath} = "$cfg{args}{outdir}/PipelineScripts/$folder/";
 		if ( !-d $var{shpath} ) {make_path $var{shpath} or die "Failed to create path: $var{shpath}";}
 
-#		die "please add genome path into configuration file" unless (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path});
 	}
 
 	if (defined $cfg{ref}{db}{$cfg{ref}{choose}}{path}){
@@ -172,6 +179,25 @@ sub CombineCfg{
 	# print "$opts{outpath}\n";
 
 	return \%var;	
+}
+
+sub RunJobs{
+	my ($var,$opts,$list,$mem,$nproc) = @_;
+	my %opts = %{$opts};
+	my %var = %{$var};
+	my %cfg = %{$var{cfg}};
+
+	if($var{run_mode} eq "qsub"){	
+		$mem = "4G" unless (defined $mem);
+		$nproc = $var{threads} unless (defined $nproc);
+
+		`perl $Bin/lib/qsub.pl -r -d $list.qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=$mem,num_proc=$nproc -binding linear:1' -m 100 $list` unless (defined $opts{skipsh});
+	}elsif($var{run_mode} eq "udocker"){
+		$var{jobs} = 10 unless (defined $var{jobs});
+		$var{container} = "HPGAP_c1" unless (defined $var{container});
+		
+		`udocker run -v $Bin:$Bin -v $cfg{args}{outdir}:$cfg{args}{outdir} $var{container} /bin/bash -c 'export PATH=\$PATH:/root/miniconda3/bin && cd $cfg{args}{outdir} && parallel -j $var{jobs} --no-notice < $list`;
+	}
 }
 
 1;

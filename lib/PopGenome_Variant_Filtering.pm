@@ -93,7 +93,8 @@ sub GATKBasicFiltering {
 	open CL, ">$var{shpath}/cmd_gatk_basic_filtering.list";
 	print CL "sh $var{shpath}/gatk_basic_filtering.sh 1>$var{shpath}/gatk_basic_filtering.sh.o 2>$var{shpath}/gatk_basic_filtering.sh.e\n";
 	close CL;
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/gatk_basic_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_gatk_basic_filtering.list` unless (defined $opts{skipsh});
+
+	PopGenome_Shared::RunJobs(\%var,\%opts,"$var{shpath}/cmd_gatk_basic_filtering.list","1G",2);
 
 	`cp -f $var{outpath}/gatk_basic_snp.vcf.gz $var{outpath}/basic_snp.vcf.gz`;
 }
@@ -123,7 +124,8 @@ sub FreebayesBasicFiltering {
 	print CL "sh $var{shpath}/freebayes_basic_filtering.sh 1>$var{shpath}/freebayes_basic_filtering.sh.o 2>$var{shpath}/freebayes_basic_filtering.sh.e\n";
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/freebayes_basic_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_basic_filtering.list` unless (defined $opts{skipsh});
+	PopGenome_Shared::RunJobs(\%var,\%opts,"$var{shpath}/cmd_freebayes_basic_filtering.list","1G",2);	
+	#`perl $Bin/lib/qsub.pl -d $var{shpath}/freebayes_basic_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_freebayes_basic_filtering.list` unless (defined $opts{skipsh});
 
 	`cp -f $var{outpath}/freebayes_basic_snp.vcf.gz $var{outpath}/basic_snp.vcf.gz`;
 }
@@ -183,7 +185,9 @@ sub AdvancedFiltering {
 	#switch on the bash running
 	print CL "sh $var{shpath}/variant_filtering_s1.sh 1>$var{shpath}/variant_filtering_s1.sh.o 2>$var{shpath}/variant_filtering_s1.sh.e\n";
 	close CL;
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s1.list` unless (defined $opts{skipsh});
+
+	PopGenome_Shared::RunJobs(\%var,\%opts,"$var{shpath}/cmd_advanced_filtering_s1.list","1G",2);	
+	#`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=2 -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s1.list` unless (defined $opts{skipsh});
 
 	$cfg{variant_filtering}{basic_vcf}="$var{outpath}/basic_snp_dp.vcf.gz";
 
@@ -223,7 +227,9 @@ sub AdvancedFiltering {
 	close SH;
 	print CL "sh $var{shpath}/variant_filtering_s2.sh 1>$var{shpath}/variant_filtering_s2.sh.o 2>$var{shpath}/variant_filtering_s2.sh.e\n";
 	close CL;
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s2_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s2.list` unless (defined $opts{skipsh});
+
+	PopGenome_Shared::RunJobs(\%var,\%opts,"$var{shpath}/cmd_advanced_filtering_s2.list","1G",$var{threads});
+	#`perl $Bin/lib/qsub.pl -d $var{shpath}/variant_filtering_s2_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=1G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_variant_filtering_s2.list` unless (defined $opts{skipsh});
 
 	$cfg{variant_filtering}{plink_data}="$var{outpath}/nosingle_snp_dp_prunned";
 	$cfg{variant_filtering}{high_confidence_vcf}="$var{outpath}/nosingle_snp_dp.vcf.gz";

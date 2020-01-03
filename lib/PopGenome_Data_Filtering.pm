@@ -108,7 +108,7 @@ sub DataFiltering{
 	}
 	close CL;
 
-	`perl $Bin/lib/qsub.pl -d $var{shpath}/cmd_read_filtering_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=2G,num_proc=$var{threads} -binding linear:1' -m 100 -r $var{shpath}/cmd_read_filtering.list` unless (defined $opts{skipsh});
+	PopGenome_Shared::RunJobs(\%var,\%opts,"$var{shpath}/cmd_read_filtering.list");
 }
 
 sub ReadReport{
