@@ -25,6 +25,7 @@ sub Main{
 		'joint_bqsr',
 		'freebayes_calling',
 		'recalibration_mode',
+		'samplelist=s',
 		'help',
 		'skipsh');
 
