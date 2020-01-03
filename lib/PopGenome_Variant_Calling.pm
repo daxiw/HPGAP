@@ -46,12 +46,12 @@ sub Main{
 	if (defined $opts{freebayes_calling}){ &FreebayesCalling (\%var,\%opts);}
 	if (defined $opts{individual_variant_calling}){ &IndividualVariantCalling (\%var,\%opts);}
 	if (defined $opts{joint_calling}){ &JointCalling (\%var,\%opts);}
-	if (defined $opts{joint_bqsr}){ &JointBQSR (\%var,\%opts);}
+	if (defined $opts{joint_bqsr}){ &GATK_JointBQSR (\%var,\%opts);}
 	#### estimate phylogeny of mt genomes ###
 
 }
 
-sub JointBQSR {
+sub GATK_JointBQSR {
 	my ($var,$opts) = @_;
 	my %opts = %{$opts};
 	my %var = %{$var};
@@ -87,8 +87,8 @@ sub JointBQSR {
 	`perl $Bin/lib/qsub.pl -r -d $var{shpath}/joint_bqsr_s1_qsub -q $cfg{args}{queue} -P $cfg{args}{prj} -l 'vf=5G,num_proc=1 -binding linear:1' -m 100 $var{shpath}/joint_bqsr_s1.list` unless (defined $opts{skipsh});
 
 	#### First round of joint calling START #####
-	if ( !-d "$var{outpath}/JointBQSR/" ) {
-		make_path "$var{outpath}/JointBQSR/" or die "Failed to create path: $var{outpath}/JointBQSR/";
+	if ( !-d "$var{outpath}/GATK_JointBQSR/" ) {
+		make_path "$var{outpath}/GATK_JointBQSR/" or die "Failed to create path: $var{outpath}/GATK_JointBQSR/";
 	}
 
 	open CL, ">$var{shpath}/joint_bqsr_s2.list";
@@ -97,44 +97,44 @@ sub JointBQSR {
 	print SH "gatk CombineGVCFs \\\n";
 	print SH "	-R $var{reference} \\\n";
 	print SH "$sample_gvcfs";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling.HC.g1st.vcf.gz && echo \"** JointCalling.HC.g1st.vcf.gz done ** \"\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling.HC.g1st.vcf.gz && echo \"** JointCalling.HC.g1st.vcf.gz done ** \"\n";
 
 	print SH "gatk GenotypeGVCFs \\\n";
 	print SH "	-R $var{reference} \\\n";
 	print SH "	-ploidy $var{ploidy} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC.g1st.vcf.gz \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling.HC1st.vcf.gz && echo \"** JointCalling.HC1st.vcf.gz done ** \"\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling.HC.g1st.vcf.gz \\\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling.HC1st.vcf.gz && echo \"** JointCalling.HC1st.vcf.gz done ** \"\n";
 
 	print SH "gatk SelectVariants \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC1st.vcf.gz \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling.HC1st.vcf.gz \\\n";
 	print SH "	--select-type-to-include SNP \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_raw_snps1st.vcf && echo \"** GVCF JointBQSR/JointCalling_raw_snps1st done\" && \\\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_raw_snps1st.vcf && echo \"** GVCF GATK_JointBQSR/JointCalling_raw_snps1st done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling_raw_snps1st.vcf \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling_raw_snps1st.vcf \\\n";
 	print SH "	--filter-expression \"QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0\" \\\n";
 	print SH "	--filter-name \"my_snp_filter\" \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_filtered_snps1st.vcf && echo \"** GVCF JointBQSR/JointCalling_raw_snps1st done\" \n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps1st.vcf && echo \"** GVCF GATK_JointBQSR/JointCalling_raw_snps1st done\" \n";
 
 	print SH "gatk SelectVariants \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC1st.vcf.gz \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling.HC1st.vcf.gz \\\n";
 	print SH "	--select-type-to-include INDEL \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_raw_indels1st.vcf && echo \"** GVCF JointBQSR/JointCalling_raw_snps1st done\" && \\\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_raw_indels1st.vcf && echo \"** GVCF GATK_JointBQSR/JointCalling_raw_snps1st done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling_raw_indels1st.vcf \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling_raw_indels1st.vcf \\\n";
 	print SH "	--filter-expression \"QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0\" \\\n";
 	print SH "	--filter-name \"my_indel_filter\" \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_filtered_indels1st.vcf && echo \"** JointBQSR/JointCalling_raw_snps1st done\" \n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels1st.vcf && echo \"** GATK_JointBQSR/JointCalling_raw_snps1st done\" \n";
 
-	print SH "bgzip -f $var{outpath}/JointBQSR/JointCalling_filtered_snps1st.vcf\n";
-	print SH "tabix -f $var{outpath}/JointBQSR/JointCalling_filtered_snps1st.vcf.gz \n";
-	print SH "bgzip -f $var{outpath}/JointBQSR/JointCalling_filtered_indels1st.vcf\n";
-	print SH "tabix -f $var{outpath}/JointBQSR/JointCalling_filtered_indels1st.vcf.gz \n";
+	print SH "bgzip -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps1st.vcf\n";
+	print SH "tabix -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps1st.vcf.gz \n";
+	print SH "bgzip -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels1st.vcf\n";
+	print SH "tabix -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels1st.vcf.gz \n";
 
 	close SH;
 	print CL "sh $var{shpath}/joint_bqsr_s2.sh 1>$var{shpath}/joint_bqsr_s2.sh.o 2>$var{shpath}/joint_bqsr_s2.sh.e\n";
@@ -155,8 +155,8 @@ sub JointBQSR {
 		print SH "	-R $var{reference} \\\n";
 		print SH "	-I $sample.sorted.markdup.bam \\\n";
 		print SH "	-O $sample.sorted.markdup.recal_data.table \\\n";
-		print SH "	--known-sites $var{outpath}/JointBQSR/JointCalling_filtered_snps1st.vcf.gz \\\n";
-		print SH "	--known-sites $var{outpath}/JointBQSR/JointCalling_filtered_indels1st.vcf.gz && echo \"** $sample.sorted.markdup.recal_data.table done **\" \n";
+		print SH "	--known-sites $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps1st.vcf.gz \\\n";
+		print SH "	--known-sites $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels1st.vcf.gz && echo \"** $sample.sorted.markdup.recal_data.table done **\" \n";
 
 		print SH "gatk ApplyBQSR \\\n";
 		print SH "	-R $var{reference} \\\n";
@@ -169,8 +169,8 @@ sub JointBQSR {
 		print SH "	-R $var{reference} \\\n";
 		print SH "	-I $sample.sorted.markdup.BQSR.bam  \\\n";
 		print SH "	-O $sample.sorted.markdup.recal_data1st_after.table \\\n";
-		print SH "	--known-sites $var{outpath}/JointBQSR/JointCalling_filtered_snps1st.vcf.gz \\\n";
-		print SH "	--known-sites $var{outpath}/JointBQSR/JointCalling_filtered_indels1st.vcf.gz && echo \"** $sample.sorted.markdup.recal_data.table done **\" \n";
+		print SH "	--known-sites $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps1st.vcf.gz \\\n";
+		print SH "	--known-sites $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels1st.vcf.gz && echo \"** $sample.sorted.markdup.recal_data.table done **\" \n";
 
 		# HaplotypeCaller
 		print SH "gatk HaplotypeCaller \\\n";
@@ -197,44 +197,44 @@ sub JointBQSR {
 	print SH "gatk CombineGVCFs \\\n";
 	print SH "	-R $var{reference} \\\n";
 	print SH "$sample_gvcfs";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling.HC.g2nd.vcf.gz && echo \"** JointCalling.HC.g2nd.vcf.gz done ** \"\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling.HC.g2nd.vcf.gz && echo \"** JointCalling.HC.g2nd.vcf.gz done ** \"\n";
 
 	print SH "gatk GenotypeGVCFs \\\n";
 	print SH "	-R $var{reference} \\\n";
 	print SH "	-ploidy $var{ploidy} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC.g2nd.vcf.gz \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling.HC2nd.vcf.gz && echo \"** JointCalling.HC2nd.vcf.gz done ** \"\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling.HC.g2nd.vcf.gz \\\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling.HC2nd.vcf.gz && echo \"** JointCalling.HC2nd.vcf.gz done ** \"\n";
 
 	print SH "gatk SelectVariants \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC2nd.vcf.gz \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling.HC2nd.vcf.gz \\\n";
 	print SH "	--select-type-to-include SNP \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_raw_snps2nd.vcf && echo \"** GVCF JointBQSR/JointCalling_raw_snps2nd done\" && \\\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_raw_snps2nd.vcf && echo \"** GVCF GATK_JointBQSR/JointCalling_raw_snps2nd done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling_raw_snps2nd.vcf \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling_raw_snps2nd.vcf \\\n";
 	print SH "	--filter-expression \"QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0\" \\\n";
 	print SH "	--filter-name \"my_snp_filter\" \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_filtered_snps2nd.vcf && echo \"** GVCF JointBQSR/JointCalling_raw_snps2nd done\" \n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps2nd.vcf && echo \"** GVCF GATK_JointBQSR/JointCalling_raw_snps2nd done\" \n";
 
 	print SH "gatk SelectVariants \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC.g2nd.vcf.gz \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling.HC.g2nd.vcf.gz \\\n";
 	print SH "	--select-type-to-include INDEL \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_raw_indels2nd.vcf && echo \"** GVCF JointBQSR/JointCalling_raw_indels2nd done\" && \\\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_raw_indels2nd.vcf && echo \"** GVCF GATK_JointBQSR/JointCalling_raw_indels2nd done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling_raw_indels2nd.vcf \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling_raw_indels2nd.vcf \\\n";
 	print SH "	--filter-expression \"QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0\" \\\n";
 	print SH "	--filter-name \"my_indel_filter\" \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_filtered_indels2nd.vcf && echo \"** JointBQSR/JointCalling_filtered_indels2nd.vcf done\" \n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels2nd.vcf && echo \"** GATK_JointBQSR/JointCalling_filtered_indels2nd.vcf done\" \n";
 
-	print SH "bgzip -f $var{outpath}/JointBQSR/JointCalling_filtered_snps2nd.vcf\n";
-	print SH "tabix -f $var{outpath}/JointBQSR/JointCalling_filtered_snps2nd.vcf.gz \n";
-	print SH "bgzip -f $var{outpath}/JointBQSR/JointCalling_filtered_indels2nd.vcf\n";
-	print SH "tabix -f $var{outpath}/JointBQSR/JointCalling_filtered_indels2nd.vcf.gz \n";
+	print SH "bgzip -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps2nd.vcf\n";
+	print SH "tabix -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps2nd.vcf.gz \n";
+	print SH "bgzip -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels2nd.vcf\n";
+	print SH "tabix -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels2nd.vcf.gz \n";
 
 	close SH;
 	print CL "sh $var{shpath}/joint_bqsr_s4.sh 1>$var{shpath}/joint_bqsr_s4.sh.o 2>$var{shpath}/joint_bqsr_s4.sh.e\n";
@@ -255,8 +255,8 @@ sub JointBQSR {
 		print SH "	-R $var{reference} \\\n";
 		print SH "	-I $sample.sorted.markdup.bam \\\n";
 		print SH "	-O $sample.sorted.markdup.recal_data2nd.table \\\n";
-		print SH "	--known-sites $var{outpath}/JointBQSR/JointCalling_filtered_snps2nd.vcf.gz\\\n";
-		print SH "	--known-sites $var{outpath}/JointBQSR/JointCalling_filtered_indels2nd.vcf.gz \n";
+		print SH "	--known-sites $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps2nd.vcf.gz\\\n";
+		print SH "	--known-sites $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels2nd.vcf.gz \n";
 
 		print SH "gatk ApplyBQSR \\\n";
 		print SH "	-R $var{reference} \\\n";
@@ -269,8 +269,8 @@ sub JointBQSR {
 		print SH "	-R $var{reference} \\\n";
 		print SH "	-I $sample.sorted.markdup.BQSR2nd.bam \\\n";
 		print SH "	-O $sample.sorted.markdup.recal_data2nd_after.table \\\n";
-		print SH "	--known-sites $var{outpath}/JointBQSR/JointCalling_filtered_snps2nd.vcf.gz \\\n";
-		print SH "	--known-sites $var{outpath}/JointBQSR/JointCalling_filtered_indels2nd.vcf.gz  \n";
+		print SH "	--known-sites $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps2nd.vcf.gz \\\n";
+		print SH "	--known-sites $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels2nd.vcf.gz  \n";
 
 		# HaplotypeCaller
 		print SH "gatk HaplotypeCaller \\\n";
@@ -308,44 +308,44 @@ sub JointBQSR {
 	print SH "gatk CombineGVCFs \\\n";
 	print SH "	-R $var{reference} \\\n";
 	print SH "$sample_gvcfs";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling.HC.g3rd.vcf.gz && echo \"** JointCalling.HC.g3rd.vcf.gz done ** \"\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling.HC.g3rd.vcf.gz && echo \"** JointCalling.HC.g3rd.vcf.gz done ** \"\n";
 
 	print SH "gatk GenotypeGVCFs \\\n";
 	print SH "	-R $var{reference} \\\n";
 	print SH "	-ploidy $var{ploidy} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC.g3rd.vcf.gz \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling.HC3rd.vcf.gz && echo \"** JointCalling.HC3rd.vcf.gz done ** \"\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling.HC.g3rd.vcf.gz \\\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling.HC3rd.vcf.gz && echo \"** JointCalling.HC3rd.vcf.gz done ** \"\n";
 
 	print SH "gatk SelectVariants \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC3rd.vcf.gz \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling.HC3rd.vcf.gz \\\n";
 	print SH "	--select-type-to-include SNP \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_raw_snps3rd.vcf && echo \"** GVCF JointBQSR/JointCalling_raw_snps3rd done\" && \\\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_raw_snps3rd.vcf && echo \"** GVCF GATK_JointBQSR/JointCalling_raw_snps3rd done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling_raw_snps3rd.vcf \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling_raw_snps3rd.vcf \\\n";
 	print SH "	--filter-expression \"QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0\" \\\n";
 	print SH "	--filter-name \"my_snp_filter\" \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_filtered_snps3rd.vcf && echo \"** GVCF JointBQSR/JointCalling_filtered_snps3rd done\" \n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps3rd.vcf && echo \"** GVCF GATK_JointBQSR/JointCalling_filtered_snps3rd done\" \n";
 
 	print SH "gatk SelectVariants \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling.HC3rd.vcf.gz \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling.HC3rd.vcf.gz \\\n";
 	print SH "	--select-type-to-include INDEL \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_raw_indels3rd.vcf && echo \"** GVCF JointBQSR/JointCalling_raw_indels3rd done\" && \\\n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_raw_indels3rd.vcf && echo \"** GVCF GATK_JointBQSR/JointCalling_raw_indels3rd done\" && \\\n";
 
 	print SH "gatk VariantFiltration \\\n";
 	print SH "	-R $var{reference} \\\n";
-	print SH "	-V $var{outpath}/JointBQSR/JointCalling_raw_indels3rd.vcf \\\n";
+	print SH "	-V $var{outpath}/GATK_JointBQSR/JointCalling_raw_indels3rd.vcf \\\n";
 	print SH "	--filter-expression \"QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0\" \\\n";
 	print SH "	--filter-name \"my_indel_filter\" \\\n";
-	print SH "	-O $var{outpath}/JointBQSR/JointCalling_raw_indels3rd.vcf && echo \"** JointBQSR/JointCalling_raw_indels3rd done\" \n";
+	print SH "	-O $var{outpath}/GATK_JointBQSR/JointCalling_raw_indels3rd.vcf && echo \"** GATK_JointBQSR/JointCalling_raw_indels3rd done\" \n";
 
-	print SH "bgzip -f $var{outpath}/JointBQSR/JointCalling_filtered_snps3rd.vcf\n";
-	print SH "tabix -f $var{outpath}/JointBQSR/JointCalling_filtered_snps3rd.vcf.gz \n";
-	print SH "bgzip -f $var{outpath}/JointBQSR/JointCalling_filtered_indels3rd.vcf\n";
-	print SH "tabix -f $var{outpath}/JointBQSR/JointCalling_filtered_indels3rd.vcf.gz \n";
+	print SH "bgzip -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps3rd.vcf\n";
+	print SH "tabix -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_snps3rd.vcf.gz \n";
+	print SH "bgzip -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels3rd.vcf\n";
+	print SH "tabix -f $var{outpath}/GATK_JointBQSR/JointCalling_filtered_indels3rd.vcf.gz \n";
 
 	close SH;
 	print CL "sh $var{shpath}/joint_bqsr_s6.sh 1>$var{shpath}/joint_bqsr_s6.sh.o 2>$var{shpath}/joint_bqsr_s6.sh.e\n";
