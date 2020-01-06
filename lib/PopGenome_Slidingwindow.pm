@@ -99,7 +99,7 @@ sub SLIDINGWINDOW{
 
 	#loop for each available population
 	foreach my $pop_name (keys %pop){
-		next unless ($pop{$pop_name}{count} > 6);
+		next unless ($pop{$pop_name}{count} > 1);
 		open OT, ">$var{outpath}/$pop_name.list";
 		print OT $pop{$pop_name}{line};
 		close OT;
