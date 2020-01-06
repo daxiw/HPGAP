@@ -146,7 +146,7 @@ sub SMCPP{
 	}
 
 	foreach my $pop_name (keys %pop){
-		next unless ($pop{$pop_name}{count} > 6);
+		next unless ($pop{$pop_name}{count} > 1);
 		if ( !-d "$smcpp_outpath/$pop_name" ) {make_path "$smcpp_outpath/$pop_name" or die "Failed to create path: $smcpp_outpath/$pop_name";}
 		if ( !-d "$smcpp_outpath/$pop_name/out" ) {make_path "$smcpp_outpath/$pop_name/out" or die "Failed to create path: $smcpp_outpath/$pop_name/out";}
 		if ( !-d "$smcpp_outpath/$pop_name/analysis" ) {make_path "$smcpp_outpath/$pop_name/analysis" or die "Failed to create path: $smcpp_outpath/$pop_name/analysis";}
