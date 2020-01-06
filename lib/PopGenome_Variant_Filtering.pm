@@ -173,8 +173,8 @@ sub AdvancedFiltering {
 		}
 	}
 
-	open CL, ">$var{shpath}/cmd_variant_filtering_s1.list";
-	open SH, ">$var{shpath}/variant_filtering_s1.sh";
+	open CL, ">$var{shpath}/cmd_advanced_filtering_s1.list";
+	open SH, ">$var{shpath}/advanced_filtering_s1.sh";
 	
 	#default SNV sites 1: PASS + max-meanDP: 3*$avgdp50 + max-missing: 0.8 + biallelic + selected chr (optional)
 	my $repeat_bed = "";
@@ -183,7 +183,7 @@ sub AdvancedFiltering {
 	}
 	print SH "vcftools --gzvcf $var{outpath}/basic_snp.vcf.gz $chrcmd --mac 1 $repeat_bed --min-meanDP 5 --max-meanDP $maxdp --max-missing 1 --max-alleles 2 --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/basic_snp_dp.vcf.gz \n";
 	#switch on the bash running
-	print CL "sh $var{shpath}/variant_filtering_s1.sh 1>$var{shpath}/variant_filtering_s1.sh.o 2>$var{shpath}/variant_filtering_s1.sh.e\n";
+	print CL "sh $var{shpath}/advanced_filtering_s1.sh 1>$var{shpath}/advanced_filtering_s1.sh.o 2>$var{shpath}/advanced_filtering_s1.sh.e\n";
 	close CL;
 
 	PopGenome_Shared::RunJobs(\%var,\%opts,"$var{shpath}/cmd_advanced_filtering_s1.list","1G",2);	
@@ -208,8 +208,8 @@ sub AdvancedFiltering {
 	print "scaffold_number_limit: $scaffold_number_limit\n";
 	
 	#Based on default SNV sites + no singletons + no missing data + minDP 2 + minQ 30  (high quality SNPs)
-	open CL, ">$var{shpath}/cmd_variant_filtering_s2.list";
-	open SH, ">$var{shpath}/variant_filtering_s2.sh";
+	open CL, ">$var{shpath}/cmd_advanced_filtering_s2.list";
+	open SH, ">$var{shpath}/advanced_filtering_s2.sh";
 	print SH "#!/bin/sh\ncd $var{outpath}\n";
 	print SH "vcftools --gzvcf $cfg{variant_filtering}{basic_vcf} --singletons --stdout >$var{outpath}/singletons.list\n";
 	print SH "vcftools --gzvcf $cfg{variant_filtering}{basic_vcf} --exclude-positions $var{outpath}/singletons.list --max-missing 1 --max-alleles 2 --recode --recode-INFO-all --stdout |bgzip -c >$var{outpath}/nosingle_snp_dp.vcf.gz\n";
@@ -225,7 +225,7 @@ sub AdvancedFiltering {
 	print SH "cat $var{outpath}/nosingle_snp_dp_pre.vcf |perl -ne \'print unless (/CHROM/);if(/CHROM/){s/_\\S+//g;print;}\' | bgzip -c >$var{outpath}/nosingle_snp_dp_prunned.vcf.gz\n";
 	print SH "ls $var{outpath}/nosingle_snp_dp_prunned.vcf.gz && echo \"** finish variant_filtering_s2 **\" > $var{shpath}/variant_filtering_s2.finished.txt";
 	close SH;
-	print CL "sh $var{shpath}/variant_filtering_s2.sh 1>$var{shpath}/variant_filtering_s2.sh.o 2>$var{shpath}/variant_filtering_s2.sh.e\n";
+	print CL "sh $var{shpath}/advanced_filtering_s2.sh 1>$var{shpath}/advanced_filtering_s2.sh.o 2>$var{shpath}/advanced_filtering_s2.sh.e\n";
 	close CL;
 
 	PopGenome_Shared::RunJobs(\%var,\%opts,"$var{shpath}/cmd_advanced_filtering_s2.list","1G",$var{threads});
