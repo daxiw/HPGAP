@@ -182,6 +182,7 @@ sub AdvancedFiltering {
 		$repeat_bed = "--exclude-bed $opts{repeat_bed} ";
 	}
 	print SH "vcftools --gzvcf $var{outpath}/basic_snp.vcf.gz $chrcmd --mac 1 $repeat_bed --min-meanDP 5 --max-meanDP $maxdp --max-missing 1 --max-alleles 2 --remove-filtered-all --recode --recode-INFO-all --stdout \| bgzip -c > $var{outpath}/basic_snp_dp.vcf.gz \n";
+	print SH "tabix -f $var{outpath}/basic_snp_dp.vcf.gz\n";
 	#switch on the bash running
 	print CL "sh $var{shpath}/advanced_filtering_s1.sh 1>$var{shpath}/advanced_filtering_s1.sh.o 2>$var{shpath}/advanced_filtering_s1.sh.e\n";
 	close CL;

@@ -58,7 +58,7 @@ sub HOMOZYGOSITY{
 	open CL, ">$var{shpath}/cmd_Homozygosity.list";
 	
 	foreach my $pop_name (keys %pop){
-		next unless ($pop{$pop_name}{count} > 4);
+		next unless ($pop{$pop_name}{count} > 1);
 
 		open OT, ">$var{outpath}/Homozygosity/$pop_name.list";
 		print OT $pop{$pop_name}{line};
@@ -112,7 +112,7 @@ sub ROH{
 
 	open CL, ">$var{shpath}/cmd_ROH.list";
 	foreach my $pop_name (keys %pop){
-		next unless ($pop{$pop_name}{count} > 4);
+		next unless ($pop{$pop_name}{count} > 1);
 		open SH, ">$var{shpath}/ROH.$pop_name.sh";
 
 		open OT, ">$var{outpath}/ROH/$pop_name.list";
@@ -175,7 +175,7 @@ EOF
 	print "2: $var{vcf}\n";
 	open CL, ">$var{shpath}/cmd_LD_s1.list";
 	foreach my $pop_name (keys %pop){
-		next unless ($pop{$pop_name}{count} > 6);
+		next unless ($pop{$pop_name}{count} > 1);
 		open OT, ">$ld_outpath/$pop_name.list";
 		print OT $pop{$pop_name}{line};
 		close OT;
@@ -194,7 +194,7 @@ EOF
 
 	open CLSH, ">$var{shpath}/cmd_LD_R.list";
 	foreach my $pop_name (keys %pop){
-		next unless ($pop{$pop_name}{count} > 6);
+		next unless ($pop{$pop_name}{count} > 1);
 
 		my $i=1;
 		open PCL, ">$var{shpath}/LD.$pop_name.cmd.list";
