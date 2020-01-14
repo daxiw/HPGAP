@@ -109,7 +109,7 @@ sub FreebayesBasicFiltering {
 	open SH, ">$var{shpath}/freebayes_basic_filtering.sh";
 	print SH "#!/bin/sh\ncd $var{outpath}/\n";
 
-	my $basic_vcf = "$var{outpath}/freebayes_joint_calling.vcf.gz";
+	my $basic_vcf = "$var{outpath}/../FreebayesCalling/freebayes_joint_calling.vcf.gz";
 	if (defined $opts{exclude_samples}){
 		`cp -f $opts{exclude_samples} $var{outpath}`;
 		print SH "vcftools --gzvcf $var{outpath}/../FreebayesCalling/freebayes_joint_calling.vcf.gz --remove-filtered-all --remove $opts{exclude_samples} --recode --recode-INFO-all --stdout | vcfsnps | bgzip -c > $var{outpath}/freebayes_basic_snp_s1.vcf.gz\n";

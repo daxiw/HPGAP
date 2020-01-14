@@ -25,7 +25,7 @@ ld:
   scaffold_length_cutoff: '1000000'
 slidingwindow:
   gff: 'undefined' # the gff file for the species
-  scaffold_length_cutoff: '10000' # only analyse the scaffolds with length larger than the cutoff
+  scaffold_length_cutoff: '100000' # only analyse the scaffolds with length larger than the cutoff
   scaffold_number_limit: '10000' # the maximum number of scaffolds
   snpeff_species: 'undefined' # the species name in the snpeff database 
   windowsize: '5000' # window size for scanning the whole genome in a sliding window manner
